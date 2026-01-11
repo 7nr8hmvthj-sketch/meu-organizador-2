@@ -28,3 +28,4 @@
 ## Bugs
 
 - [x] Corrigir datas deslocadas em 1 dia (problema de timezone)
+- [x] Corrigir deslocamento de 1 dia nos eventos (eventos do dia 12 aparecem no dia 11)
