@@ -1,0 +1,46 @@
+{
+  "query": "SELECT COUNT(*) as total, \n       SUM(CASE WHEN isPassed = 1 THEN 1 ELSE 0 END) as passed,\n       type, COUNT(*) as count\nFROM events \nGROUP BY type\nORDER BY count DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT COUNT(*) as total, \n       SUM(CASE WHEN isPassed = 1 THEN 1 ELSE 0 END) as passed,\n       type, COUNT(*) as count\nFROM events \nGROUP BY type\nORDER BY count DESC;",
+  "rows": [
+    {
+      "total": "96",
+      "passed": "8",
+      "type": "Zona Norte (Manhã)",
+      "count": "96"
+    },
+    {
+      "total": "88",
+      "passed": "4",
+      "type": "Zona Norte (Tarde)",
+      "count": "88"
+    },
+    {
+      "total": "58",
+      "passed": "2",
+      "type": "HC Manhã",
+      "count": "58"
+    },
+    {
+      "total": "31",
+      "passed": "11",
+      "type": "Noturno (19-07)",
+      "count": "31"
+    },
+    {
+      "total": "5",
+      "passed": "1",
+      "type": "Apoio (19-01)",
+      "count": "5"
+    },
+    {
+      "total": "3",
+      "passed": "0",
+      "type": "Pessoal",
+      "count": "3"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tpassed\ttype\tcount\n96\t8\tZona Norte (Manhã)\t96\n88\t4\tZona Norte (Tarde)\t88\n58\t2\tHC Manhã\t58\n31\t11\tNoturno (19-07)\t31\n5\t1\tApoio (19-01)\t5\n3\t0\tPessoal\t3\n",
+  "stderr": "",
+  "execution_time_ms": 392
+}

@@ -134,24 +134,11 @@
 }
 
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -162,16 +149,146 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
   }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0.02 260);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0.02 260);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.02 260);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.45 0.02 260);
+}
+
+/* Event type colors */
+.event-morning {
+  border-left-color: oklch(0.7 0.15 90) !important;
+  background: linear-gradient(to right, oklch(0.95 0.08 90), transparent);
+}
+
+.event-afternoon {
+  border-left-color: oklch(0.7 0.15 50) !important;
+  background: linear-gradient(to right, oklch(0.95 0.08 50), transparent);
+}
+
+.event-night {
+  border-left-color: oklch(0.55 0.15 270) !important;
+  background: linear-gradient(to right, oklch(0.95 0.08 270), transparent);
+}
+
+.event-hc {
+  border-left-color: oklch(0.6 0.18 150) !important;
+  background: linear-gradient(to right, oklch(0.95 0.08 150), transparent);
+}
+
+.event-zona {
+  border-left-color: oklch(0.65 0.15 200) !important;
+  background: linear-gradient(to right, oklch(0.95 0.08 200), transparent);
+}
+
+.event-personal {
+  border-left-color: oklch(0.6 0.15 320) !important;
+  background: linear-gradient(to right, oklch(0.95 0.08 320), transparent);
+}
+
+.dark .event-morning {
+  background: linear-gradient(to right, oklch(0.25 0.05 90), transparent);
+}
+
+.dark .event-afternoon {
+  background: linear-gradient(to right, oklch(0.25 0.05 50), transparent);
+}
+
+.dark .event-night {
+  background: linear-gradient(to right, oklch(0.25 0.05 270), transparent);
+}
+
+.dark .event-hc {
+  background: linear-gradient(to right, oklch(0.25 0.05 150), transparent);
+}
+
+.dark .event-zona {
+  background: linear-gradient(to right, oklch(0.25 0.05 200), transparent);
+}
+
+.dark .event-personal {
+  background: linear-gradient(to right, oklch(0.25 0.05 320), transparent);
+}
+
+/* Passed/Cancelled event styles */
+.event-passed {
+  opacity: 0.6;
+}
+
+.event-passed .event-title {
+  text-decoration: line-through;
+}
+
+.passed-note {
+  background-color: oklch(0.9 0.12 90);
+  color: oklch(0.35 0.1 90);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.dark .passed-note {
+  background-color: oklch(0.35 0.1 90);
+  color: oklch(0.9 0.08 90);
+}
+
+/* Animation classes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px -12px oklch(0.5 0.1 270 / 0.3);
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 8px 30px -12px oklch(0.2 0.05 270 / 0.5);
 }
