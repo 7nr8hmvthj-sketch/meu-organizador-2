@@ -1,0 +1,35 @@
+{
+  "query": "SELECT id, date, type FROM events ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, date, type FROM events ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "281",
+      "date": "2026-12-31",
+      "type": "HC Manhã"
+    },
+    {
+      "id": "280",
+      "date": "2026-12-29",
+      "type": "Zona Norte (Tarde)"
+    },
+    {
+      "id": "279",
+      "date": "2026-12-27",
+      "type": "Zona Norte (Manhã)"
+    },
+    {
+      "id": "278",
+      "date": "2026-12-24",
+      "type": "HC Manhã"
+    },
+    {
+      "id": "277",
+      "date": "2026-12-22",
+      "type": "Zona Norte (Tarde)"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdate\ttype\n281\t2026-12-31\tHC Manhã\n280\t2026-12-29\tZona Norte (Tarde)\n279\t2026-12-27\tZona Norte (Manhã)\n278\t2026-12-24\tHC Manhã\n277\t2026-12-22\tZona Norte (Tarde)\n",
+  "stderr": "",
+  "execution_time_ms": 393
+}

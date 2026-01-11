@@ -30,7 +30,8 @@ function getEventClass(type: string): string {
 export default function Today() {
   const utils = trpc.useUtils();
   const today = new Date();
-  const todayStr = format(today, "yyyy-MM-dd");
+  // Usar data local sem conversão de timezone
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
   const { data: events = [] } = trpc.events.list.useQuery();
   const { data: medications = [] } = trpc.medications.list.useQuery();
@@ -41,7 +42,8 @@ export default function Today() {
   // Today's events
   const todayEvents = useMemo(() => {
     return events.filter(e => {
-      const eventDate = e.date instanceof Date ? format(e.date, 'yyyy-MM-dd') : String(e.date).split('T')[0];
+      // Extrair apenas a parte da data (YYYY-MM-DD) sem conversão de timezone
+      const eventDate = String(e.date).split('T')[0];
       return eventDate === todayStr;
     }).sort((a, b) => a.type.localeCompare(b.type));
   }, [events, todayStr]);

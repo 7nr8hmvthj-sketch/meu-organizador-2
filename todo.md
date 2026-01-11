@@ -24,3 +24,7 @@
 - [x] Tabela de despesas
 - [x] Tabela de medicamentos
 - [x] Tabela de preferências do usuário
+
+## Bugs
+
+- [x] Corrigir datas deslocadas em 1 dia (problema de timezone)

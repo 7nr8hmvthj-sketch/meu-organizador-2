@@ -28,9 +28,12 @@ function getEventClass(type: string): string {
 
 export default function Dashboard() {
   const today = new Date();
-  const todayStr = format(today, "yyyy-MM-dd");
-  const monthStart = format(startOfMonth(today), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(today), "yyyy-MM-dd");
+  // Usar data local sem conversão de timezone
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const monthStartDate = startOfMonth(today);
+  const monthEndDate = endOfMonth(today);
+  const monthStart = `${monthStartDate.getFullYear()}-${String(monthStartDate.getMonth() + 1).padStart(2, '0')}-${String(monthStartDate.getDate()).padStart(2, '0')}`;
+  const monthEnd = `${monthEndDate.getFullYear()}-${String(monthEndDate.getMonth() + 1).padStart(2, '0')}-${String(monthEndDate.getDate()).padStart(2, '0')}`;
 
   const { data: events = [] } = trpc.events.list.useQuery();
   const { data: expenses = [] } = trpc.expenses.list.useQuery();
@@ -41,12 +44,13 @@ export default function Dashboard() {
 
   const stats = useMemo(() => {
     const todayEvents = events.filter(e => {
-      const eventDate = typeof e.date === 'string' ? e.date : format(new Date(e.date), 'yyyy-MM-dd');
+      // Extrair apenas a parte da data (YYYY-MM-DD) sem conversão de timezone
+      const eventDate = String(e.date).split('T')[0];
       return eventDate === todayStr && !e.isPassed && !e.isCancelled;
     });
 
     const monthEvents = events.filter(e => {
-      const eventDate = typeof e.date === 'string' ? e.date : format(new Date(e.date), 'yyyy-MM-dd');
+      const eventDate = String(e.date).split('T')[0];
       return eventDate >= monthStart && eventDate <= monthEnd && !e.isPassed && !e.isCancelled;
     });
 
@@ -65,7 +69,7 @@ export default function Dashboard() {
   const todayAgenda = useMemo(() => {
     return events
       .filter(e => {
-        const eventDate = typeof e.date === 'string' ? e.date : format(new Date(e.date), 'yyyy-MM-dd');
+        const eventDate = String(e.date).split('T')[0];
         return eventDate === todayStr;
       })
       .sort((a, b) => a.type.localeCompare(b.type));
@@ -74,12 +78,12 @@ export default function Dashboard() {
   const upcomingEvents = useMemo(() => {
     return events
       .filter(e => {
-        const eventDate = typeof e.date === 'string' ? e.date : format(new Date(e.date), 'yyyy-MM-dd');
+        const eventDate = String(e.date).split('T')[0];
         return eventDate >= todayStr && !e.isPassed && !e.isCancelled;
       })
       .sort((a, b) => {
-        const dateA = typeof a.date === 'string' ? a.date : format(new Date(a.date), 'yyyy-MM-dd');
-        const dateB = typeof b.date === 'string' ? b.date : format(new Date(b.date), 'yyyy-MM-dd');
+        const dateA = String(a.date).split('T')[0];
+        const dateB = String(b.date).split('T')[0];
         return dateA.localeCompare(dateB);
       })
       .slice(0, 5);
@@ -212,9 +216,23 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-3">
                 {upcomingEvents.map((event) => {
-                  const eventDate = typeof event.date === 'string' 
-                    ? parseISO(event.date) 
-                    : new Date(event.date);
+                  // Usar a data diretamente sem conversão de timezone
+                  let formattedDate = 'Data inválida';
+                  try {
+                    const dateStr = String(event.date).split('T')[0];
+                    const parts = dateStr.split('-');
+                    if (parts.length === 3) {
+                      const year = parseInt(parts[0], 10);
+                      const month = parseInt(parts[1], 10);
+                      const day = parseInt(parts[2], 10);
+                      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                        const eventDate = new Date(year, month - 1, day);
+                        formattedDate = `${format(eventDate, "dd/MM/yyyy")} - ${format(eventDate, "EEEE", { locale: ptBR })}`;
+                      }
+                    }
+                  } catch (e) {
+                    console.error('Erro ao formatar data:', event.date);
+                  }
                   return (
                     <div
                       key={event.id}
@@ -222,7 +240,7 @@ export default function Dashboard() {
                     >
                       <p className="font-medium">{event.description || event.type}</p>
                       <p className="text-sm text-muted-foreground">
-                        {format(eventDate, "dd/MM/yyyy")} - {format(eventDate, "EEEE", { locale: ptBR })}
+                        {formattedDate}
                       </p>
                     </div>
                   );

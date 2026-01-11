@@ -37,7 +37,8 @@ export default function CalendarPage() {
   const eventsByDate = useMemo(() => {
     const map = new Map<string, typeof events>();
     events.forEach(e => {
-      const dateStr = e.date instanceof Date ? format(e.date, 'yyyy-MM-dd') : String(e.date).split('T')[0];
+      // Extrair apenas a parte da data (YYYY-MM-DD) sem conversão de timezone
+      const dateStr = String(e.date).split('T')[0];
       if (!map.has(dateStr)) {
         map.set(dateStr, []);
       }

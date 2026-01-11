@@ -256,9 +256,13 @@ export default function Events() {
           </Card>
         ) : (
           filteredEvents.map((event) => {
-            const eventDate = typeof event.date === 'string' 
-              ? parseISO(event.date) 
-              : new Date(event.date);
+            // Usar a data diretamente sem conversão de timezone
+            const dateStr = String(event.date).split('T')[0];
+            const parts = dateStr.split('-');
+            const year = parseInt(parts[0] || '2026', 10);
+            const month = parseInt(parts[1] || '1', 10);
+            const day = parseInt(parts[2] || '1', 10);
+            const eventDate = new Date(year, month - 1, day);
             const isPassed = event.isPassed;
             const isCancelled = event.isCancelled;
             

@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, date, type, description FROM events WHERE description LIKE '%Samila%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, date, type, description FROM events WHERE description LIKE '%Samila%';",
+  "rows": [
+    {
+      "id": "32",
+      "date": "2026-01-12",
+      "type": "Pessoal",
+      "description": "Samila"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdate\ttype\tdescription\n32\t2026-01-12\tPessoal\tSamila\n",
+  "stderr": "",
+  "execution_time_ms": 392
+}
