@@ -76,17 +76,17 @@ function Navigation({ userRole, username }: NavigationProps) {
             const Icon = item.icon;
             const isActive = location === item.path;
             return (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-accent"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </a>
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-accent"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
               </Link>
             );
           })}
@@ -140,18 +140,18 @@ function Navigation({ userRole, username }: NavigationProps) {
               const Icon = item.icon;
               const isActive = location === item.path;
               return (
-                <Link key={item.path} href={item.path}>
-                  <a
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </a>
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent"
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
                 </Link>
               );
             })}
@@ -173,15 +173,15 @@ function Navigation({ userRole, username }: NavigationProps) {
           const Icon = item.icon;
           const isActive = location === item.path;
           return (
-            <Link key={item.path} href={item.path}>
-              <a
-                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all ${
-                  isActive ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </a>
+            <Link
+              key={item.path}
+              href={item.path}
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all ${
+                isActive ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
         })}
@@ -224,10 +224,11 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
             <Route>
               <div className="text-center py-20">
                 <h1 className="text-2xl font-bold">Página não encontrada</h1>
-                <Link href={userRole === "trainer" ? "/calendario" : "/"}>
-                  <a className="text-primary hover:underline mt-4 inline-block">
-                    Voltar ao início
-                  </a>
+                <Link
+                  href={userRole === "trainer" ? "/calendario" : "/"}
+                  className="text-primary hover:underline mt-4 inline-block"
+                >
+                  Voltar ao início
                 </Link>
               </div>
             </Route>

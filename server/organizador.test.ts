@@ -45,7 +45,12 @@ describe("auth.simpleLogin", () => {
     expect(result.success).toBe(true);
     expect(setCookies).toHaveLength(1);
     expect(setCookies[0]?.name).toBe("simple_auth");
-    expect(setCookies[0]?.value).toBe("authenticated");
+    // Cookie now contains JSON with user info
+    const cookieValue = setCookies[0]?.value;
+    expect(cookieValue).toBeDefined();
+    const parsed = JSON.parse(decodeURIComponent(cookieValue!));
+    expect(parsed.username).toBe("USER");
+    expect(parsed.role).toBe("admin");
   });
 
   it("returns success false with incorrect credentials", async () => {
@@ -77,7 +82,9 @@ describe("auth.simpleLogin", () => {
 describe("auth.checkSimpleAuth", () => {
   it("returns isAuthenticated true when cookie is present", async () => {
     const { ctx } = createMockContext();
-    ctx.req.headers.cookie = "simple_auth=authenticated";
+    // Cookie now contains JSON with user info
+    const userInfo = { username: "USER", role: "admin", userId: 1 };
+    ctx.req.headers.cookie = `simple_auth=${encodeURIComponent(JSON.stringify(userInfo))}`;
     const caller = appRouter.createCaller(ctx);
 
     const result = await caller.auth.checkSimpleAuth();

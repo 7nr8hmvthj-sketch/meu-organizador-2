@@ -73,13 +73,45 @@ function getEventLabel(event: any): string {
     return time ? `${shortType} ${time}` : shortType;
   }
   
-  // For HC shifts, extract hours from type
+  // For HC shifts, extract hours from type or use default based on shift type
   if (event.type.toLowerCase().includes("hc")) {
     const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
     if (hoursMatch) {
       return `HC ${hoursMatch[1]}-${hoursMatch[2]}`;
     }
+    // Default HC hours based on shift name
+    const typeLower = event.type.toLowerCase();
+    if (typeLower.includes("manhã") || typeLower.includes("manha")) {
+      return "HC 7-13";
+    }
+    if (typeLower.includes("tarde")) {
+      return "HC 13-19";
+    }
+    if (typeLower.includes("noturno") || typeLower.includes("noite")) {
+      return "HC 19-7";
+    }
     return time ? `HC ${time}` : "HC";
+  }
+  
+  // For Zona Norte/Sul events
+  if (event.type.toLowerCase().includes("zona")) {
+    const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
+    if (hoursMatch) {
+      return `${event.type.split('(')[0].trim()} ${hoursMatch[1]}-${hoursMatch[2]}`;
+    }
+    // Default Zona hours based on shift name
+    const typeLower = event.type.toLowerCase();
+    const zoneName = event.type.split('(')[0].trim();
+    if (typeLower.includes("manhã") || typeLower.includes("manha")) {
+      return `${zoneName} 7-13`;
+    }
+    if (typeLower.includes("tarde")) {
+      return `${zoneName} 13-19`;
+    }
+    if (typeLower.includes("noturno") || typeLower.includes("noite")) {
+      return `${zoneName} 19-7`;
+    }
+    return time ? `${zoneName} ${time}` : zoneName;
   }
   
   // For other events, show description or type
@@ -160,16 +192,19 @@ export default function CalendarPage() {
       return;
     }
 
-    // Add +1 day to compensate for timezone offset
-    const adjustedDate = new Date(selectedDate);
-    adjustedDate.setDate(adjustedDate.getDate() + 1);
+    // Format date correctly without timezone issues
+    // Use the year, month, day directly from the selected date
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
 
     const description = trainingDescription 
       ? `${trainingDescription} ${trainingTime}`
       : `${trainingType} ${trainingTime}`;
 
     createEventMutation.mutate({
-      date: format(adjustedDate, 'yyyy-MM-dd'),
+      date: dateStr,
       type: trainingType,
       description: description,
       isShift: false,

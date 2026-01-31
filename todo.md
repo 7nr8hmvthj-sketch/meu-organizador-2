@@ -36,3 +36,10 @@
 - [x] Investigar natação duplicada (não há duplicatas no banco, nem eventos de natação)
 - [x] Adicionar horários dos plantões na visualização do calendário (13-19, 7-13, 19-7, etc)
 - [x] Adicionar 260 eventos de natação para 2026
+
+## Bugs Reportados (31/01/2026)
+
+- [x] Erro de links aninhados (<a> dentro de <a>) na página /calendario
+- [x] Natação duplicada - verificado: não há duplicatas no banco
+- [x] Data errada ao inserir treino - corrigido problema de timezone
+- [x] HC e Zona Norte sem horário - adicionados horários padrão (7-13, 13-19, 19-7)

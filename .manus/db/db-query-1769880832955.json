@@ -1,0 +1,90 @@
+{
+  "query": "SELECT DISTINCT type, description FROM events WHERE type LIKE '%HC%' OR type LIKE '%Zona%' OR type LIKE '%zona%' LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT DISTINCT type, description FROM events WHERE type LIKE '%HC%' OR type LIKE '%Zona%' OR type LIKE '%zona%' LIMIT 20;",
+  "rows": [
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Fixo 5ª sabado manha perdi esse"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Fixo 5ª sabado manhã"
+    },
+    {
+      "type": "HC Manhã",
+      "description": "HC manha"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "Corredor tarde juh"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã maria fernanda a confirmar"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "ZN 13-19 paula pvd 06/01"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "ZN 13-19 fixo passei pascoal"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã 2° sabado fixo"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "Tarde pessoal marcos passei Juh"
+    },
+    {
+      "type": "HC Tarde",
+      "description": "HC tarde fixo"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã mari pvd 15/12"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã plantao maria a confirmar"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "Tarde pascoal / Ariane Altoé"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "ZN Manhã maickon grupo 06/01"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "ZN 13-19 fixo juh"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã mari pvd 04/01"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã Yana pvd 07/01"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "ZN 13-19 pascoal"
+    },
+    {
+      "type": "Zona Norte (Tarde)",
+      "description": "Tarde Igor"
+    },
+    {
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã Juh Hammes "
+    }
+  ],
+  "messages": [],
+  "stdout": "type\tdescription\nZona Norte (Manhã)\tFixo 5ª sabado manha perdi esse\nZona Norte (Manhã)\tFixo 5ª sabado manhã\nHC Manhã\tHC manha\nZona Norte (Tarde)\tCorredor tarde juh\nZona Norte (Manhã)\tManhã maria fernanda a confirmar\nZona Norte (Tarde)\tZN 13-19 paula pvd 06/01\nZona Norte (Tarde)\tZN 13-19 fixo passei pascoal\nZona Norte (Manhã)\tManhã 2° sabado fixo\nZona Norte (Tarde)\tTarde pessoal marcos passei Juh\nHC Tarde\tHC tarde fixo\nZona Norte (Manhã)\tManhã mari pvd 15/12\nZona Norte (Manhã)\tManhã plantao maria a confirmar\nZona Norte (Tarde)\tTarde pascoal / Ariane Altoé\nZona Norte (Manhã)\tZN Manhã maickon grupo 06/01\nZona Norte (Tarde)\tZN 13-19 fixo juh\nZona Norte (Manhã)\tManhã mari pvd 04/01\nZona Norte (Manhã)\tManhã Yana pvd 07/01\nZona Norte (Tarde)\tZN 13-19 pascoal\nZona Norte (Tarde)\tTarde Igor\nZona Norte (Manhã)\tManhã Juh Hammes \n",
+  "stderr": "",
+  "execution_time_ms": 62
+}
