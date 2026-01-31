@@ -1,9 +1,38 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, router } from "./_core/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
+
+// --- MIDDLEWARES ---
+
+const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  const cookies = ctx.req.headers.cookie || "";
+  const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
+  
+  if (!authCookie) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Login necessário." });
+  }
+
+  let user;
+  try {
+    const cookieValue = decodeURIComponent(authCookie.split('=')[1]);
+    user = JSON.parse(cookieValue);
+  } catch {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida." });
+  }
+
+  return next({ ctx: { ...ctx, user: user as { username: string; role: string; userId: number } } });
+});
+
+const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores." });
+  }
+  return next();
+});
 
 // Simple auth credentials
 const VALID_CREDENTIALS = {
@@ -12,53 +41,44 @@ const VALID_CREDENTIALS = {
   "ISA": { password: "123", role: "trainer", userId: 150024 },
 };
 
+// Força meio-dia UTC para evitar bug de dia anterior por timezone
+const parseDateSafe = (dateString: string) => {
+  if (dateString.length === 10) return new Date(`${dateString}T12:00:00Z`);
+  return new Date(dateString);
+};
+
 export const appRouter = router({
   system: systemRouter,
   
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(({ ctx }) => {
+      const cookies = ctx.req.headers.cookie || "";
+      const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
+      if (!authCookie) return null;
+      try { return JSON.parse(decodeURIComponent(authCookie.split('=')[1])); } catch { return null; }
+    }),
     
-    // Simple login with fixed credentials
     simpleLogin: publicProcedure
-      .input(z.object({
-        username: z.string(),
-        password: z.string(),
-      }))
+      .input(z.object({ username: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
         const user = VALID_CREDENTIALS[input.username.toUpperCase() as keyof typeof VALID_CREDENTIALS];
-        
         if (user && input.password === user.password) {
-          // Create a simple session by setting a cookie with user info
           const cookieOptions = getSessionCookieOptions(ctx.req);
-          const userInfo = JSON.stringify({
-            username: input.username.toUpperCase(),
-            role: user.role,
-            userId: user.userId,
-          });
-          ctx.res.cookie("simple_auth", userInfo, {
-            ...cookieOptions,
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-          });
+          const userInfo = JSON.stringify({ username: input.username.toUpperCase(), role: user.role, userId: user.userId });
+          ctx.res.cookie("simple_auth", userInfo, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
           return { success: true, role: user.role, username: input.username.toUpperCase() };
         }
         return { success: false, error: "Credenciais inválidas" };
       }),
     
-    // Check if user is authenticated via simple auth
     checkSimpleAuth: publicProcedure.query(({ ctx }) => {
       const cookies = ctx.req.headers.cookie || "";
       const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
-      if (!authCookie) {
-        return { isAuthenticated: false, user: null };
-      }
-      
+      if (!authCookie) return { isAuthenticated: false, user: null };
       try {
-        const cookieValue = decodeURIComponent(authCookie.split('=')[1]);
-        const userInfo = JSON.parse(cookieValue);
+        const userInfo = JSON.parse(decodeURIComponent(authCookie.split('=')[1]));
         return { isAuthenticated: true, user: userInfo };
-      } catch {
-        return { isAuthenticated: false, user: null };
-      }
+      } catch { return { isAuthenticated: false, user: null }; }
     }),
     
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -71,235 +91,115 @@ export const appRouter = router({
 
   // Events/Shifts router
   events: router({
-    list: publicProcedure.query(async () => {
-      return await db.getEventsByUserId(1); // Using userId 1 for simple auth
-    }),
+    // Trainers veem agenda do Admin (ID 1)
+    list: publicProcedure.query(async () => await db.getEventsByUserId(1)),
     
     listByDateRange: publicProcedure
-      .input(z.object({
-        startDate: z.string(),
-        endDate: z.string(),
-      }))
-      .query(async ({ input }) => {
-        return await db.getEventsByDateRange(1, input.startDate, input.endDate);
-      }),
+      .input(z.object({ startDate: z.string(), endDate: z.string() }))
+      .query(async ({ input }) => await db.getEventsByDateRange(1, input.startDate, input.endDate)),
     
-    create: publicProcedure
-      .input(z.object({
-        date: z.string(),
-        type: z.string(),
-        description: z.string().optional(),
-        isShift: z.boolean().default(true),
-      }))
+    create: protectedProcedure
+      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), isShift: z.boolean().default(true) }))
       .mutation(async ({ input }) => {
         return await db.createEvent({
-          userId: 1,
-          date: new Date(input.date),
+          userId: 1, // Trainers agendam para o Admin
+          date: parseDateSafe(input.date),
           type: input.type,
           description: input.description || null,
           isShift: input.isShift,
         });
       }),
     
-    update: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        date: z.string().optional(),
-        type: z.string().optional(),
-        description: z.string().optional(),
-      }))
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional() }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
         const updateData: Record<string, unknown> = {};
-        if (data.date) updateData.date = new Date(data.date);
+        if (data.date) updateData.date = parseDateSafe(data.date);
         if (data.type) updateData.type = data.type;
         if (data.description !== undefined) updateData.description = data.description;
         return await db.updateEvent(id, 1, updateData);
       }),
     
-    passShift: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        reason: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.updateEvent(input.id, 1, {
-          isPassed: true,
-          passedReason: input.reason,
-        });
-      }),
+    passShift: protectedProcedure
+      .input(z.object({ id: z.number(), reason: z.string() }))
+      .mutation(async ({ input }) => await db.updateEvent(input.id, 1, { isPassed: true, passedReason: input.reason })),
     
-    undoPass: publicProcedure
+    undoPass: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.updateEvent(input.id, 1, {
-          isPassed: false,
-          passedReason: null,
-        });
-      }),
+      .mutation(async ({ input }) => await db.updateEvent(input.id, 1, { isPassed: false, passedReason: null })),
     
-    cancel: publicProcedure
+    cancel: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.updateEvent(input.id, 1, { isCancelled: true });
-      }),
+      .mutation(async ({ input }) => await db.updateEvent(input.id, 1, { isCancelled: true })),
     
-    undoCancel: publicProcedure
+    undoCancel: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.updateEvent(input.id, 1, { isCancelled: false });
-      }),
+      .mutation(async ({ input }) => await db.updateEvent(input.id, 1, { isCancelled: false })),
     
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.deleteEvent(input.id, 1);
-      }),
+      .mutation(async ({ input }) => await db.deleteEvent(input.id, 1)),
   }),
 
-  // Expenses router
+  // Expenses router - Admin only
   expenses: router({
-    list: publicProcedure.query(async () => {
-      return await db.getExpensesByUserId(1);
-    }),
+    list: adminProcedure.query(async ({ ctx }) => await db.getExpensesByUserId(ctx.user.userId)),
     
-    create: publicProcedure
-      .input(z.object({
-        name: z.string(),
-        amount: z.string(),
-        dueDay: z.number(),
-        category: z.enum(["fixed", "variable"]),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.createExpense({
-          userId: 1,
-          name: input.name,
-          amount: input.amount,
-          dueDay: input.dueDay,
-          category: input.category,
-        });
-      }),
+    create: adminProcedure
+      .input(z.object({ name: z.string(), amount: z.string(), dueDay: z.number(), category: z.enum(["fixed", "variable"]) }))
+      .mutation(async ({ input, ctx }) => await db.createExpense({ userId: ctx.user.userId, name: input.name, amount: input.amount, dueDay: input.dueDay, category: input.category })),
     
-    update: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        name: z.string().optional(),
-        amount: z.string().optional(),
-        dueDay: z.number().optional(),
-        category: z.enum(["fixed", "variable"]).optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { id, ...data } = input;
-        return await db.updateExpense(id, 1, data);
-      }),
+    update: adminProcedure
+      .input(z.object({ id: z.number(), name: z.string().optional(), amount: z.string().optional(), dueDay: z.number().optional(), category: z.enum(["fixed", "variable"]).optional() }))
+      .mutation(async ({ input, ctx }) => { const { id, ...data } = input; return await db.updateExpense(id, ctx.user.userId, data); }),
     
-    togglePaid: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        isPaid: z.boolean(),
-        month: z.number().optional(),
-        year: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.updateExpense(input.id, 1, {
-          isPaid: input.isPaid,
-          paidMonth: input.isPaid ? input.month : null,
-          paidYear: input.isPaid ? input.year : null,
-        });
-      }),
+    togglePaid: adminProcedure
+      .input(z.object({ id: z.number(), isPaid: z.boolean(), month: z.number().optional(), year: z.number().optional() }))
+      .mutation(async ({ input, ctx }) => await db.updateExpense(input.id, ctx.user.userId, { isPaid: input.isPaid, paidMonth: input.isPaid ? input.month : null, paidYear: input.isPaid ? input.year : null })),
     
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.deleteExpense(input.id, 1);
-      }),
+      .mutation(async ({ input, ctx }) => await db.deleteExpense(input.id, ctx.user.userId)),
     
-    resetPaidStatus: publicProcedure.mutation(async () => {
-      await db.resetExpensesPaidStatus(1);
-      return { success: true };
-    }),
+    resetPaidStatus: adminProcedure.mutation(async ({ ctx }) => { await db.resetExpensesPaidStatus(ctx.user.userId); return { success: true }; }),
   }),
 
   // Medications router
   medications: router({
-    list: publicProcedure.query(async () => {
-      return await db.getMedicationsByUserId(1);
-    }),
+    list: adminProcedure.query(async ({ ctx }) => await db.getMedicationsByUserId(ctx.user.userId)),
     
-    create: publicProcedure
-      .input(z.object({
-        name: z.string(),
-        time: z.string(),
-        order: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.createMedication({
-          userId: 1,
-          name: input.name,
-          time: input.time,
-          order: input.order || 0,
-        });
-      }),
+    create: adminProcedure
+      .input(z.object({ name: z.string(), time: z.string(), order: z.number().optional() }))
+      .mutation(async ({ input, ctx }) => await db.createMedication({ userId: ctx.user.userId, name: input.name, time: input.time, order: input.order || 0 })),
     
-    update: publicProcedure
-      .input(z.object({
-        id: z.number(),
-        name: z.string().optional(),
-        time: z.string().optional(),
-        order: z.number().optional(),
-      }))
-      .mutation(async ({ input }) => {
-        const { id, ...data } = input;
-        return await db.updateMedication(id, 1, data);
-      }),
+    update: adminProcedure
+      .input(z.object({ id: z.number(), name: z.string().optional(), time: z.string().optional(), order: z.number().optional() }))
+      .mutation(async ({ input, ctx }) => { const { id, ...data } = input; return await db.updateMedication(id, ctx.user.userId, data); }),
     
-    delete: publicProcedure
+    delete: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        return await db.deleteMedication(input.id, 1);
-      }),
+      .mutation(async ({ input, ctx }) => await db.deleteMedication(input.id, ctx.user.userId)),
     
-    // Medication logs
-    getLogs: publicProcedure
+    getLogs: adminProcedure
       .input(z.object({ date: z.string() }))
-      .query(async ({ input }) => {
-        return await db.getMedicationLogsByDate(1, input.date);
-      }),
+      .query(async ({ input, ctx }) => await db.getMedicationLogsByDate(ctx.user.userId, input.date)),
     
-    logTaken: publicProcedure
-      .input(z.object({
-        medicationId: z.number(),
-        date: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.logMedicationTaken({
-          userId: 1,
-          medicationId: input.medicationId,
-          takenDate: new Date(input.date),
-        });
-      }),
+    logTaken: adminProcedure
+      .input(z.object({ medicationId: z.number(), date: z.string() }))
+      .mutation(async ({ input, ctx }) => await db.logMedicationTaken({ userId: ctx.user.userId, medicationId: input.medicationId, takenDate: parseDateSafe(input.date) })),
     
-    undoTaken: publicProcedure
-      .input(z.object({
-        medicationId: z.number(),
-        date: z.string(),
-      }))
-      .mutation(async ({ input }) => {
-        return await db.deleteMedicationLog(input.medicationId, 1, input.date);
-      }),
+    undoTaken: adminProcedure
+      .input(z.object({ medicationId: z.number(), date: z.string() }))
+      .mutation(async ({ input, ctx }) => await db.deleteMedicationLog(input.medicationId, ctx.user.userId, input.date)),
   }),
 
   // User preferences router
   preferences: router({
-    get: publicProcedure.query(async () => {
-      return await db.getUserPreferences(1);
-    }),
-    
-    setTheme: publicProcedure
+    get: protectedProcedure.query(async ({ ctx }) => await db.getUserPreferences(ctx.user.userId)),
+    setTheme: protectedProcedure
       .input(z.object({ theme: z.enum(["light", "dark"]) }))
-      .mutation(async ({ input }) => {
-        return await db.upsertUserPreferences(1, { theme: input.theme });
-      }),
+      .mutation(async ({ input, ctx }) => await db.upsertUserPreferences(ctx.user.userId, { theme: input.theme })),
   }),
 });
 

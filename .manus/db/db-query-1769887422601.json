@@ -1,0 +1,43 @@
+{
+  "query": "SELECT DISTINCT type FROM events ORDER BY type;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT DISTINCT type FROM events ORDER BY type;",
+  "rows": [
+    {
+      "type": "Apoio (19-01)"
+    },
+    {
+      "type": "HC Manhã"
+    },
+    {
+      "type": "HC Tarde"
+    },
+    {
+      "type": "Musculação"
+    },
+    {
+      "type": "Natação"
+    },
+    {
+      "type": "Noturno (19-07)"
+    },
+    {
+      "type": "Pessoal"
+    },
+    {
+      "type": "Pilates"
+    },
+    {
+      "type": "Plantão"
+    },
+    {
+      "type": "Zona Norte (Manhã)"
+    },
+    {
+      "type": "Zona Norte (Tarde)"
+    }
+  ],
+  "messages": [],
+  "stdout": "type\nApoio (19-01)\nHC Manhã\nHC Tarde\nMusculação\nNatação\nNoturno (19-07)\nPessoal\nPilates\nPlantão\nZona Norte (Manhã)\nZona Norte (Tarde)\n",
+  "stderr": "",
+  "execution_time_ms": 154
+}

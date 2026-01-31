@@ -7,123 +7,81 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar, Plus } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, addMonths, subMonths, getDay } from "date-fns";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
+// --- HELPERS ---
+
+// Normaliza a data para YYYY-MM-DD ignorando o offset de timezone para visualização
+function normalizeDateKey(dateInput: string | Date): string {
+  if (!dateInput) return "";
+  if (typeof dateInput === 'string') {
+    return dateInput.split('T')[0];
+  }
+  try {
+    return dateInput.toISOString().split('T')[0];
+  } catch {
+    return format(dateInput, 'yyyy-MM-dd');
+  }
+}
+
 function getEventColor(type: string, isPassed: boolean): string {
-  if (isPassed) return "text-gray-400 bg-gray-50 dark:bg-gray-900/30";
+  if (isPassed) return "text-gray-400 bg-gray-50 dark:bg-gray-900/30 border-gray-200";
+  const typeLower = (type || "").toLowerCase();
   
-  const typeLower = type.toLowerCase();
-  if (typeLower.includes("natação") || typeLower.includes("natacao")) return "text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300";
-  if (typeLower.includes("musculação") || typeLower.includes("musculacao")) return "text-green-700 bg-green-50 dark:bg-green-900/30 dark:text-green-300";
-  if (typeLower.includes("pilates")) return "text-purple-700 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-300";
-  if (typeLower.includes("hc")) return "text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300";
-  if (typeLower.includes("manhã") || typeLower.includes("manha")) return "text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300";
-  if (typeLower.includes("tarde")) return "text-orange-700 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-300";
-  if (typeLower.includes("noturno")) return "text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-300";
-  if (typeLower.includes("apoio")) return "text-purple-700 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-300";
-  return "text-pink-700 bg-pink-50 dark:bg-pink-900/30 dark:text-pink-300";
+  if (typeLower.includes("natação") || typeLower.includes("natacao")) return "text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200";
+  if (typeLower.includes("musculação") || typeLower.includes("musculacao")) return "text-green-700 bg-green-50 dark:bg-green-900/30 dark:text-green-300 border-green-200";
+  if (typeLower.includes("pilates")) return "text-purple-700 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200";
+  if (typeLower.includes("hc")) return "text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200";
+  if (typeLower.includes("zn")) return "text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200";
+  
+  if (typeLower.includes("apoio")) return "text-pink-700 bg-pink-50 dark:bg-pink-900/30 dark:text-pink-300 border-pink-200";
+  if (typeLower.includes("noturno")) return "text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200";
+  
+  return "text-slate-700 bg-slate-50 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200";
 }
 
-function extractTime(description: string, type: string): string {
-  // Try to extract time from description (format: HH:MM or HH:MM-HH:MM)
-  const timeMatch = description?.match(/(\d{1,2}):(\d{2})/);
-  if (timeMatch) {
-    return timeMatch[0];
+function getEventLabel(event: { type?: string; description?: string | null }): string {
+  const type = event.type || "";
+  const desc = event.description || "";
+  
+  // Extrair horário da descrição ou do tipo
+  const timeMatch = desc.match(/(\d{1,2}):(\d{2})/) || type.match(/(\d{1,2}):(\d{2})/);
+  const timeStr = timeMatch ? timeMatch[0] : "";
+
+  // Simplificar o label
+  let label = type;
+  if (type.toLowerCase().includes("natação")) label = "Natação";
+  else if (type.toLowerCase().includes("musculação")) label = "Musculação";
+  else if (type.toLowerCase().includes("pilates")) label = "Pilates";
+  
+  // Adicionar horário se existir e não estiver no label
+  if (timeStr && !label.includes(timeStr)) {
+    return `${label} ${timeStr}`;
   }
   
-  // Try to extract from type (e.g., "Manhã (07-13)")
-  const typeTimeMatch = type?.match(/\((\d{1,2})-(\d{1,2})\)/);
-  if (typeTimeMatch) {
-    return `${typeTimeMatch[1]}:00`;
-  }
+  // Se não tem horário mas tem descrição curta, usar descrição
+  if (!timeStr && desc.length < 20 && desc.length > 0) return desc;
   
-  return "";
+  return label;
 }
 
-function getEventLabel(event: any): string {
-  const time = extractTime(event.description || "", event.type);
-  
-  // For swimming events, extract time from description
-  if (event.type.toLowerCase().includes("natação")) {
-    const timeMatch = (event.description || "").match(/(\d{1,2}):(\d{2})/);
-    if (timeMatch) {
-      return `Natação ${timeMatch[0]}`;
-    }
-    return "Natação";
-  }
-  
-  // For training events
-  if (event.type.toLowerCase().includes("musculação") || event.type.toLowerCase().includes("pilates")) {
-    return time ? `${event.type} ${time}` : event.type;
-  }
-  
-  // For shifts, extract hours from type (e.g., "Manhã (07-13)" -> "Manhã 7-13")
-  if (event.type.toLowerCase().includes("manhã") || 
-      event.type.toLowerCase().includes("tarde") ||
-      event.type.toLowerCase().includes("noturno") ||
-      event.type.toLowerCase().includes("apoio")) {
-    const shortType = event.type.split('(')[0].trim();
-    const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
-    if (hoursMatch) {
-      return `${shortType} ${hoursMatch[1]}-${hoursMatch[2]}`;
-    }
-    return time ? `${shortType} ${time}` : shortType;
-  }
-  
-  // For HC shifts, extract hours from type or use default based on shift type
-  if (event.type.toLowerCase().includes("hc")) {
-    const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
-    if (hoursMatch) {
-      return `HC ${hoursMatch[1]}-${hoursMatch[2]}`;
-    }
-    // Default HC hours based on shift name
-    const typeLower = event.type.toLowerCase();
-    if (typeLower.includes("manhã") || typeLower.includes("manha")) {
-      return "HC 7-13";
-    }
-    if (typeLower.includes("tarde")) {
-      return "HC 13-19";
-    }
-    if (typeLower.includes("noturno") || typeLower.includes("noite")) {
-      return "HC 19-7";
-    }
-    return time ? `HC ${time}` : "HC";
-  }
-  
-  // For Zona Norte/Sul events
-  if (event.type.toLowerCase().includes("zona")) {
-    const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
-    if (hoursMatch) {
-      return `${event.type.split('(')[0].trim()} ${hoursMatch[1]}-${hoursMatch[2]}`;
-    }
-    // Default Zona hours based on shift name
-    const typeLower = event.type.toLowerCase();
-    const zoneName = event.type.split('(')[0].trim();
-    if (typeLower.includes("manhã") || typeLower.includes("manha")) {
-      return `${zoneName} 7-13`;
-    }
-    if (typeLower.includes("tarde")) {
-      return `${zoneName} 13-19`;
-    }
-    if (typeLower.includes("noturno") || typeLower.includes("noite")) {
-      return `${zoneName} 19-7`;
-    }
-    return time ? `${zoneName} ${time}` : zoneName;
-  }
-  
-  // For other events, show description or type
-  const label = event.description || event.type;
-  return time ? `${label.substring(0, 15)} ${time}` : label.substring(0, 18);
+function extractTimeFromDescription(desc: string): string {
+  if (!desc) return "";
+  const match = desc.match(/(\d{1,2}):(\d{2})/);
+  return match ? match[0] : "";
 }
+
+// --- COMPONENT ---
 
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayModal, setShowDayModal] = useState(false);
   const [showAddTrainingModal, setShowAddTrainingModal] = useState(false);
+  
   const [trainingType, setTrainingType] = useState<string>("");
   const [trainingTime, setTrainingTime] = useState<string>("");
   const [trainingDescription, setTrainingDescription] = useState<string>("");
@@ -136,31 +94,36 @@ export default function CalendarPage() {
 
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
-      toast.success("Treino adicionado com sucesso!");
+      toast.success("Evento adicionado com sucesso!");
       utils.events.list.invalidate();
       setShowAddTrainingModal(false);
       setTrainingType("");
       setTrainingTime("");
       setTrainingDescription("");
     },
-    onError: () => {
-      toast.error("Erro ao adicionar treino");
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
     },
   });
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Get the day of week for the first day (0 = Sunday)
   const startDayOfWeek = getDay(monthStart);
 
-  // Events grouped by date
+  // Lógica de agrupamento com Deduplicação e Normalização de Data
   const eventsByDate = useMemo(() => {
     const map = new Map<string, typeof events>();
+    const processedIds = new Set<number>();
+
+    if (!events) return map;
+
     events.forEach(e => {
-      // Extrair apenas a parte da data (YYYY-MM-DD) sem conversão de timezone
-      const dateStr = String(e.date).split('T')[0];
+      if (e.id && processedIds.has(e.id)) return; // Evita duplicatas
+      if (e.id) processedIds.add(e.id);
+
+      const dateStr = normalizeDateKey(e.date);
+      
       if (!map.has(dateStr)) {
         map.set(dateStr, []);
       }
@@ -177,28 +140,22 @@ export default function CalendarPage() {
 
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
-    if (isTrainer) {
-      // For trainers, show add training modal
-      setShowAddTrainingModal(true);
-    } else {
-      // For admin, show day details
-      setShowDayModal(true);
-    }
+    if (isTrainer) setShowAddTrainingModal(true);
+    else setShowDayModal(true);
   };
 
   const handleAddTraining = () => {
     if (!selectedDate || !trainingType || !trainingTime) {
-      toast.error("Preencha todos os campos obrigatórios");
+      toast.error("Preencha tipo e horário.");
+      return;
+    }
+    // Validação de horário
+    if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(trainingTime)) {
+      toast.error("Horário inválido. Use formato HH:MM.");
       return;
     }
 
-    // Format date correctly without timezone issues
-    // Use the year, month, day directly from the selected date
-    const year = selectedDate.getFullYear();
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const day = String(selectedDate.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
-
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const description = trainingDescription 
       ? `${trainingDescription} ${trainingTime}`
       : `${trainingType} ${trainingTime}`;
@@ -214,184 +171,146 @@ export default function CalendarPage() {
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-primary" />
-            Calendário
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-primary">
+            <CalendarIcon className="w-6 h-6" /> Calendário
           </h1>
-          <p className="text-muted-foreground">
-            {isTrainer ? "Visualize a agenda e adicione treinos" : "Visualize seus eventos por mês"}
+          <p className="text-muted-foreground text-sm">
+            {isTrainer ? "Clique em um dia para adicionar treino." : "Visualize sua programação mensal."}
           </p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
+          Hoje
+        </Button>
       </div>
 
-      {/* Calendar Card */}
-      <Card>
-        <CardHeader className="pb-2">
+      <Card className="shadow-md">
+        <CardHeader className="pb-4 border-b">
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
-            <CardTitle className="text-lg capitalize">
+            <CardTitle className="text-lg font-semibold capitalize">
               {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
             </CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            >
+            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {/* Week days header */}
+        <CardContent className="pt-4">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {weekDays.map(day => (
-              <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
-                {day}
-              </div>
+              <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-2">{day}</div>
             ))}
           </div>
-
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1">
-            {/* Empty cells for days before month start */}
+          <div className="grid grid-cols-7 gap-1 auto-rows-fr">
             {Array.from({ length: startDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="min-h-[120px]" />
+              <div key={`empty-${i}`} className="min-h-[100px] bg-gray-50/50 dark:bg-gray-900/10 rounded-md" />
             ))}
-
-            {/* Days of the month */}
             {days.map(day => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const dayEvents = eventsByDate.get(dateStr) || [];
-              const hasEvents = dayEvents.length > 0;
-              const today = isToday(day);
+              const isCurrentDay = isToday(day);
+              const isOtherMonth = !isSameMonth(day, currentMonth);
 
               return (
                 <button
                   key={dateStr}
                   onClick={() => handleDayClick(day)}
-                  className={`
-                    min-h-[120px] p-2 rounded-lg text-sm relative border
-                    hover:bg-accent transition-colors text-left align-top
-                    ${today ? "border-primary bg-primary/5 font-bold" : "border-border"}
-                    ${!isSameMonth(day, currentMonth) ? "text-muted-foreground/50 bg-muted/30" : ""}
-                  `}
+                  className={`min-h-[110px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group
+                    ${isCurrentDay ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"}
+                    ${isOtherMonth ? "opacity-40 bg-muted/20" : ""}`}
                 >
-                  <span className="block text-center mb-1 font-semibold">{format(day, "d")}</span>
-                  {hasEvents && (
-                    <div className="space-y-1 text-[10px] leading-tight">
-                      {dayEvents.slice(0, 4).map((e, i) => (
-                        <div
-                          key={i}
-                          className={`px-1 py-0.5 rounded truncate ${getEventColor(e.type, e.isPassed || false)} ${
-                            e.isPassed ? "line-through" : ""
-                          }`}
-                          title={getEventLabel(e)}
-                        >
-                          {getEventLabel(e)}
-                        </div>
-                      ))}
-                      {dayEvents.length > 4 && (
-                        <div className="text-[9px] text-muted-foreground text-center">
-                          +{dayEvents.length - 4} mais
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-1
+                    ${isCurrentDay ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+                    {format(day, "d")}
+                  </span>
+                  <div className="w-full space-y-1 overflow-hidden">
+                    {dayEvents.slice(0, 3).map((e) => (
+                      <div 
+                        key={e.id} 
+                        className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}
+                      >
+                        {getEventLabel(e)}
+                      </div>
+                    ))}
+                    {dayEvents.length > 3 && (
+                      <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 3} mais</div>
+                    )}
+                  </div>
                 </button>
               );
             })}
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Legend */}
-          <div className="mt-6 pt-4 border-t">
-            <p className="text-xs text-muted-foreground mb-2">Legenda:</p>
-            <div className="flex flex-wrap gap-3 text-xs">
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-300" />
-                <span>Natação</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-green-100 dark:bg-green-900/30 border border-green-300" />
-                <span>Musculação</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-purple-100 dark:bg-purple-900/30 border border-purple-300" />
-                <span>Pilates</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-300" />
-                <span>HC</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300" />
-                <span>Manhã</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-orange-100 dark:bg-orange-900/30 border border-orange-300" />
-                <span>Tarde</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-300" />
-                <span>Noturno</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded bg-gray-100 dark:bg-gray-900/30 border border-gray-300" />
-                <span>Passado</span>
-              </div>
+      {/* Legenda */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex flex-wrap gap-3 text-xs">
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-red-100 border-l-2 border-red-500"></div>
+              <span>HC</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-amber-100 border-l-2 border-amber-500"></div>
+              <span>ZN</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-blue-100 border-l-2 border-blue-500"></div>
+              <span>Natação</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-green-100 border-l-2 border-green-500"></div>
+              <span>Musculação</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-purple-100 border-l-2 border-purple-500"></div>
+              <span>Pilates</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-indigo-100 border-l-2 border-indigo-500"></div>
+              <span>Noturno</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-pink-100 border-l-2 border-pink-500"></div>
+              <span>Apoio</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-gray-100 border-l-2 border-gray-400"></div>
+              <span className="line-through">Passado</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Day Detail Modal (for admin) */}
+      {/* Modal para visualizar eventos do dia (usuário admin) */}
       <Dialog open={showDayModal} onOpenChange={setShowDayModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </DialogTitle>
+            <DialogTitle>{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-4">
+          <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
             {selectedDateEvents.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">
-                Nenhum evento neste dia
-              </p>
+              <p className="text-center text-muted-foreground">Sem eventos neste dia.</p>
             ) : (
               selectedDateEvents.map(event => (
-                <div
-                  key={event.id}
-                  className={`p-3 rounded-lg border-l-4 ${
-                    event.isPassed || event.isCancelled ? "opacity-60" : ""
-                  }`}
-                  style={{
-                    borderLeftColor: event.type.toLowerCase().includes("natação") ? "#3b82f6" :
-                      event.type.toLowerCase().includes("musculação") ? "#22c55e" :
-                      event.type.toLowerCase().includes("pilates") ? "#a855f7" :
-                      event.type.toLowerCase().includes("hc") ? "#ef4444" :
-                      event.type.toLowerCase().includes("manhã") ? "#eab308" :
-                      event.type.toLowerCase().includes("tarde") ? "#f97316" :
-                      event.type.toLowerCase().includes("noturno") ? "#6366f1" :
-                      event.type.toLowerCase().includes("apoio") ? "#a855f7" : "#ec4899"
-                  }}
-                >
-                  <p className={`font-medium ${event.isPassed || event.isCancelled ? "line-through" : ""}`}>
-                    {event.description || event.type}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{event.type}</p>
-                  {event.passedReason && (
-                    <span className="passed-note mt-2">
-                      📝 {event.passedReason}
-                    </span>
+                <div key={event.id} className={`p-3 rounded-md border ${getEventColor(event.type, event.isPassed)}`}>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">{event.type}</span>
+                    <span className="text-xs font-mono">{extractTimeFromDescription(event.description || "")}</span>
+                  </div>
+                  {event.description && (
+                    <p className="text-sm mt-1">{event.description.replace(event.type, '').trim()}</p>
+                  )}
+                  {event.isPassed && event.passedReason && (
+                    <p className="text-xs mt-2 text-yellow-600 dark:text-yellow-400 italic">
+                      Passado: {event.passedReason}
+                    </p>
                   )}
                 </div>
               ))
@@ -400,46 +319,34 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Training Modal (for trainers) */}
+      {/* Modal para adicionar treino (treinadoras) */}
       <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Inserir Treino
-            </DialogTitle>
+            <DialogTitle>Novo Treino: {selectedDate && format(selectedDate, "dd/MM/yyyy")}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Data: {selectedDate && format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-              </p>
-              
-              {/* Show existing events for this day */}
-              {selectedDateEvents.length > 0 && (
-                <div className="mb-4 p-3 bg-muted rounded-lg">
-                  <p className="text-xs font-medium mb-2">Eventos neste dia:</p>
-                  <div className="space-y-1 text-xs">
-                    {selectedDateEvents.map((e, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${
-                          e.type.toLowerCase().includes("natação") ? "bg-blue-500" :
-                          e.type.toLowerCase().includes("musculação") ? "bg-green-500" :
-                          e.type.toLowerCase().includes("pilates") ? "bg-purple-500" : "bg-gray-400"
-                        }`} />
-                        <span>{getEventLabel(e)}</span>
-                      </div>
-                    ))}
+          
+          {/* Mostrar eventos existentes no dia */}
+          {selectedDateEvents.length > 0 && (
+            <div className="bg-muted/50 rounded-md p-3 mb-2">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Eventos neste dia:</p>
+              <div className="space-y-1">
+                {selectedDateEvents.map(e => (
+                  <div key={e.id} className="text-xs flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${e.type.toLowerCase().includes('natação') ? 'bg-blue-500' : e.type.toLowerCase().includes('musculação') ? 'bg-green-500' : e.type.toLowerCase().includes('pilates') ? 'bg-purple-500' : 'bg-gray-400'}`}></div>
+                    <span>{getEventLabel(e)}</span>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
-
+          )}
+          
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="training-type">Tipo de Treino *</Label>
+              <Label>Modalidade *</Label>
               <Select value={trainingType} onValueChange={setTrainingType}>
-                <SelectTrigger id="training-type">
-                  <SelectValue placeholder="Selecione o tipo" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Musculação">Musculação</SelectItem>
@@ -447,26 +354,21 @@ export default function CalendarPage() {
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="training-time">Horário *</Label>
-              <Input
-                id="training-time"
-                type="time"
-                value={trainingTime}
-                onChange={(e) => setTrainingTime(e.target.value)}
-                placeholder="HH:MM"
+              <Label>Horário *</Label>
+              <Input 
+                type="time" 
+                value={trainingTime} 
+                onChange={(e) => setTrainingTime(e.target.value)} 
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="training-description">Descrição (opcional)</Label>
-              <Textarea
-                id="training-description"
-                value={trainingDescription}
+              <Label>Observação (opcional)</Label>
+              <Textarea 
+                value={trainingDescription} 
                 onChange={(e) => setTrainingDescription(e.target.value)}
-                placeholder="Ex: Treino de pernas, Treino de core..."
-                rows={3}
+                placeholder="Ex: Treino de pernas, foco em core..."
+                rows={2}
               />
             </div>
           </div>
@@ -475,7 +377,7 @@ export default function CalendarPage() {
               Cancelar
             </Button>
             <Button onClick={handleAddTraining} disabled={createEventMutation.isPending}>
-              {createEventMutation.isPending ? "Adicionando..." : "Adicionar Treino"}
+              {createEventMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
         </DialogContent>

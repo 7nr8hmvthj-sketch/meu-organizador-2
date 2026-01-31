@@ -43,3 +43,27 @@
 - [x] Natação duplicada - verificado: não há duplicatas no banco
 - [x] Data errada ao inserir treino - corrigido problema de timezone
 - [x] HC e Zona Norte sem horário - adicionados horários padrão (7-13, 13-19, 19-7)
+
+## Melhorias Sugeridas (31/01/2026)
+
+### Banco de Dados
+- [x] Atualizar "Zona Norte (Manhã)" para "ZN 7-13"
+- [x] Atualizar "Zona Norte (Tarde)" para "ZN 13-19"
+- [x] Atualizar "HC Manhã" para "HC 7-13"
+- [x] Atualizar "HC Tarde" para "HC 13-19"
+- [x] Remover duplicatas de natação (636 removidas)
+
+### Backend (routers.ts)
+- [x] Adicionar função parseDateSafe para corrigir timezone
+- [x] Adicionar middleware protectedProcedure
+- [x] Adicionar middleware adminProcedure
+- [x] Proteger rotas de finanças com adminProcedure
+- [x] Proteger rotas de medicamentos com adminProcedure
+
+### Frontend (CalendarPage.tsx)
+- [x] Usar getEventLabel simplificado
+- [x] Adicionar função normalizeDateKey
+- [x] Adicionar deduplicação com Set
+- [x] Adicionar validação de horário no modal
+- [x] Usar key={e.id} ao invés de índice
+- [x] Adicionar botão "Hoje"
