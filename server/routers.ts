@@ -6,8 +6,11 @@ import { z } from "zod";
 import * as db from "./db";
 
 // Simple auth credentials
-const SIMPLE_USER = "USER";
-const SIMPLE_PASSWORD = "Wert123.";
+const VALID_CREDENTIALS = {
+  "USER": { password: "Wert123.", role: "admin", userId: 1 },
+  "JESSICA": { password: "123", role: "trainer", userId: 150023 },
+  "ISA": { password: "123", role: "trainer", userId: 150024 },
+};
 
 export const appRouter = router({
   system: systemRouter,
@@ -22,14 +25,21 @@ export const appRouter = router({
         password: z.string(),
       }))
       .mutation(async ({ input, ctx }) => {
-        if (input.username === SIMPLE_USER && input.password === SIMPLE_PASSWORD) {
-          // Create a simple session by setting a cookie
+        const user = VALID_CREDENTIALS[input.username.toUpperCase() as keyof typeof VALID_CREDENTIALS];
+        
+        if (user && input.password === user.password) {
+          // Create a simple session by setting a cookie with user info
           const cookieOptions = getSessionCookieOptions(ctx.req);
-          ctx.res.cookie("simple_auth", "authenticated", {
+          const userInfo = JSON.stringify({
+            username: input.username.toUpperCase(),
+            role: user.role,
+            userId: user.userId,
+          });
+          ctx.res.cookie("simple_auth", userInfo, {
             ...cookieOptions,
             maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           });
-          return { success: true };
+          return { success: true, role: user.role, username: input.username.toUpperCase() };
         }
         return { success: false, error: "Credenciais inválidas" };
       }),
@@ -37,8 +47,18 @@ export const appRouter = router({
     // Check if user is authenticated via simple auth
     checkSimpleAuth: publicProcedure.query(({ ctx }) => {
       const cookies = ctx.req.headers.cookie || "";
-      const isAuthenticated = cookies.includes("simple_auth=authenticated");
-      return { isAuthenticated };
+      const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
+      if (!authCookie) {
+        return { isAuthenticated: false, user: null };
+      }
+      
+      try {
+        const cookieValue = decodeURIComponent(authCookie.split('=')[1]);
+        const userInfo = JSON.parse(cookieValue);
+        return { isAuthenticated: true, user: userInfo };
+      } catch {
+        return { isAuthenticated: false, user: null };
+      }
     }),
     
     logout: publicProcedure.mutation(({ ctx }) => {

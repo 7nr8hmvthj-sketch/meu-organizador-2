@@ -1,6 +1,6 @@
 # Meu Organizador Pessoal - TODO
 
-## Funcionalidades
+## Funcionalidades Implementadas
 
 - [x] Sistema de login com credenciais fixas (USER/Wert123.)
 - [x] Dashboard inteligente com saudação dinâmica e estatísticas
@@ -16,16 +16,17 @@
 - [x] Página 'Hoje' com agenda e medicamentos
 - [x] Persistência de dados em banco de dados
 - [x] Alternância modo escuro/claro com persistência
-- [x] Importação de dados do CSV do Plantãozinho (271 plantões importados)
+- [x] Importação de dados do CSV do Plantãozinho
+- [x] Sincronização de plantões passados
 
-## Schema do Banco de Dados
+## Implementação Sistema de Treinos (Em Andamento)
 
-- [x] Tabela de eventos/plantões
-- [x] Tabela de despesas
-- [x] Tabela de medicamentos
-- [x] Tabela de preferências do usuário
-
-## Bugs
-
-- [x] Corrigir datas deslocadas em 1 dia (problema de timezone)
-- [x] Corrigir deslocamento de 1 dia nos eventos (eventos do dia 12 aparecem no dia 11)
+- [x] Importar CSV completo atualizado (286 eventos)
+- [x] Adicionar eventos de natação fixa (seg 20:45, ter 11:40, qua 20:45, sex 20:45, sáb 12:10)
+- [x] Criar sistema de autenticação para JESSICA (personal) e ISA (pilates) - senha: 123
+- [x] Reformular calendário para mostrar "EVENTO HORÁRIO" em vez de bolinhas
+- [x] Criar interface de calendário exclusiva para personal/instrutora
+- [x] Adicionar modal "Inserir Treino" com opções Musculação/Pilates
+- [x] Adicionar campo de horário e descrição no modal de treino
+- [x] Implementar cores diferenciadas para Musculação e Pilates
+- [ ] Testar sistema completo com os 3 tipos de usuário (USER, JESSICA, ISA)

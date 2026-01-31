@@ -27,7 +27,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-function Navigation() {
+interface NavigationProps {
+  userRole?: string;
+  username?: string;
+}
+
+function Navigation({ userRole, username }: NavigationProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,14 +44,19 @@ function Navigation() {
     },
   });
 
-  const navItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard },
-    { path: "/hoje", label: "Hoje", icon: SunIcon },
-    { path: "/eventos", label: "Escala", icon: Calendar },
-    { path: "/calendario", label: "Calendário", icon: CalendarDays },
-    { path: "/financeiro", label: "Financeiro", icon: DollarSign },
-    { path: "/medicamentos", label: "Medicamentos", icon: Pill },
+  // Define navigation items based on user role
+  const allNavItems = [
+    { path: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
+    { path: "/hoje", label: "Hoje", icon: SunIcon, roles: ["admin"] },
+    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
+    { path: "/calendario", label: "Calendário", icon: CalendarDays, roles: ["admin", "trainer"] },
+    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
+    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"] },
   ];
+
+  const navItems = allNavItems.filter(item => 
+    !item.roles || item.roles.includes(userRole || "")
+  );
 
   return (
     <>
@@ -56,7 +66,9 @@ function Navigation() {
           <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
             Meu Organizador
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">2026</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {username ? `Olá, ${username}` : "2026"}
+          </p>
         </div>
         
         <nav className="flex-1 p-4 space-y-1">
@@ -102,9 +114,14 @@ function Navigation() {
 
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b z-50 flex items-center justify-between px-4">
-        <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-          Meu Organizador
-        </h1>
+        <div>
+          <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
+            Meu Organizador
+          </h1>
+          {username && (
+            <p className="text-[10px] text-muted-foreground">Olá, {username}</p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleTheme}>
             {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -173,23 +190,41 @@ function Navigation() {
   );
 }
 
-function AuthenticatedApp() {
+interface AuthenticatedAppProps {
+  userRole?: string;
+  username?: string;
+}
+
+function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
+  const [, setLocation] = useLocation();
+
+  // Redirect trainers to calendar page
+  useEffect(() => {
+    if (userRole === "trainer") {
+      setLocation("/calendario");
+    }
+  }, [userRole, setLocation]);
+
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation userRole={userRole} username={username} />
       <main className="lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0">
         <div className="container py-6">
           <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/hoje" component={Today} />
-            <Route path="/eventos" component={Events} />
+            {userRole === "admin" && (
+              <>
+                <Route path="/" component={Dashboard} />
+                <Route path="/hoje" component={Today} />
+                <Route path="/eventos" component={Events} />
+                <Route path="/financeiro" component={Finance} />
+                <Route path="/medicamentos" component={Medications} />
+              </>
+            )}
             <Route path="/calendario" component={CalendarPage} />
-            <Route path="/financeiro" component={Finance} />
-            <Route path="/medicamentos" component={Medications} />
             <Route>
               <div className="text-center py-20">
                 <h1 className="text-2xl font-bold">Página não encontrada</h1>
-                <Link href="/">
+                <Link href={userRole === "trainer" ? "/calendario" : "/"}>
                   <a className="text-primary hover:underline mt-4 inline-block">
                     Voltar ao início
                   </a>
@@ -205,11 +240,13 @@ function AuthenticatedApp() {
 
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [userInfo, setUserInfo] = useState<any>(null);
   const { data: authData, isLoading } = trpc.auth.checkSimpleAuth.useQuery();
 
   useEffect(() => {
     if (!isLoading && authData) {
       setIsAuthenticated(authData.isAuthenticated);
+      setUserInfo(authData.user);
     }
   }, [authData, isLoading]);
 
@@ -225,7 +262,7 @@ function AppContent() {
     return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
   }
 
-  return <AuthenticatedApp />;
+  return <AuthenticatedApp userRole={userInfo?.role} username={userInfo?.username} />;
 }
 
 function App() {
