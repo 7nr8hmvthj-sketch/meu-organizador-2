@@ -30,3 +30,9 @@
 - [x] Adicionar campo de horário e descrição no modal de treino
 - [x] Implementar cores diferenciadas para Musculação e Pilates
 - [ ] Testar sistema completo com os 3 tipos de usuário (USER, JESSICA, ISA)
+
+## Correções Solicitadas
+
+- [x] Investigar natação duplicada (não há duplicatas no banco, nem eventos de natação)
+- [x] Adicionar horários dos plantões na visualização do calendário (13-19, 7-13, 19-7, etc)
+- [x] Adicionar 260 eventos de natação para 2026

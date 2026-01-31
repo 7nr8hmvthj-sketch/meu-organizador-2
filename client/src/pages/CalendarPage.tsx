@@ -60,17 +60,25 @@ function getEventLabel(event: any): string {
     return time ? `${event.type} ${time}` : event.type;
   }
   
-  // For shifts, show type + time
+  // For shifts, extract hours from type (e.g., "Manhã (07-13)" -> "Manhã 7-13")
   if (event.type.toLowerCase().includes("manhã") || 
       event.type.toLowerCase().includes("tarde") ||
       event.type.toLowerCase().includes("noturno") ||
       event.type.toLowerCase().includes("apoio")) {
     const shortType = event.type.split('(')[0].trim();
+    const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
+    if (hoursMatch) {
+      return `${shortType} ${hoursMatch[1]}-${hoursMatch[2]}`;
+    }
     return time ? `${shortType} ${time}` : shortType;
   }
   
-  // For HC shifts
+  // For HC shifts, extract hours from type
   if (event.type.toLowerCase().includes("hc")) {
+    const hoursMatch = event.type.match(/\((\d{1,2})-(\d{1,2})\)/);
+    if (hoursMatch) {
+      return `HC ${hoursMatch[1]}-${hoursMatch[2]}`;
+    }
     return time ? `HC ${time}` : "HC";
   }
   

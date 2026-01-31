@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, date, type, description FROM events WHERE (type LIKE '%Manhã%' OR type LIKE '%Tarde%' OR type LIKE '%Noturno%' OR type LIKE '%HC%') ORDER BY date LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, date, type, description FROM events WHERE (type LIKE '%Manhã%' OR type LIKE '%Tarde%' OR type LIKE '%Noturno%' OR type LIKE '%HC%') ORDER BY date LIMIT 10;",
+  "rows": [
+    {
+      "id": "30001",
+      "date": "2026-01-02",
+      "type": "HC Manhã",
+      "description": "HC manha"
+    },
+    {
+      "id": "30004",
+      "date": "2026-01-03",
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã maicon passei Lygia"
+    },
+    {
+      "id": "30003",
+      "date": "2026-01-03",
+      "type": "Noturno (19-07)",
+      "description": "Noturno ZN melissa fixo mari grupo sexta 11/11"
+    },
+    {
+      "id": "30006",
+      "date": "2026-01-05",
+      "type": "Zona Norte (Manhã)",
+      "description": "ZN Manhã camila manha"
+    },
+    {
+      "id": "30007",
+      "date": "2026-01-05",
+      "type": "Noturno (19-07)",
+      "description": "Noturno ZN amanda noturno 02/11 Carlos"
+    },
+    {
+      "id": "30008",
+      "date": "2026-01-06",
+      "type": "Zona Norte (Tarde)",
+      "description": "Corredor tarde juh"
+    },
+    {
+      "id": "30010",
+      "date": "2026-01-07",
+      "type": "Zona Norte (Tarde)",
+      "description": "ZN 13-19 fixo juh"
+    },
+    {
+      "id": "30009",
+      "date": "2026-01-07",
+      "type": "Zona Norte (Tarde)",
+      "description": "Tarde Igor"
+    },
+    {
+      "id": "30012",
+      "date": "2026-01-08",
+      "type": "Noturno (19-07)",
+      "description": "Noturno jédsica pvd 03/11 amanda pvd 07/01"
+    },
+    {
+      "id": "30011",
+      "date": "2026-01-08",
+      "type": "Zona Norte (Manhã)",
+      "description": "Manhã mari pvd 04/01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdate\ttype\tdescription\n30001\t2026-01-02\tHC Manhã\tHC manha\n30004\t2026-01-03\tZona Norte (Manhã)\tManhã maicon passei Lygia\n30003\t2026-01-03\tNoturno (19-07)\tNoturno ZN melissa fixo mari grupo sexta 11/11\n30006\t2026-01-05\tZona Norte (Manhã)\tZN Manhã camila manha\n30007\t2026-01-05\tNoturno (19-07)\tNoturno ZN amanda noturno 02/11 Carlos\n30008\t2026-01-06\tZona Norte (Tarde)\tCorredor tarde juh\n30010\t2026-01-07\tZona Norte (Tarde)\tZN 13-19 fixo juh\n30009\t2026-01-07\tZona Norte (Tarde)\tTarde Igor\n30012\t2026-01-08\tNoturno (19-07)\tNoturno jédsica pvd 03/11 amanda pvd 07/01\n30011\t2026-01-08\tZona Norte (Manhã)\tManhã mari pvd 04/01\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}
