@@ -67,3 +67,10 @@
 - [x] Adicionar validação de horário no modal
 - [x] Usar key={e.id} ao invés de índice
 - [x] Adicionar botão "Hoje"
+
+## Correção de Horários HC/ZN (31/01/2026)
+
+- [x] Implementar regex melhorada para capturar formatos HH:MM e H-H
+- [x] Adicionar mapeamento SHIFT_HOURS como fallback para turnos sem horário explícito
+- [x] Testar no site agendaintegrada.xyz com usuário ISA
+- [x] Corrigir conversão de data no db.ts para usar métodos UTC (getUTCFullYear, getUTCMonth, getUTCDate)

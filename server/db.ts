@@ -114,11 +114,11 @@ export async function getEventsByUserId(userId: number) {
   
   const result = await db.select().from(events).where(eq(events.userId, userId)).orderBy(events.date);
   
-  // Converter datas para string no formato YYYY-MM-DD para evitar problemas de timezone
+  // Converter datas para string no formato YYYY-MM-DD usando UTC para evitar problemas de timezone
   return result.map(event => ({
     ...event,
     date: event.date instanceof Date 
-      ? `${event.date.getFullYear()}-${String(event.date.getMonth() + 1).padStart(2, '0')}-${String(event.date.getDate()).padStart(2, '0')}`
+      ? `${event.date.getUTCFullYear()}-${String(event.date.getUTCMonth() + 1).padStart(2, '0')}-${String(event.date.getUTCDate()).padStart(2, '0')}`
       : String(event.date)
   }));
 }

@@ -43,27 +43,61 @@ function getEventColor(type: string, isPassed: boolean): string {
   return "text-slate-700 bg-slate-50 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200";
 }
 
+// Mapeamento de turnos para horários (fallback quando não há horário explícito)
+const SHIFT_HOURS: Record<string, string> = {
+  "hc manhã": "7-13",
+  "hc tarde": "13-19",
+  "corredor tarde": "13-19",
+  "corredor manhã": "7-13",
+  "zona norte manhã": "7-13",
+  "zona norte tarde": "13-19",
+  "zona norte (manhã)": "7-13",
+  "zona norte (tarde)": "13-19",
+  "noturno": "19-7",
+  "noturno (19-07)": "19-7",
+  "apoio": "19-01",
+  "apoio (19-01)": "19-01",
+};
+
 function getEventLabel(event: { type?: string; description?: string | null }): string {
   const type = event.type || "";
   const desc = event.description || "";
+  const typeLower = type.toLowerCase();
   
-  // Extrair horário da descrição ou do tipo
-  const timeMatch = desc.match(/(\d{1,2}):(\d{2})/) || type.match(/(\d{1,2}):(\d{2})/);
-  const timeStr = timeMatch ? timeMatch[0] : "";
+  // 1. Tenta extrair horário no formato HH:MM (com dois-pontos) da descrição ou tipo
+  const timeMatchColon = desc.match(/(\d{1,2}:\d{2})/) || type.match(/(\d{1,2}:\d{2})/);
+  
+  // 2. Tenta extrair horário no formato H-H ou HH-HH (com hífen) do tipo
+  const timeMatchHyphen = type.match(/(\d{1,2}-\d{1,2})/);
+  
+  let timeStr = timeMatchColon ? timeMatchColon[0] : (timeMatchHyphen ? timeMatchHyphen[0] : "");
 
-  // Simplificar o label
+  // 3. Simplificar o label baseado no tipo
   let label = type;
-  if (type.toLowerCase().includes("natação")) label = "Natação";
-  else if (type.toLowerCase().includes("musculação")) label = "Musculação";
-  else if (type.toLowerCase().includes("pilates")) label = "Pilates";
+  if (typeLower.includes("natação") || typeLower.includes("natacao")) label = "Natação";
+  else if (typeLower.includes("musculação") || typeLower.includes("musculacao")) label = "Musculação";
+  else if (typeLower.includes("pilates")) label = "Pilates";
+  else if (typeLower.includes("hc")) label = "HC";
+  else if (typeLower.includes("zn") || typeLower.includes("zona norte")) label = "ZN";
+  else if (typeLower.includes("noturno")) label = "Noturno";
+  else if (typeLower.includes("apoio")) label = "Apoio";
+  else if (typeLower.includes("corredor")) label = "Corredor";
   
-  // Adicionar horário se existir e não estiver no label
+  // 4. Se não achou horário via regex, tenta pelo mapeamento de turnos
+  if (!timeStr) {
+    const mappedTime = SHIFT_HOURS[typeLower];
+    if (mappedTime) timeStr = mappedTime;
+  }
+  
+  // 5. Retorna label + horário se existir
   if (timeStr && !label.includes(timeStr)) {
     return `${label} ${timeStr}`;
   }
   
-  // Se não tem horário mas tem descrição curta, usar descrição
-  if (!timeStr && desc.length < 20 && desc.length > 0) return desc;
+  // 6. Fallback: Se não tem horário mas tem descrição curta, usar descrição
+  if (!timeStr && desc.length < 20 && desc.length > 0 && desc !== type) {
+    return desc;
+  }
   
   return label;
 }
