@@ -675,17 +675,34 @@ export default function CalendarPage() {
                     .replace(time, '')
                     .trim();
                   
+                  // Determinar cor do indicador baseado no tipo
+                  const getIndicatorColor = () => {
+                    if (e.isPassed) return 'bg-gray-400';
+                    const typeLower = e.type.toLowerCase();
+                    if (typeLower.includes('natação') || typeLower.includes('natacao')) return 'bg-blue-500';
+                    if (typeLower.includes('musculação') || typeLower.includes('musculacao')) return 'bg-green-500';
+                    if (typeLower.includes('pilates')) return 'bg-purple-500';
+                    if (typeLower.includes('hc')) return 'bg-red-500';
+                    if (typeLower.includes('zn') || typeLower.includes('zona norte')) return 'bg-amber-500';
+                    if (typeLower.includes('noturno')) return 'bg-indigo-500';
+                    if (typeLower.includes('apoio')) return 'bg-pink-500';
+                    return 'bg-gray-400';
+                  };
+                  
                   return (
-                    <div key={e.id} className="text-xs">
+                    <div key={e.id} className={`text-xs ${e.isPassed ? 'opacity-60' : ''}`}>
                       <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${e.type.toLowerCase().includes('natação') ? 'bg-blue-500' : e.type.toLowerCase().includes('musculação') ? 'bg-green-500' : e.type.toLowerCase().includes('pilates') ? 'bg-purple-500' : 'bg-gray-400'}`}></div>
-                        <span className="font-medium">{getEventLabel(e)}</span>
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getIndicatorColor()}`}></div>
+                        <span className={`font-medium ${e.isPassed ? 'line-through text-gray-500' : ''}`}>{getEventLabel(e)}</span>
                         {isTraining && e.createdBy && (
                           <span className="text-muted-foreground">({e.createdBy})</span>
                         )}
                       </div>
                       {isTraining && descWithoutTypeAndTime && (
                         <p className="ml-4 text-muted-foreground italic">{descWithoutTypeAndTime}</p>
+                      )}
+                      {e.isPassed && e.passedReason && (
+                        <p className="ml-4 text-xs text-yellow-600 dark:text-yellow-400 italic">Passado: {e.passedReason}</p>
                       )}
                     </div>
                   );

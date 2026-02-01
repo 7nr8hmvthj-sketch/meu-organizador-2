@@ -106,3 +106,9 @@
 - [x] Implementar edição de nome, data, horário e descrição de eventos
 - [x] Implementar exclusão de eventos pelo calendário
 - [x] Manter funcionalidade atual das treinadoras (apenas treinos próprios)
+
+## Correção Visualização de Eventos Passados para Treinadoras (01/02/2026)
+
+- [x] Mostrar eventos passados com estilo riscado no modal das treinadoras
+- [x] Adicionar observação "Passado" em amarelo igual ao modal do admin
+- [x] Manter consistência visual entre os dois tipos de modal
