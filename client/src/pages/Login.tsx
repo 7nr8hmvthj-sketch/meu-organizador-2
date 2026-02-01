@@ -17,14 +17,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const loginMutation = trpc.auth.simpleLogin.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.success) {
         toast.success("Login realizado com sucesso!");
+        // Aguardar um momento para o cookie ser processado pelo navegador
+        await new Promise(resolve => setTimeout(resolve, 150));
         onLoginSuccess();
       } else {
         toast.error(data.error || "Credenciais inválidas");
+        setIsLoading(false);
       }
-      setIsLoading(false);
     },
     onError: () => {
       toast.error("Erro ao fazer login");

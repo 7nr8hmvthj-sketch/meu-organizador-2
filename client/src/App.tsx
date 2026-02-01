@@ -242,7 +242,7 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
-  const { data: authData, isLoading } = trpc.auth.checkSimpleAuth.useQuery();
+  const { data: authData, isLoading, refetch } = trpc.auth.checkSimpleAuth.useQuery();
 
   useEffect(() => {
     if (!isLoading && authData) {
@@ -250,6 +250,15 @@ function AppContent() {
       setUserInfo(authData.user);
     }
   }, [authData, isLoading]);
+
+  const handleLoginSuccess = async () => {
+    // Refetch para obter os dados atualizados do usuário
+    const result = await refetch();
+    if (result.data) {
+      setIsAuthenticated(result.data.isAuthenticated);
+      setUserInfo(result.data.user);
+    }
+  };
 
   if (isLoading || isAuthenticated === null) {
     return (
@@ -260,7 +269,7 @@ function AppContent() {
   }
 
   if (!isAuthenticated) {
-    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
   return <AuthenticatedApp userRole={userInfo?.role} username={userInfo?.username} />;

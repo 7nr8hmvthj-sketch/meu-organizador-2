@@ -94,3 +94,7 @@
 ## Correção Visibilidade de Observações (01/02/2026)
 
 - [x] Permitir que treinadoras vejam observações de treinos criados uma pela outra
+
+## Bug Login Intermitente (01/02/2026)
+
+- [x] Corrigir "Página não encontrada" após primeiro login - erro intermitente
