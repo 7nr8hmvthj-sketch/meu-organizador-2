@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -55,6 +55,22 @@ const SHIFT_HOURS: Record<string, string> = {
   "apoio": "19-01",
   "apoio (19-01)": "19-01",
 };
+
+// Tipos de eventos disponíveis para o admin criar
+const EVENT_TYPES = [
+  { value: "HC 7-13", label: "HC 7-13 (Manhã)" },
+  { value: "HC 13-19", label: "HC 13-19 (Tarde)" },
+  { value: "ZN 7-13", label: "Zona Norte 7-13 (Manhã)" },
+  { value: "ZN 13-19", label: "Zona Norte 13-19 (Tarde)" },
+  { value: "Noturno 19-7", label: "Noturno 19-7" },
+  { value: "Apoio 19-01", label: "Apoio 19-01" },
+  { value: "Corredor Manhã", label: "Corredor Manhã" },
+  { value: "Corredor Tarde", label: "Corredor Tarde" },
+  { value: "Natação", label: "Natação" },
+  { value: "Musculação", label: "Musculação" },
+  { value: "Pilates", label: "Pilates" },
+  { value: "Outro", label: "Outro (personalizado)" },
+];
 
 function getEventLabel(event: { type?: string; description?: string | null }): string {
   const type = event.type || "";
@@ -106,13 +122,21 @@ export default function CalendarPage() {
   const [showAddTrainingModal, setShowAddTrainingModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
   
+  // Estados para treinos (treinadoras)
   const [trainingType, setTrainingType] = useState<string>("");
   const [trainingTime, setTrainingTime] = useState<string>("");
   const [trainingDescription, setTrainingDescription] = useState<string>("");
   
+  // Estados para eventos (admin)
+  const [eventType, setEventType] = useState<string>("");
+  const [customEventType, setCustomEventType] = useState<string>("");
+  const [eventTime, setEventTime] = useState<string>("");
+  const [eventDescription, setEventDescription] = useState<string>("");
+  
   // Estado para edição
-  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null } | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
 
   const { data: events = [] } = trpc.events.list.useQuery();
@@ -120,13 +144,15 @@ export default function CalendarPage() {
   const utils = trpc.useUtils();
 
   const isTrainer = authData?.user?.role === "trainer";
+  const isAdmin = authData?.user?.role === "admin";
   const currentUsername = authData?.user?.username;
 
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
-      toast.success("Treino adicionado com sucesso!");
+      toast.success("Evento adicionado com sucesso!");
       utils.events.list.invalidate();
       setShowAddTrainingModal(false);
+      setShowAddEventModal(false);
       resetForm();
     },
     onError: (error) => toast.error(`Erro: ${error.message}`),
@@ -134,7 +160,7 @@ export default function CalendarPage() {
 
   const updateEventMutation = trpc.events.update.useMutation({
     onSuccess: () => {
-      toast.success("Treino atualizado com sucesso!");
+      toast.success("Evento atualizado com sucesso!");
       utils.events.list.invalidate();
       setShowEditModal(false);
       setEditingEvent(null);
@@ -145,10 +171,11 @@ export default function CalendarPage() {
 
   const deleteEventMutation = trpc.events.delete.useMutation({
     onSuccess: () => {
-      toast.success("Treino excluído com sucesso!");
+      toast.success("Evento excluído com sucesso!");
       utils.events.list.invalidate();
       setShowDeleteConfirm(false);
       setEventToDelete(null);
+      setShowDayModal(false);
     },
     onError: (error) => toast.error(`Erro: ${error.message}`),
   });
@@ -157,6 +184,10 @@ export default function CalendarPage() {
     setTrainingType("");
     setTrainingTime("");
     setTrainingDescription("");
+    setEventType("");
+    setCustomEventType("");
+    setEventTime("");
+    setEventDescription("");
   };
 
   const monthStart = startOfMonth(currentMonth);
@@ -207,6 +238,7 @@ export default function CalendarPage() {
     else setShowDayModal(true);
   };
 
+  // --- Handlers para Treinadoras ---
   const handleAddTraining = () => {
     if (!selectedDate || !trainingType || !trainingTime) {
       toast.error("Preencha tipo e horário.");
@@ -230,7 +262,7 @@ export default function CalendarPage() {
     });
   };
 
-  const handleEditClick = (event: typeof editableEvents[0]) => {
+  const handleEditTrainingClick = (event: typeof editableEvents[0]) => {
     setEditingEvent(event);
     setTrainingType(event.type);
     const time = extractTimeFromDescription(event.description || "");
@@ -262,7 +294,98 @@ export default function CalendarPage() {
     });
   };
 
-  const handleDeleteClick = (event: typeof editableEvents[0]) => {
+  // --- Handlers para Admin ---
+  const handleAddEvent = () => {
+    if (!selectedDate || !eventType) {
+      toast.error("Selecione o tipo de evento.");
+      return;
+    }
+
+    const finalType = eventType === "Outro" ? customEventType : eventType;
+    if (!finalType) {
+      toast.error("Digite o tipo de evento personalizado.");
+      return;
+    }
+
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    let description = eventDescription || finalType;
+    
+    // Se tiver horário específico, adiciona à descrição
+    if (eventTime) {
+      description = `${description} ${eventTime}`;
+    }
+
+    createEventMutation.mutate({
+      date: dateStr,
+      type: finalType,
+      description: description,
+      isShift: finalType.toLowerCase().includes("hc") || 
+               finalType.toLowerCase().includes("zn") || 
+               finalType.toLowerCase().includes("noturno") ||
+               finalType.toLowerCase().includes("apoio") ||
+               finalType.toLowerCase().includes("corredor"),
+    });
+  };
+
+  const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {
+    setEditingEvent({
+      id: event.id,
+      type: event.type,
+      description: event.description,
+      createdBy: event.createdBy,
+      date: normalizeDateKey(event.date),
+    });
+    
+    // Tenta encontrar o tipo na lista de tipos pré-definidos
+    const matchedType = EVENT_TYPES.find(t => 
+      event.type.toLowerCase().includes(t.value.toLowerCase().split(" ")[0])
+    );
+    
+    if (matchedType) {
+      setEventType(matchedType.value);
+      setCustomEventType("");
+    } else {
+      setEventType("Outro");
+      setCustomEventType(event.type);
+    }
+    
+    const time = extractTimeFromDescription(event.description || "");
+    setEventTime(time);
+    
+    // Remove tipo e horário da descrição para obter apenas a observação
+    let desc = event.description || "";
+    desc = desc.replace(event.type, "").replace(time, "").trim();
+    setEventDescription(desc);
+    
+    setShowDayModal(false);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateEvent = () => {
+    if (!editingEvent || !eventType) {
+      toast.error("Selecione o tipo de evento.");
+      return;
+    }
+
+    const finalType = eventType === "Outro" ? customEventType : eventType;
+    if (!finalType) {
+      toast.error("Digite o tipo de evento personalizado.");
+      return;
+    }
+
+    let description = eventDescription || finalType;
+    if (eventTime) {
+      description = `${description} ${eventTime}`;
+    }
+
+    updateEventMutation.mutate({
+      id: editingEvent.id,
+      type: finalType,
+      description: description,
+    });
+  };
+
+  const handleDeleteClick = (event: { id: number; type: string }) => {
     setEventToDelete({ id: event.id, type: event.type });
     setShowDeleteConfirm(true);
   };
@@ -277,13 +400,13 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-primary">
             <CalendarIcon className="w-6 h-6" /> Calendário
           </h1>
           <p className="text-muted-foreground text-sm">
-            {isTrainer ? "Clique em um dia para adicionar treino." : "Visualize sua programação mensal."}
+            {isTrainer ? "Clique em um dia para adicionar treino." : "Clique em um dia para ver e editar eventos."}
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>
@@ -393,34 +516,140 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      {/* Modal para visualizar eventos do dia (usuário admin) */}
+      {/* Modal para visualizar e editar eventos do dia (usuário admin) */}
       <Dialog open={showDayModal} onOpenChange={setShowDayModal}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
+              {isAdmin && (
+                <Button 
+                  size="sm" 
+                  onClick={() => { setShowDayModal(false); setShowAddEventModal(true); }}
+                  className="ml-4"
+                >
+                  <Plus className="w-4 h-4 mr-1" /> Novo Evento
+                </Button>
+              )}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
             {selectedDateEvents.length === 0 ? (
-              <p className="text-center text-muted-foreground">Sem eventos neste dia.</p>
+              <p className="text-center text-muted-foreground py-8">Sem eventos neste dia.</p>
             ) : (
               selectedDateEvents.map(event => (
                 <div key={event.id} className={`p-3 rounded-md border ${getEventColor(event.type, event.isPassed)}`}>
-                  <div className="flex justify-between">
-                    <span className="font-semibold">{event.type}</span>
-                    <span className="text-xs font-mono">{extractTimeFromDescription(event.description || "")}</span>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{event.type}</span>
+                        <span className="text-xs font-mono">{extractTimeFromDescription(event.description || "")}</span>
+                      </div>
+                      {event.description && event.description !== event.type && (
+                        <p className="text-sm mt-1 opacity-80">
+                          {event.description.replace(event.type, '').replace(extractTimeFromDescription(event.description || ""), '').trim()}
+                        </p>
+                      )}
+                      {event.isPassed && event.passedReason && (
+                        <p className="text-xs mt-2 text-yellow-600 dark:text-yellow-400 italic">
+                          Passado: {event.passedReason}
+                        </p>
+                      )}
+                      {event.createdBy && (
+                        <p className="text-xs mt-1 text-muted-foreground">
+                          Criado por: {event.createdBy}
+                        </p>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-1 ml-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8"
+                          onClick={() => handleEditEventClick(event)}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-500 hover:text-red-700"
+                          onClick={() => handleDeleteClick({ id: event.id, type: event.type })}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {event.description && (
-                    <p className="text-sm mt-1">{event.description.replace(event.type, '').trim()}</p>
-                  )}
-                  {event.isPassed && event.passedReason && (
-                    <p className="text-xs mt-2 text-yellow-600 dark:text-yellow-400 italic">
-                      Passado: {event.passedReason}
-                    </p>
-                  )}
                 </div>
               ))
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal para adicionar evento (admin) */}
+      <Dialog open={showAddEventModal} onOpenChange={(open) => { setShowAddEventModal(open); if (!open) resetForm(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Evento: {selectedDate && format(selectedDate, "dd/MM/yyyy")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Tipo de Evento *</Label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map(type => (
+                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {eventType === "Outro" && (
+              <div className="space-y-2">
+                <Label>Tipo Personalizado *</Label>
+                <Input 
+                  value={customEventType} 
+                  onChange={(e) => setCustomEventType(e.target.value)}
+                  placeholder="Ex: Consulta médica, Reunião..."
+                />
+              </div>
+            )}
+            
+            {(eventType === "Natação" || eventType === "Musculação" || eventType === "Pilates" || eventType === "Outro") && (
+              <div className="space-y-2">
+                <Label>Horário (opcional)</Label>
+                <Input 
+                  type="time" 
+                  value={eventTime} 
+                  onChange={(e) => setEventTime(e.target.value)} 
+                />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label>Observação (opcional)</Label>
+              <Textarea 
+                value={eventDescription} 
+                onChange={(e) => setEventDescription(e.target.value)}
+                placeholder="Detalhes adicionais sobre o evento..."
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowAddEventModal(false); resetForm(); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddEvent} disabled={createEventMutation.isPending}>
+              {createEventMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -486,7 +715,7 @@ export default function CalendarPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-6 w-6"
-                            onClick={(ev) => { ev.stopPropagation(); handleEditClick(e); }}
+                            onClick={(ev) => { ev.stopPropagation(); handleEditTrainingClick(e); }}
                           >
                             <Pencil className="w-3 h-3" />
                           </Button>
@@ -494,7 +723,7 @@ export default function CalendarPage() {
                             variant="ghost" 
                             size="icon" 
                             className="h-6 w-6 text-red-500 hover:text-red-700"
-                            onClick={(ev) => { ev.stopPropagation(); handleDeleteClick(e); }}
+                            onClick={(ev) => { ev.stopPropagation(); handleDeleteClick({ id: e.id, type: e.type }); }}
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
@@ -552,48 +781,105 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de edição */}
+      {/* Modal de edição (para admin e treinadoras) */}
       <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) { setEditingEvent(null); resetForm(); } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Editar Treino</DialogTitle>
+            <DialogTitle>{isAdmin ? "Editar Evento" : "Editar Treino"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Modalidade *</Label>
-              <Select value={trainingType} onValueChange={setTrainingType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Musculação">Musculação</SelectItem>
-                  <SelectItem value="Pilates">Pilates</SelectItem>
-                </SelectContent>
-              </Select>
+          
+          {isAdmin ? (
+            // Formulário de edição para Admin
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Tipo de Evento *</Label>
+                <Select value={eventType} onValueChange={setEventType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EVENT_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {eventType === "Outro" && (
+                <div className="space-y-2">
+                  <Label>Tipo Personalizado *</Label>
+                  <Input 
+                    value={customEventType} 
+                    onChange={(e) => setCustomEventType(e.target.value)}
+                    placeholder="Ex: Consulta médica, Reunião..."
+                  />
+                </div>
+              )}
+              
+              {(eventType === "Natação" || eventType === "Musculação" || eventType === "Pilates" || eventType === "Outro") && (
+                <div className="space-y-2">
+                  <Label>Horário (opcional)</Label>
+                  <Input 
+                    type="time" 
+                    value={eventTime} 
+                    onChange={(e) => setEventTime(e.target.value)} 
+                  />
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label>Observação (opcional)</Label>
+                <Textarea 
+                  value={eventDescription} 
+                  onChange={(e) => setEventDescription(e.target.value)}
+                  placeholder="Detalhes adicionais sobre o evento..."
+                  rows={2}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Horário *</Label>
-              <Input 
-                type="time" 
-                value={trainingTime} 
-                onChange={(e) => setTrainingTime(e.target.value)} 
-              />
+          ) : (
+            // Formulário de edição para Treinadoras
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Modalidade *</Label>
+                <Select value={trainingType} onValueChange={setTrainingType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Musculação">Musculação</SelectItem>
+                    <SelectItem value="Pilates">Pilates</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Horário *</Label>
+                <Input 
+                  type="time" 
+                  value={trainingTime} 
+                  onChange={(e) => setTrainingTime(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Observação (opcional)</Label>
+                <Textarea 
+                  value={trainingDescription} 
+                  onChange={(e) => setTrainingDescription(e.target.value)}
+                  placeholder="Ex: Treino de pernas, foco em core..."
+                  rows={2}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Observação (opcional)</Label>
-              <Textarea 
-                value={trainingDescription} 
-                onChange={(e) => setTrainingDescription(e.target.value)}
-                placeholder="Ex: Treino de pernas, foco em core..."
-                rows={2}
-              />
-            </div>
-          </div>
+          )}
+          
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowEditModal(false); setEditingEvent(null); resetForm(); }}>
               Cancelar
             </Button>
-            <Button onClick={handleUpdateTraining} disabled={updateEventMutation.isPending}>
+            <Button 
+              onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining} 
+              disabled={updateEventMutation.isPending}
+            >
               {updateEventMutation.isPending ? "Salvando..." : "Atualizar"}
             </Button>
           </DialogFooter>
@@ -607,7 +893,7 @@ export default function CalendarPage() {
             <DialogTitle>Confirmar Exclusão</DialogTitle>
           </DialogHeader>
           <p className="py-4">
-            Tem certeza que deseja excluir o treino <strong>{eventToDelete?.type}</strong>?
+            Tem certeza que deseja excluir o evento <strong>{eventToDelete?.type}</strong>?
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowDeleteConfirm(false); setEventToDelete(null); }}>

@@ -98,3 +98,11 @@
 ## Bug Login Intermitente (01/02/2026)
 
 - [x] Corrigir "Página não encontrada" após primeiro login - erro intermitente
+
+## Edição de Eventos pelo Calendário (01/02/2026)
+
+- [x] Permitir que admin (USER) edite qualquer evento clicando no dia do calendário
+- [x] Criar modal de visualização/edição de eventos do dia para admin
+- [x] Implementar edição de nome, data, horário e descrição de eventos
+- [x] Implementar exclusão de eventos pelo calendário
+- [x] Manter funcionalidade atual das treinadoras (apenas treinos próprios)
