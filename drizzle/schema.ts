@@ -31,6 +31,7 @@ export const events = mysqlTable("events", {
   isPassed: boolean("isPassed").default(false).notNull(), // true if shift was passed to someone
   passedReason: text("passedReason"), // reason for passing the shift
   isCancelled: boolean("isCancelled").default(false).notNull(),
+  createdBy: varchar("createdBy", { length: 50 }), // username of who created the event (for trainers)
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

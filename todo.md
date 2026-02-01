@@ -74,3 +74,11 @@
 - [x] Adicionar mapeamento SHIFT_HOURS como fallback para turnos sem horário explícito
 - [x] Testar no site agendaintegrada.xyz com usuário ISA
 - [x] Corrigir conversão de data no db.ts para usar métodos UTC (getUTCFullYear, getUTCMonth, getUTCDate)
+
+## Edição/Exclusão de Treinos (31/01/2026)
+
+- [x] Adicionar campo createdBy no schema de eventos
+- [x] Atualizar backend para salvar quem criou o treino
+- [x] Implementar modal de edição de treinos
+- [x] Implementar exclusão de treinos
+- [x] Restringir edição/exclusão apenas para treinos criados pela própria treinadora

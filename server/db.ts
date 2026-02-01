@@ -108,6 +108,14 @@ export async function createEvent(event: InsertEvent): Promise<Event> {
   return inserted[0];
 }
 
+export async function getEventById(id: number): Promise<Event | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(events).where(eq(events.id, id)).limit(1);
+  return result[0] || null;
+}
+
 export async function getEventsByUserId(userId: number) {
   const db = await getDb();
   if (!db) return [];

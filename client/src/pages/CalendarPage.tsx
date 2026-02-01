@@ -7,14 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
 // --- HELPERS ---
 
-// Normaliza a data para YYYY-MM-DD ignorando o offset de timezone para visualização
 function normalizeDateKey(dateInput: string | Date): string {
   if (!dateInput) return "";
   if (typeof dateInput === 'string') {
@@ -36,14 +35,12 @@ function getEventColor(type: string, isPassed: boolean): string {
   if (typeLower.includes("pilates")) return "text-purple-700 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200";
   if (typeLower.includes("hc")) return "text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200";
   if (typeLower.includes("zn")) return "text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200";
-  
   if (typeLower.includes("apoio")) return "text-pink-700 bg-pink-50 dark:bg-pink-900/30 dark:text-pink-300 border-pink-200";
   if (typeLower.includes("noturno")) return "text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200";
   
   return "text-slate-700 bg-slate-50 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200";
 }
 
-// Mapeamento de turnos para horários (fallback quando não há horário explícito)
 const SHIFT_HOURS: Record<string, string> = {
   "hc manhã": "7-13",
   "hc tarde": "13-19",
@@ -64,15 +61,10 @@ function getEventLabel(event: { type?: string; description?: string | null }): s
   const desc = event.description || "";
   const typeLower = type.toLowerCase();
   
-  // 1. Tenta extrair horário no formato HH:MM (com dois-pontos) da descrição ou tipo
   const timeMatchColon = desc.match(/(\d{1,2}:\d{2})/) || type.match(/(\d{1,2}:\d{2})/);
-  
-  // 2. Tenta extrair horário no formato H-H ou HH-HH (com hífen) do tipo
   const timeMatchHyphen = type.match(/(\d{1,2}-\d{1,2})/);
-  
   let timeStr = timeMatchColon ? timeMatchColon[0] : (timeMatchHyphen ? timeMatchHyphen[0] : "");
 
-  // 3. Simplificar o label baseado no tipo
   let label = type;
   if (typeLower.includes("natação") || typeLower.includes("natacao")) label = "Natação";
   else if (typeLower.includes("musculação") || typeLower.includes("musculacao")) label = "Musculação";
@@ -83,18 +75,15 @@ function getEventLabel(event: { type?: string; description?: string | null }): s
   else if (typeLower.includes("apoio")) label = "Apoio";
   else if (typeLower.includes("corredor")) label = "Corredor";
   
-  // 4. Se não achou horário via regex, tenta pelo mapeamento de turnos
   if (!timeStr) {
     const mappedTime = SHIFT_HOURS[typeLower];
     if (mappedTime) timeStr = mappedTime;
   }
   
-  // 5. Retorna label + horário se existir
   if (timeStr && !label.includes(timeStr)) {
     return `${label} ${timeStr}`;
   }
   
-  // 6. Fallback: Se não tem horário mas tem descrição curta, usar descrição
   if (!timeStr && desc.length < 20 && desc.length > 0 && desc !== type) {
     return desc;
   }
@@ -115,37 +104,66 @@ export default function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayModal, setShowDayModal] = useState(false);
   const [showAddTrainingModal, setShowAddTrainingModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const [trainingType, setTrainingType] = useState<string>("");
   const [trainingTime, setTrainingTime] = useState<string>("");
   const [trainingDescription, setTrainingDescription] = useState<string>("");
+  
+  // Estado para edição
+  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null } | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
 
   const { data: events = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
 
   const isTrainer = authData?.user?.role === "trainer";
+  const currentUsername = authData?.user?.username;
 
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
-      toast.success("Evento adicionado com sucesso!");
+      toast.success("Treino adicionado com sucesso!");
       utils.events.list.invalidate();
       setShowAddTrainingModal(false);
-      setTrainingType("");
-      setTrainingTime("");
-      setTrainingDescription("");
+      resetForm();
     },
-    onError: (error) => {
-      toast.error(`Erro: ${error.message}`);
-    },
+    onError: (error) => toast.error(`Erro: ${error.message}`),
   });
+
+  const updateEventMutation = trpc.events.update.useMutation({
+    onSuccess: () => {
+      toast.success("Treino atualizado com sucesso!");
+      utils.events.list.invalidate();
+      setShowEditModal(false);
+      setEditingEvent(null);
+      resetForm();
+    },
+    onError: (error) => toast.error(`Erro: ${error.message}`),
+  });
+
+  const deleteEventMutation = trpc.events.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Treino excluído com sucesso!");
+      utils.events.list.invalidate();
+      setShowDeleteConfirm(false);
+      setEventToDelete(null);
+    },
+    onError: (error) => toast.error(`Erro: ${error.message}`),
+  });
+
+  const resetForm = () => {
+    setTrainingType("");
+    setTrainingTime("");
+    setTrainingDescription("");
+  };
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startDayOfWeek = getDay(monthStart);
 
-  // Lógica de agrupamento com Deduplicação e Normalização de Data
   const eventsByDate = useMemo(() => {
     const map = new Map<string, typeof events>();
     const processedIds = new Set<number>();
@@ -153,7 +171,7 @@ export default function CalendarPage() {
     if (!events) return map;
 
     events.forEach(e => {
-      if (e.id && processedIds.has(e.id)) return; // Evita duplicatas
+      if (e.id && processedIds.has(e.id)) return;
       if (e.id) processedIds.add(e.id);
 
       const dateStr = normalizeDateKey(e.date);
@@ -172,6 +190,17 @@ export default function CalendarPage() {
     return eventsByDate.get(dateStr) || [];
   }, [selectedDate, eventsByDate]);
 
+  // Filtra apenas treinos que a treinadora pode editar/excluir
+  const editableEvents = useMemo(() => {
+    if (!isTrainer) return [];
+    return selectedDateEvents.filter(e => 
+      e.createdBy === currentUsername && 
+      (e.type.toLowerCase().includes("musculação") || 
+       e.type.toLowerCase().includes("musculacao") || 
+       e.type.toLowerCase().includes("pilates"))
+    );
+  }, [selectedDateEvents, isTrainer, currentUsername]);
+
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
     if (isTrainer) setShowAddTrainingModal(true);
@@ -183,7 +212,6 @@ export default function CalendarPage() {
       toast.error("Preencha tipo e horário.");
       return;
     }
-    // Validação de horário
     if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(trainingTime)) {
       toast.error("Horário inválido. Use formato HH:MM.");
       return;
@@ -200,6 +228,49 @@ export default function CalendarPage() {
       description: description,
       isShift: false,
     });
+  };
+
+  const handleEditClick = (event: typeof editableEvents[0]) => {
+    setEditingEvent(event);
+    setTrainingType(event.type);
+    const time = extractTimeFromDescription(event.description || "");
+    setTrainingTime(time);
+    const desc = (event.description || "").replace(event.type, "").replace(time, "").trim();
+    setTrainingDescription(desc);
+    setShowAddTrainingModal(false);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateTraining = () => {
+    if (!editingEvent || !trainingType || !trainingTime) {
+      toast.error("Preencha tipo e horário.");
+      return;
+    }
+    if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(trainingTime)) {
+      toast.error("Horário inválido. Use formato HH:MM.");
+      return;
+    }
+
+    const description = trainingDescription 
+      ? `${trainingDescription} ${trainingTime}`
+      : `${trainingType} ${trainingTime}`;
+
+    updateEventMutation.mutate({
+      id: editingEvent.id,
+      type: trainingType,
+      description: description,
+    });
+  };
+
+  const handleDeleteClick = (event: typeof editableEvents[0]) => {
+    setEventToDelete({ id: event.id, type: event.type });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    if (eventToDelete) {
+      deleteEventMutation.mutate({ id: eventToDelete.id });
+    }
   };
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -374,6 +445,38 @@ export default function CalendarPage() {
               </div>
             </div>
           )}
+
+          {/* Treinos editáveis pela treinadora */}
+          {editableEvents.length > 0 && (
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-md p-3 mb-2 border border-green-200 dark:border-green-800">
+              <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Seus treinos (clique para editar/excluir):</p>
+              <div className="space-y-2">
+                {editableEvents.map(e => (
+                  <div key={e.id} className="text-xs flex items-center justify-between bg-white dark:bg-gray-800 rounded p-2">
+                    <span className="font-medium">{getEventLabel(e)}</span>
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6"
+                        onClick={(ev) => { ev.stopPropagation(); handleEditClick(e); }}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-red-500 hover:text-red-700"
+                        onClick={(ev) => { ev.stopPropagation(); handleDeleteClick(e); }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -407,11 +510,79 @@ export default function CalendarPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddTrainingModal(false)}>
+            <Button variant="outline" onClick={() => { setShowAddTrainingModal(false); resetForm(); }}>
               Cancelar
             </Button>
             <Button onClick={handleAddTraining} disabled={createEventMutation.isPending}>
               {createEventMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de edição */}
+      <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) { setEditingEvent(null); resetForm(); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Treino</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Modalidade *</Label>
+              <Select value={trainingType} onValueChange={setTrainingType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Musculação">Musculação</SelectItem>
+                  <SelectItem value="Pilates">Pilates</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Horário *</Label>
+              <Input 
+                type="time" 
+                value={trainingTime} 
+                onChange={(e) => setTrainingTime(e.target.value)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Observação (opcional)</Label>
+              <Textarea 
+                value={trainingDescription} 
+                onChange={(e) => setTrainingDescription(e.target.value)}
+                placeholder="Ex: Treino de pernas, foco em core..."
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowEditModal(false); setEditingEvent(null); resetForm(); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateTraining} disabled={updateEventMutation.isPending}>
+              {updateEventMutation.isPending ? "Salvando..." : "Atualizar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de confirmação de exclusão */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <p className="py-4">
+            Tem certeza que deseja excluir o treino <strong>{eventToDelete?.type}</strong>?
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowDeleteConfirm(false); setEventToDelete(null); }}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={deleteEventMutation.isPending}>
+              {deleteEventMutation.isPending ? "Excluindo..." : "Excluir"}
             </Button>
           </DialogFooter>
         </DialogContent>

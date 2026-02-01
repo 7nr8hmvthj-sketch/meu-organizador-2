@@ -100,19 +100,31 @@ export const appRouter = router({
     
     create: protectedProcedure
       .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), isShift: z.boolean().default(true) }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         return await db.createEvent({
           userId: 1, // Trainers agendam para o Admin
           date: parseDateSafe(input.date),
           type: input.type,
           description: input.description || null,
           isShift: input.isShift,
+          createdBy: ctx.user.username, // Salva quem criou o evento
         });
       }),
     
     update: protectedProcedure
       .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
+        // Verifica se o usuário pode editar (admin ou criador do evento)
+        const event = await db.getEventById(input.id);
+        if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado." });
+        
+        // Treinadoras só podem editar eventos que elas criaram (Musculação/Pilates)
+        if (ctx.user.role === "trainer") {
+          if (event.createdBy !== ctx.user.username) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "Você só pode editar treinos que você criou." });
+          }
+        }
+        
         const { id, ...data } = input;
         const updateData: Record<string, unknown> = {};
         if (data.date) updateData.date = parseDateSafe(data.date);
@@ -137,9 +149,22 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => await db.updateEvent(input.id, 1, { isCancelled: false })),
     
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => await db.deleteEvent(input.id, 1)),
+      .mutation(async ({ input, ctx }) => {
+        // Verifica se o usuário pode excluir (admin ou criador do evento)
+        const event = await db.getEventById(input.id);
+        if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado." });
+        
+        // Treinadoras só podem excluir eventos que elas criaram (Musculação/Pilates)
+        if (ctx.user.role === "trainer") {
+          if (event.createdBy !== ctx.user.username) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "Você só pode excluir treinos que você criou." });
+          }
+        }
+        
+        return await db.deleteEvent(input.id, 1);
+      }),
   }),
 
   // Expenses router - Admin only
