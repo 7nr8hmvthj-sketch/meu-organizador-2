@@ -82,3 +82,11 @@
 - [x] Implementar modal de edição de treinos
 - [x] Implementar exclusão de treinos
 - [x] Restringir edição/exclusão apenas para treinos criados pela própria treinadora
+
+## Bug Crítico de Datas (01/02/2026)
+
+- [x] Investigar dados brutos no banco - verificar formato exato das datas
+- [x] Identificar padrão do deslocamento - problema de timezone na importação do CSV
+- [x] Corrigir causa raiz - reimportar CSV usando apenas data local (YYYY-MM-DD)
+- [x] Recriar natação usando SQL puro com DAYOFWEEK correto
+- [x] Verificar manualmente - todos os eventos de fevereiro estão corretos
