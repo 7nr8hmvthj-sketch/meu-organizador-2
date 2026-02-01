@@ -112,3 +112,13 @@
 - [x] Mostrar eventos passados com estilo riscado no modal das treinadoras
 - [x] Adicionar observação "Passado" em amarelo igual ao modal do admin
 - [x] Manter consistência visual entre os dois tipos de modal
+
+## Calendário Semanal para Treinadoras (01/02/2026)
+
+- [x] Criar página de calendário semanal otimizada para smartphone
+- [x] Layout com 6 dias (segunda a sábado, sem domingo)
+- [x] Visualização vertical com cada dia ocupando mais espaço
+- [x] Navegação por semana (anterior/próxima)
+- [x] Manter lógica de adicionar, editar e excluir treinos
+- [x] Usar mesmo banco de dados e padrões visuais
+- [x] Redirecionar treinadoras automaticamente para esta página ao logar

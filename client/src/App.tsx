@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
 import CalendarPage from "./pages/CalendarPage";
+import WeeklyCalendarPage from "./pages/WeeklyCalendarPage";
 import Finance from "./pages/Finance";
 import Medications from "./pages/Medications";
 import Today from "./pages/Today";
@@ -49,7 +50,8 @@ function Navigation({ userRole, username }: NavigationProps) {
     { path: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
     { path: "/hoje", label: "Hoje", icon: SunIcon, roles: ["admin"] },
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
-    { path: "/calendario", label: "Calendário", icon: CalendarDays, roles: ["admin", "trainer"] },
+    { path: "/calendario", label: "Calendário", icon: CalendarDays, roles: ["admin"] },
+    { path: "/agenda", label: "Calendário", icon: CalendarDays, roles: ["trainer"] },
     { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
     { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"] },
   ];
@@ -198,10 +200,10 @@ interface AuthenticatedAppProps {
 function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
   const [, setLocation] = useLocation();
 
-  // Redirect trainers to calendar page
+  // Redirect trainers to weekly calendar page
   useEffect(() => {
     if (userRole === "trainer") {
-      setLocation("/calendario");
+      setLocation("/agenda");
     }
   }, [userRole, setLocation]);
 
@@ -221,11 +223,12 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
               </>
             )}
             <Route path="/calendario" component={CalendarPage} />
+            <Route path="/agenda" component={WeeklyCalendarPage} />
             <Route>
               <div className="text-center py-20">
                 <h1 className="text-2xl font-bold">Página não encontrada</h1>
                 <Link
-                  href={userRole === "trainer" ? "/calendario" : "/"}
+                  href={userRole === "trainer" ? "/agenda" : "/"}
                   className="text-primary hover:underline mt-4 inline-block"
                 >
                   Voltar ao início
