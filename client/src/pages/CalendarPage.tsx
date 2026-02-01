@@ -435,13 +435,32 @@ export default function CalendarPage() {
           {selectedDateEvents.length > 0 && (
             <div className="bg-muted/50 rounded-md p-3 mb-2">
               <p className="text-xs font-medium text-muted-foreground mb-2">Eventos neste dia:</p>
-              <div className="space-y-1">
-                {selectedDateEvents.map(e => (
-                  <div key={e.id} className="text-xs flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${e.type.toLowerCase().includes('natação') ? 'bg-blue-500' : e.type.toLowerCase().includes('musculação') ? 'bg-green-500' : e.type.toLowerCase().includes('pilates') ? 'bg-purple-500' : 'bg-gray-400'}`}></div>
-                    <span>{getEventLabel(e)}</span>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                {selectedDateEvents.map(e => {
+                  const isTraining = e.type.toLowerCase().includes('musculação') || 
+                                     e.type.toLowerCase().includes('musculacao') || 
+                                     e.type.toLowerCase().includes('pilates');
+                  const time = extractTimeFromDescription(e.description || "");
+                  const descWithoutTypeAndTime = (e.description || "")
+                    .replace(e.type, '')
+                    .replace(time, '')
+                    .trim();
+                  
+                  return (
+                    <div key={e.id} className="text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${e.type.toLowerCase().includes('natação') ? 'bg-blue-500' : e.type.toLowerCase().includes('musculação') ? 'bg-green-500' : e.type.toLowerCase().includes('pilates') ? 'bg-purple-500' : 'bg-gray-400'}`}></div>
+                        <span className="font-medium">{getEventLabel(e)}</span>
+                        {isTraining && e.createdBy && (
+                          <span className="text-muted-foreground">({e.createdBy})</span>
+                        )}
+                      </div>
+                      {isTraining && descWithoutTypeAndTime && (
+                        <p className="ml-4 text-muted-foreground italic">{descWithoutTypeAndTime}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -451,29 +470,42 @@ export default function CalendarPage() {
             <div className="bg-green-50 dark:bg-green-900/20 rounded-md p-3 mb-2 border border-green-200 dark:border-green-800">
               <p className="text-xs font-medium text-green-700 dark:text-green-300 mb-2">Seus treinos (clique para editar/excluir):</p>
               <div className="space-y-2">
-                {editableEvents.map(e => (
-                  <div key={e.id} className="text-xs flex items-center justify-between bg-white dark:bg-gray-800 rounded p-2">
-                    <span className="font-medium">{getEventLabel(e)}</span>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6"
-                        onClick={(ev) => { ev.stopPropagation(); handleEditClick(e); }}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 text-red-500 hover:text-red-700"
-                        onClick={(ev) => { ev.stopPropagation(); handleDeleteClick(e); }}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                {editableEvents.map(e => {
+                  const time = extractTimeFromDescription(e.description || "");
+                  const descWithoutTypeAndTime = (e.description || "")
+                    .replace(e.type, '')
+                    .replace(time, '')
+                    .trim();
+                  
+                  return (
+                    <div key={e.id} className="text-xs bg-white dark:bg-gray-800 rounded p-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{getEventLabel(e)}</span>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={(ev) => { ev.stopPropagation(); handleEditClick(e); }}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6 text-red-500 hover:text-red-700"
+                            onClick={(ev) => { ev.stopPropagation(); handleDeleteClick(e); }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      {descWithoutTypeAndTime && (
+                        <p className="text-muted-foreground italic mt-1">{descWithoutTypeAndTime}</p>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

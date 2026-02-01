@@ -90,3 +90,7 @@
 - [x] Corrigir causa raiz - reimportar CSV usando apenas data local (YYYY-MM-DD)
 - [x] Recriar natação usando SQL puro com DAYOFWEEK correto
 - [x] Verificar manualmente - todos os eventos de fevereiro estão corretos
+
+## Correção Visibilidade de Observações (01/02/2026)
+
+- [x] Permitir que treinadoras vejam observações de treinos criados uma pela outra
