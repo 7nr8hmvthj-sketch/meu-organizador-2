@@ -122,3 +122,13 @@
 - [x] Manter lógica de adicionar, editar e excluir treinos
 - [x] Usar mesmo banco de dados e padrões visuais
 - [x] Redirecionar treinadoras automaticamente para esta página ao logar
+
+## Frontend Financeiro (01/02/2026)
+
+- [x] Criar tabela de despesas no banco de dados (expenses)
+- [x] Implementar routers tRPC para CRUD de despesas
+- [x] Criar página de gestão financeira com dashboard de resumo
+- [x] Implementar listagem de despesas fixas e variáveis
+- [x] Adicionar funcionalidade de marcar como pago
+- [x] Implementar botão "Virar Mês" para reiniciar status de pagamento
+- [x] Adicionar modal de criação/edição de despesas

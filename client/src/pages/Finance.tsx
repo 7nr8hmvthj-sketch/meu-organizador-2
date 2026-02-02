@@ -2,127 +2,166 @@ import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { DollarSign, Plus, Pencil, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, DollarSign, CheckCircle2, Circle, Trash2, Pencil, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
-export default function Finance() {
-  const utils = trpc.useUtils();
-  const { data: expenses = [], isLoading } = trpc.expenses.list.useQuery();
-  
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<typeof expenses[0] | null>(null);
-  
-  // Form states
-  const [newName, setNewName] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newDueDay, setNewDueDay] = useState("1");
-  const [newCategory, setNewCategory] = useState<"fixed" | "variable">("fixed");
+// --- HELPERS ---
 
-  const currentMonth = new Date().getMonth() + 1;
-  const currentYear = new Date().getFullYear();
+const formatCurrency = (value: string | number) => {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return "R$ 0,00";
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(num);
+};
+
+export default function FinancePage() {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Form States
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [dueDay, setDueDay] = useState("");
+  const [category, setCategory] = useState<"fixed" | "variable">("fixed");
+
+  // Data Fetching
+  const { data: expenses = [], isLoading, refetch } = trpc.expenses.list.useQuery();
+  const utils = trpc.useUtils();
 
   // Mutations
   const createMutation = trpc.expenses.create.useMutation({
     onSuccess: () => {
+      toast.success("Despesa adicionada!");
       utils.expenses.list.invalidate();
-      setShowAddModal(false);
-      resetForm();
-      toast.success("Despesa criada com sucesso!");
+      closeModal();
     },
+    onError: (e) => toast.error(`Erro: ${e.message}`)
   });
 
   const updateMutation = trpc.expenses.update.useMutation({
     onSuccess: () => {
-      utils.expenses.list.invalidate();
-      setShowEditModal(false);
-      setSelectedExpense(null);
       toast.success("Despesa atualizada!");
+      utils.expenses.list.invalidate();
+      closeModal();
     },
+    onError: (e) => toast.error(`Erro: ${e.message}`)
   });
 
   const togglePaidMutation = trpc.expenses.togglePaid.useMutation({
-    onSuccess: () => {
-      utils.expenses.list.invalidate();
-    },
+    onSuccess: () => utils.expenses.list.invalidate(),
   });
 
   const deleteMutation = trpc.expenses.delete.useMutation({
     onSuccess: () => {
+      toast.success("Despesa removida.");
       utils.expenses.list.invalidate();
-      toast.success("Despesa excluída!");
     },
   });
 
-  const resetForm = () => {
-    setNewName("");
-    setNewAmount("");
-    setNewDueDay("1");
-    setNewCategory("fixed");
-  };
+  const resetMutation = trpc.expenses.resetPaidStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Status de pagamento reiniciado para o novo mês.");
+      utils.expenses.list.invalidate();
+    }
+  });
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    const total = expenses.reduce((sum, e) => sum + parseFloat(String(e.amount)), 0);
-    const paid = expenses.filter(e => e.isPaid).reduce((sum, e) => sum + parseFloat(String(e.amount)), 0);
-    const pending = total - paid;
-    return { total, paid, pending };
+  // --- CALCULATIONS ---
+
+  const summary = useMemo(() => {
+    let total = 0;
+    let paid = 0;
+    let pending = 0;
+    let fixedTotal = 0;
+    let variableTotal = 0;
+
+    expenses.forEach(e => {
+      const val = parseFloat(String(e.amount));
+      total += val;
+      if (e.isPaid) paid += val;
+      else pending += val;
+
+      if (e.category === 'fixed') fixedTotal += val;
+      else variableTotal += val;
+    });
+
+    return { total, paid, pending, fixedTotal, variableTotal };
   }, [expenses]);
 
-  // Separate by category
-  const fixedExpenses = expenses.filter(e => e.category === "fixed");
-  const variableExpenses = expenses.filter(e => e.category === "variable");
+  // Ordenar por dia de vencimento
+  const sortedExpenses = useMemo(() => {
+    return [...expenses].sort((a, b) => a.dueDay - b.dueDay);
+  }, [expenses]);
 
-  const handleCreate = () => {
-    if (!newName || !newAmount) {
-      toast.error("Preencha todos os campos");
+  const fixedExpenses = sortedExpenses.filter(e => e.category === 'fixed');
+  const variableExpenses = sortedExpenses.filter(e => e.category === 'variable');
+
+  // --- HANDLERS ---
+
+  const handleSave = () => {
+    if (!name || !amount || !dueDay) {
+      toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    createMutation.mutate({
-      name: newName,
-      amount: newAmount,
-      dueDay: parseInt(newDueDay),
-      category: newCategory,
-    });
+
+    const payload = {
+      name,
+      amount: amount.replace(',', '.'), // Aceitar vírgula
+      dueDay: parseInt(dueDay),
+      category
+    };
+
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, ...payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
-  const handleUpdate = () => {
-    if (!selectedExpense) return;
-    updateMutation.mutate({
-      id: selectedExpense.id,
-      name: newName || undefined,
-      amount: newAmount || undefined,
-      dueDay: parseInt(newDueDay) || undefined,
-      category: newCategory,
-    });
+  const handleEdit = (expense: typeof expenses[0]) => {
+    setEditingId(expense.id);
+    setName(expense.name);
+    setAmount(String(expense.amount));
+    setDueDay(expense.dueDay.toString());
+    setCategory(expense.category);
+    setShowAddModal(true);
   };
 
-  const openEditModal = (expense: typeof expenses[0]) => {
-    setSelectedExpense(expense);
-    setNewName(expense.name);
-    setNewAmount(String(expense.amount));
-    setNewDueDay(String(expense.dueDay));
-    setNewCategory(expense.category);
-    setShowEditModal(true);
-  };
-
-  const handleTogglePaid = (expense: typeof expenses[0]) => {
+  const handleTogglePaid = (id: number, currentStatus: boolean) => {
+    const today = new Date();
     togglePaidMutation.mutate({
-      id: expense.id,
-      isPaid: !expense.isPaid,
-      month: currentMonth,
-      year: currentYear,
+      id,
+      isPaid: !currentStatus,
+      month: !currentStatus ? today.getMonth() + 1 : undefined,
+      year: !currentStatus ? today.getFullYear() : undefined
     });
   };
 
-  const formatCurrency = (value: number | string) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const handleDelete = (id: number) => {
+    if (confirm("Tem certeza que deseja excluir esta despesa?")) {
+      deleteMutation.mutate({ id });
+    }
+  };
+
+  const closeModal = () => {
+    setShowAddModal(false);
+    setEditingId(null);
+    setName("");
+    setAmount("");
+    setDueDay("");
+    setCategory("fixed");
+  };
+
+  const handleResetMonth = () => {
+    if(confirm("Isso marcará todas as contas como 'Não Pagas' para iniciar um novo mês. Continuar?")) {
+      resetMutation.mutate();
+    }
   };
 
   if (isLoading) {
@@ -133,276 +172,242 @@ export default function Finance() {
     );
   }
 
-  const ExpenseItem = ({ expense }: { expense: typeof expenses[0] }) => (
-    <div className={`flex items-center gap-3 p-3 rounded-lg border ${expense.isPaid ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800" : "bg-card"}`}>
-      <Checkbox
-        checked={expense.isPaid}
-        onCheckedChange={() => handleTogglePaid(expense)}
-        className="h-5 w-5"
-      />
-      <div className="flex-1 min-w-0">
-        <p className={`font-medium ${expense.isPaid ? "line-through text-muted-foreground" : ""}`}>
-          {expense.name}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          Vencimento: dia {expense.dueDay}
-        </p>
-      </div>
-      <div className="text-right">
-        <p className={`font-semibold ${expense.isPaid ? "text-green-600" : ""}`}>
-          {formatCurrency(expense.amount)}
-        </p>
-      </div>
-      <div className="flex gap-1">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => openEditModal(expense)}
-        >
-          <Pencil className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-red-500"
-          onClick={() => {
-            if (confirm("Tem certeza que deseja excluir esta despesa?")) {
-              deleteMutation.mutate({ id: expense.id });
-            }
-          }}
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <DollarSign className="w-6 h-6 text-primary" />
-            Controle Financeiro
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-primary">
+            <DollarSign className="w-6 h-6" /> Gestão Financeira
           </h1>
-          <p className="text-muted-foreground">Gerencie suas contas e despesas</p>
+          <p className="text-muted-foreground text-sm">
+            Controle de despesas fixas e variáveis.
+          </p>
         </div>
-        <Button onClick={() => setShowAddModal(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Nova Despesa
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleResetMonth} title="Reiniciar pagamentos para novo mês">
+            <RefreshCw className="w-4 h-4 mr-2" /> Virar Mês
+          </Button>
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Nova Despesa
+          </Button>
+        </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/20">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-green-700 dark:text-green-400">Total Pago</p>
-                <p className="text-xl font-bold text-green-700 dark:text-green-300">
-                  {formatCurrency(totals.paid)}
-                </p>
-              </div>
-            </div>
+      {/* Dashboard Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Previsto</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(summary.total)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Fixas: {formatCurrency(summary.fixedTotal)} | Var: {formatCurrency(summary.variableTotal)}
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pago</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.paid)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {summary.total > 0 ? Math.round((summary.paid / summary.total) * 100) : 0}% do total
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20 border-amber-200 dark:border-amber-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-amber-500/20">
-                <Clock className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm text-amber-700 dark:text-amber-400">Pendente</p>
-                <p className="text-xl font-bold text-amber-700 dark:text-amber-300">
-                  {formatCurrency(totals.pending)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <DollarSign className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-blue-700 dark:text-blue-400">Total do Mês</p>
-                <p className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                  {formatCurrency(totals.total)}
-                </p>
-              </div>
-            </div>
+        <Card className="border-l-4 border-l-amber-500">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">A Pagar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-600">{formatCurrency(summary.pending)}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Faltam {expenses.length - expenses.filter(e => e.isPaid).length} contas
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Fixed Expenses */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Contas Fixas</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {fixedExpenses.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              Nenhuma conta fixa cadastrada
-            </p>
-          ) : (
-            fixedExpenses.map(expense => (
-              <ExpenseItem key={expense.id} expense={expense} />
-            ))
-          )}
-        </CardContent>
-      </Card>
+      {/* Listas de Despesas */}
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+          <TabsTrigger value="all">Todas</TabsTrigger>
+          <TabsTrigger value="fixed">Fixas</TabsTrigger>
+          <TabsTrigger value="variable">Variáveis</TabsTrigger>
+        </TabsList>
 
-      {/* Variable Expenses */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Contas Variáveis</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {variableExpenses.length === 0 ? (
-            <p className="text-center text-muted-foreground py-4">
-              Nenhuma conta variável cadastrada
-            </p>
-          ) : (
-            variableExpenses.map(expense => (
-              <ExpenseItem key={expense.id} expense={expense} />
-            ))
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="all" className="mt-4">
+          <ExpenseList 
+            expenses={sortedExpenses} 
+            onToggle={handleTogglePaid} 
+            onEdit={handleEdit} 
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+        
+        <TabsContent value="fixed" className="mt-4">
+          <ExpenseList 
+            expenses={fixedExpenses} 
+            onToggle={handleTogglePaid} 
+            onEdit={handleEdit} 
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+        
+        <TabsContent value="variable" className="mt-4">
+          <ExpenseList 
+            expenses={variableExpenses} 
+            onToggle={handleTogglePaid} 
+            onEdit={handleEdit} 
+            onDelete={handleDelete}
+          />
+        </TabsContent>
+      </Tabs>
 
-      {/* Add Expense Modal */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+      {/* Modal Adicionar/Editar */}
+      <Dialog open={showAddModal} onOpenChange={(open) => !open && closeModal()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nova Despesa</DialogTitle>
+            <DialogTitle>{editingId ? "Editar Despesa" : "Nova Despesa"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div>
-              <Label>Nome</Label>
-              <Input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Ex: Aluguel"
+            <div className="space-y-2">
+              <Label>Nome da Despesa</Label>
+              <Input 
+                value={name} 
+                onChange={e => setName(e.target.value)} 
+                placeholder="Ex: Aluguel, Academia..." 
               />
             </div>
-            <div>
-              <Label>Valor</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={newAmount}
-                onChange={(e) => setNewAmount(e.target.value)}
-                placeholder="0.00"
-              />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Valor (R$)</Label>
+                <Input 
+                  value={amount} 
+                  onChange={e => setAmount(e.target.value)} 
+                  type="number" 
+                  step="0.01" 
+                  placeholder="0.00" 
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Dia Vencimento</Label>
+                <Select value={dueDay} onValueChange={setDueDay}>
+                  <SelectTrigger><SelectValue placeholder="Dia" /></SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                      <SelectItem key={d} value={d.toString()}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <Label>Dia de Vencimento</Label>
-              <Select value={newDueDay} onValueChange={setNewDueDay}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <SelectItem key={day} value={String(day)}>Dia {day}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
+
+            <div className="space-y-2">
               <Label>Categoria</Label>
-              <Select value={newCategory} onValueChange={(v) => setNewCategory(v as "fixed" | "variable")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={category} onValueChange={(v: "fixed" | "variable") => setCategory(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fixed">Fixa</SelectItem>
-                  <SelectItem value="variable">Variável</SelectItem>
+                  <SelectItem value="fixed">Fixa (Recorrente)</SelectItem>
+                  <SelectItem value="variable">Variável (Cartão/Outros)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreate} disabled={createMutation.isPending}>
-              Criar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Expense Modal */}
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Despesa</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label>Nome</Label>
-              <Input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Valor</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={newAmount}
-                onChange={(e) => setNewAmount(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Dia de Vencimento</Label>
-              <Select value={newDueDay} onValueChange={setNewDueDay}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                    <SelectItem key={day} value={String(day)}>Dia {day}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Categoria</Label>
-              <Select value={newCategory} onValueChange={(v) => setNewCategory(v as "fixed" | "variable")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">Fixa</SelectItem>
-                  <SelectItem value="variable">Variável</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditModal(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleUpdate} disabled={updateMutation.isPending}>
+            <Button variant="outline" onClick={closeModal}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
               Salvar
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Sub-componente para renderizar a lista
+function ExpenseList({ expenses, onToggle, onEdit, onDelete }: {
+  expenses: any[];
+  onToggle: (id: number, currentStatus: boolean) => void;
+  onEdit: (expense: any) => void;
+  onDelete: (id: number) => void;
+}) {
+  if (expenses.length === 0) {
+    return (
+      <Card className="bg-muted/20 border-dashed">
+        <CardContent className="py-10 text-center text-muted-foreground">
+          Nenhuma despesa encontrada. Adicione uma nova clicando em "+ Nova Despesa".
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {/* Cabeçalho da Tabela - Desktop */}
+      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="col-span-1 text-center">Status</div>
+        <div className="col-span-1 text-center">Dia</div>
+        <div className="col-span-5">Descrição</div>
+        <div className="col-span-3 text-right">Valor</div>
+        <div className="col-span-2 text-right">Ações</div>
+      </div>
+
+      {expenses.map((expense) => (
+        <Card key={expense.id} className={`transition-all hover:bg-accent/30 ${expense.isPaid ? 'opacity-60 bg-muted/20' : ''}`}>
+          <div className="grid grid-cols-12 gap-2 md:gap-4 p-3 md:p-4 items-center">
+            
+            {/* Checkbox Status */}
+            <div className="col-span-2 md:col-span-1 flex justify-center">
+              <button 
+                onClick={() => onToggle(expense.id, expense.isPaid)}
+                className={`rounded-full p-1 transition-colors ${expense.isPaid ? 'text-green-500 hover:text-green-600' : 'text-gray-300 hover:text-gray-400'}`}
+              >
+                {expense.isPaid ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+              </button>
+            </div>
+
+            {/* Dia */}
+            <div className="col-span-2 md:col-span-1 flex justify-center">
+              <span className="text-sm font-bold bg-muted px-2 py-1 rounded text-muted-foreground">
+                {expense.dueDay}
+              </span>
+            </div>
+
+            {/* Nome e Categoria */}
+            <div className="col-span-8 md:col-span-5 flex flex-col">
+              <span className={`font-medium ${expense.isPaid ? 'line-through text-muted-foreground' : ''}`}>
+                {expense.name}
+              </span>
+              <span className="text-[10px] uppercase text-muted-foreground flex items-center gap-1">
+                {expense.category === 'fixed' ? 'Fixa' : 'Variável'}
+              </span>
+            </div>
+
+            {/* Valor */}
+            <div className="col-span-6 md:col-span-3 text-left md:text-right font-mono font-medium">
+              {formatCurrency(expense.amount)}
+            </div>
+
+            {/* Ações */}
+            <div className="col-span-6 md:col-span-2 flex justify-end gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(expense)}>
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => onDelete(expense.id)}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ))}
     </div>
   );
 }
