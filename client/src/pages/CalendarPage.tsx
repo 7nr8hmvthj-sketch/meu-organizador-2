@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen } from "lucide-react";
+import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -116,6 +117,7 @@ function extractTimeFromDescription(desc: string): string {
 // --- COMPONENT ---
 
 export default function CalendarPage() {
+  const [, navigate] = useLocation();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showDayModal, setShowDayModal] = useState(false);
@@ -142,6 +144,13 @@ export default function CalendarPage() {
   const { data: events = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
+
+  // Query for diary entry of selected date (only for admin)
+  const selectedDateKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
+  const { data: diaryEntry } = trpc.diary.get.useQuery(
+    { date: selectedDateKey || "" },
+    { enabled: !!selectedDateKey && authData?.user?.role === "admin" }
+  );
 
   const isTrainer = authData?.user?.role === "trainer";
   const isAdmin = authData?.user?.role === "admin";
@@ -584,6 +593,44 @@ export default function CalendarPage() {
                   </div>
                 </div>
               ))
+            )}
+
+            {/* Diary Preview Section - Only for Admin */}
+            {isAdmin && (
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-primary" /> 
+                    Diário do Dia
+                  </h4>
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="text-xs h-auto p-0"
+                    onClick={() => {
+                      setShowDayModal(false);
+                      navigate(`/diario?date=${format(selectedDate!, 'yyyy-MM-dd')}`);
+                    }}
+                  >
+                    Abrir Diário Completo &rarr;
+                  </Button>
+                </div>
+                
+                <div className="bg-muted/30 p-3 rounded-md text-sm text-muted-foreground italic min-h-[60px]">
+                  {diaryEntry?.content ? (
+                    <div>
+                      {diaryEntry.title && (
+                        <p className="font-semibold not-italic text-foreground mb-1">{diaryEntry.title}</p>
+                      )}
+                      <p className="line-clamp-3">
+                        "{diaryEntry.content.substring(0, 200)}{diaryEntry.content.length > 200 ? '...' : ''}"
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="opacity-50">Nenhum registro no diário para este dia.</span>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </DialogContent>

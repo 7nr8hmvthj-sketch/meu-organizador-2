@@ -132,3 +132,16 @@
 - [x] Adicionar funcionalidade de marcar como pago
 - [x] Implementar botão "Virar Mês" para reiniciar status de pagamento
 - [x] Adicionar modal de criação/edição de despesas
+
+## Diário Pessoal (02/02/2026)
+
+- [x] Criar tabela diary_entries no banco de dados
+- [x] Implementar routers tRPC para CRUD de entradas
+- [x] Criar página DiaryPage.tsx com editor markdown
+- [x] Adicionar navegação por data (dia anterior/próximo)
+- [x] Implementar sistema de tags para categorização
+- [x] Adicionar busca por palavra-chave
+- [x] Filtro por tag na lista de entradas
+- [x] Preview do diário no modal de eventos do calendário
+- [x] Link direto do calendário para o diário do dia
+- [x] Restringir acesso apenas para USER (admin)

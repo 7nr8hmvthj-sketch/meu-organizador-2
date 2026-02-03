@@ -100,3 +100,20 @@ export const userPreferences = mysqlTable("user_preferences", {
 
 export type UserPreference = typeof userPreferences.$inferSelect;
 export type InsertUserPreference = typeof userPreferences.$inferInsert;
+
+/**
+ * Diary entries table - stores personal diary entries with markdown content
+ */
+export const diaryEntries = mysqlTable("diary_entries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  date: date("date").notNull(),
+  title: varchar("title", { length: 255 }),
+  content: text("content"),
+  tags: varchar("tags", { length: 500 }), // comma-separated tags
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DiaryEntry = typeof diaryEntries.$inferSelect;
+export type InsertDiaryEntry = typeof diaryEntries.$inferInsert;

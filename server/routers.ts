@@ -219,6 +219,65 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => await db.deleteMedicationLog(input.medicationId, ctx.user.userId, input.date)),
   }),
 
+  // Diary router - Admin only (private diary)
+  diary: router({
+    // Get diary entry for a specific date
+    get: adminProcedure
+      .input(z.object({ date: z.string() }))
+      .query(async ({ input, ctx }) => {
+        return await db.getDiaryEntry(ctx.user.userId, input.date);
+      }),
+    
+    // Save or update diary entry
+    save: adminProcedure
+      .input(z.object({ 
+        date: z.string(), 
+        title: z.string().nullable().optional(),
+        content: z.string().nullable().optional(),
+        tags: z.string().nullable().optional()
+      }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.upsertDiaryEntry(
+          ctx.user.userId, 
+          input.date, 
+          input.title || null, 
+          input.content || null,
+          input.tags || null
+        );
+      }),
+    
+    // List all diary entries
+    list: adminProcedure.query(async ({ ctx }) => {
+      return await db.getDiaryEntriesByUserId(ctx.user.userId);
+    }),
+    
+    // Search diary entries by keyword
+    search: adminProcedure
+      .input(z.object({ query: z.string() }))
+      .query(async ({ input, ctx }) => {
+        return await db.searchDiaryEntries(ctx.user.userId, input.query);
+      }),
+    
+    // Get entries by tag
+    byTag: adminProcedure
+      .input(z.object({ tag: z.string() }))
+      .query(async ({ input, ctx }) => {
+        return await db.getDiaryEntriesByTag(ctx.user.userId, input.tag);
+      }),
+    
+    // Get all tags used
+    tags: adminProcedure.query(async ({ ctx }) => {
+      return await db.getAllDiaryTags(ctx.user.userId);
+    }),
+    
+    // Delete diary entry
+    delete: adminProcedure
+      .input(z.object({ date: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        return await db.deleteDiaryEntry(ctx.user.userId, input.date);
+      }),
+  }),
+
   // User preferences router
   preferences: router({
     get: protectedProcedure.query(async ({ ctx }) => await db.getUserPreferences(ctx.user.userId)),

@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { eq, and, gte, lte, sql, or, like } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -6,7 +6,8 @@ import {
   expenses, InsertExpense, Expense,
   medications, InsertMedication, Medication,
   medicationLogs, InsertMedicationLog, MedicationLog,
-  userPreferences, InsertUserPreference, UserPreference
+  userPreferences, InsertUserPreference, UserPreference,
+  diaryEntries, InsertDiaryEntry, DiaryEntry
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -297,4 +298,157 @@ export async function upsertUserPreferences(userId: number, prefs: Partial<Inser
   
   const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
   return result[0];
+}
+
+// ============ DIARY FUNCTIONS ============
+
+export async function getDiaryEntry(userId: number, dateStr: string): Promise<DiaryEntry | null> {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(diaryEntries)
+    .where(and(
+      eq(diaryEntries.userId, userId),
+      eq(diaryEntries.date, new Date(dateStr + "T12:00:00Z"))
+    ))
+    .limit(1);
+  
+  if (result[0]) {
+    return {
+      ...result[0],
+      date: result[0].date instanceof Date 
+        ? `${result[0].date.getUTCFullYear()}-${String(result[0].date.getUTCMonth() + 1).padStart(2, '0')}-${String(result[0].date.getUTCDate()).padStart(2, '0')}`
+        : String(result[0].date)
+    } as any;
+  }
+  return null;
+}
+
+export async function upsertDiaryEntry(
+  userId: number, 
+  dateStr: string, 
+  title: string | null, 
+  content: string | null, 
+  tags: string | null
+): Promise<DiaryEntry> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const dateValue = new Date(dateStr + "T12:00:00Z");
+  const existing = await getDiaryEntry(userId, dateStr);
+  
+  if (existing) {
+    await db.update(diaryEntries)
+      .set({ title, content, tags })
+      .where(and(
+        eq(diaryEntries.userId, userId),
+        eq(diaryEntries.date, dateValue)
+      ));
+  } else {
+    await db.insert(diaryEntries).values({
+      userId,
+      date: dateValue,
+      title,
+      content,
+      tags
+    });
+  }
+  
+  const result = await getDiaryEntry(userId, dateStr);
+  return result!;
+}
+
+export async function getDiaryEntriesByUserId(userId: number): Promise<DiaryEntry[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select().from(diaryEntries)
+    .where(eq(diaryEntries.userId, userId))
+    .orderBy(sql`${diaryEntries.date} DESC`);
+  
+  return result.map(entry => ({
+    ...entry,
+    date: entry.date instanceof Date 
+      ? `${entry.date.getUTCFullYear()}-${String(entry.date.getUTCMonth() + 1).padStart(2, '0')}-${String(entry.date.getUTCDate()).padStart(2, '0')}`
+      : String(entry.date)
+  })) as any[];
+}
+
+export async function searchDiaryEntries(userId: number, searchTerm: string): Promise<DiaryEntry[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const searchPattern = `%${searchTerm}%`;
+  
+  const result = await db.select().from(diaryEntries)
+    .where(and(
+      eq(diaryEntries.userId, userId),
+      or(
+        like(diaryEntries.title, searchPattern),
+        like(diaryEntries.content, searchPattern),
+        like(diaryEntries.tags, searchPattern)
+      )
+    ))
+    .orderBy(sql`${diaryEntries.date} DESC`);
+  
+  return result.map(entry => ({
+    ...entry,
+    date: entry.date instanceof Date 
+      ? `${entry.date.getUTCFullYear()}-${String(entry.date.getUTCMonth() + 1).padStart(2, '0')}-${String(entry.date.getUTCDate()).padStart(2, '0')}`
+      : String(entry.date)
+  })) as any[];
+}
+
+export async function getDiaryEntriesByTag(userId: number, tag: string): Promise<DiaryEntry[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const tagPattern = `%${tag}%`;
+  
+  const result = await db.select().from(diaryEntries)
+    .where(and(
+      eq(diaryEntries.userId, userId),
+      like(diaryEntries.tags, tagPattern)
+    ))
+    .orderBy(sql`${diaryEntries.date} DESC`);
+  
+  return result.map(entry => ({
+    ...entry,
+    date: entry.date instanceof Date 
+      ? `${entry.date.getUTCFullYear()}-${String(entry.date.getUTCMonth() + 1).padStart(2, '0')}-${String(entry.date.getUTCDate()).padStart(2, '0')}`
+      : String(entry.date)
+  })) as any[];
+}
+
+export async function getAllDiaryTags(userId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db.select({ tags: diaryEntries.tags })
+    .from(diaryEntries)
+    .where(eq(diaryEntries.userId, userId));
+  
+  const allTags = new Set<string>();
+  result.forEach(entry => {
+    if (entry.tags) {
+      entry.tags.split(',').forEach(tag => {
+        const trimmed = tag.trim();
+        if (trimmed) allTags.add(trimmed);
+      });
+    }
+  });
+  
+  return Array.from(allTags).sort();
+}
+
+export async function deleteDiaryEntry(userId: number, dateStr: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  
+  const dateValue = new Date(dateStr + "T12:00:00Z");
+  await db.delete(diaryEntries).where(and(
+    eq(diaryEntries.userId, userId),
+    eq(diaryEntries.date, dateValue)
+  ));
+  return true;
 }

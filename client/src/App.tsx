@@ -13,6 +13,7 @@ import WeeklyCalendarPage from "./pages/WeeklyCalendarPage";
 import Finance from "./pages/Finance";
 import Medications from "./pages/Medications";
 import Today from "./pages/Today";
+import DiaryPage from "./pages/DiaryPage";
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -24,7 +25,8 @@ import {
   Sun,
   LogOut,
   Menu,
-  X
+  X,
+  Book
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -52,6 +54,7 @@ function Navigation({ userRole, username }: NavigationProps) {
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
     { path: "/calendario", label: "Calendário", icon: CalendarDays, roles: ["admin"] },
     { path: "/agenda", label: "Calendário", icon: CalendarDays, roles: ["trainer"] },
+    { path: "/diario", label: "Diário", icon: Book, roles: ["admin"] },
     { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
     { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"] },
   ];
@@ -220,6 +223,7 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
                 <Route path="/eventos" component={Events} />
                 <Route path="/financeiro" component={Finance} />
                 <Route path="/medicamentos" component={Medications} />
+                <Route path="/diario" component={DiaryPage} />
               </>
             )}
             <Route path="/calendario" component={CalendarPage} />
