@@ -502,9 +502,9 @@ export default function DiaryPage() {
                               <h4 className="font-semibold mt-1">{e.title}</h4>
                             )}
                             {e.content && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {e.content.substring(0, 150)}...
-                              </p>
+                              <div className="text-sm text-muted-foreground mt-1 max-h-[200px] overflow-y-auto">
+                                <SimpleMarkdown>{e.content}</SimpleMarkdown>
+                              </div>
                             )}
                             {e.tags && (
                               <div className="flex flex-wrap gap-1 mt-2">

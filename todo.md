@@ -145,3 +145,9 @@
 - [x] Preview do diário no modal de eventos do calendário
 - [x] Link direto do calendário para o diário do dia
 - [x] Restringir acesso apenas para USER (admin)
+
+## Correção Visualização Diário (03/02/2026)
+
+- [x] Melhorar visualização de entradas passadas no modal "Ver Entradas"
+- [x] Exibir conteúdo completo das entradas (não apenas preview)
+- [x] Adicionar scroll ou expandir conteúdo truncado
