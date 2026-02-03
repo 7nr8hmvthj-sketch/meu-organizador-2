@@ -151,3 +151,8 @@
 - [x] Melhorar visualização de entradas passadas no modal "Ver Entradas"
 - [x] Exibir conteúdo completo das entradas (não apenas preview)
 - [x] Adicionar scroll ou expandir conteúdo truncado
+
+## Correção Key Duplicada Diário (03/02/2026)
+
+- [x] Corrigir erro de keys duplicadas no modal de entradas
+- [x] Usar ID ao invés de data como key única

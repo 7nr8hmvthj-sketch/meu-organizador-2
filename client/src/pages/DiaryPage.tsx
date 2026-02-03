@@ -488,7 +488,7 @@ export default function DiaryPage() {
                 <div className="space-y-3">
                   {displayEntries.map((e) => (
                     <Card 
-                      key={String(e.date)}
+                      key={e.id}
                       className="cursor-pointer hover:bg-accent/50 transition-colors"
                       onClick={() => goToDate(String(e.date))}
                     >
