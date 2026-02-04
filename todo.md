@@ -162,3 +162,8 @@
 - [x] Corrigir DiaryPage: texto sumindo após salvar (problema de recarregamento)
 - [x] Adicionar função extractTimeFromDescription no CalendarPage
 - [x] Corrigir link para diário no CalendarPage
+
+## Sincronização GitHub (03/02/2026)
+
+- [x] Puxar alterações do commit 9cee872 do GitHub
+- [x] Aplicar correções definitivas do Diário

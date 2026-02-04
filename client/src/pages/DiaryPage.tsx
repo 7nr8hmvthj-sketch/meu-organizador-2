@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -52,13 +52,13 @@ export default function DiaryPage() {
   const searchString = useSearch();
   const [, setLocation] = useLocation();
   
-  // Parse date from URL
+  // CORREÇÃO 1: Forçar meio-dia para evitar bug de fuso horário
   const getDateFromUrl = () => {
     const params = new URLSearchParams(searchString);
     const dateParam = params.get('date');
     if (dateParam) {
       try {
-        return parseISO(dateParam);
+        return new Date(dateParam + "T12:00:00");
       } catch {
         return new Date();
       }
@@ -68,10 +68,8 @@ export default function DiaryPage() {
   
   const [currentDate, setCurrentDate] = useState(getDateFromUrl);
   
-  // Update date when URL changes
   useEffect(() => {
-    const newDate = getDateFromUrl();
-    setCurrentDate(newDate);
+    setCurrentDate(getDateFromUrl());
   }, [searchString]);
   
   const [title, setTitle] = useState("");
@@ -84,7 +82,7 @@ export default function DiaryPage() {
   const [activeTab, setActiveTab] = useState("write");
   const [showEntriesModal, setShowEntriesModal] = useState(false);
   
-  // Ref para controlar se a data mudou para limpar campos
+  // CORREÇÃO 2: Ref para impedir limpeza indevida do form
   const lastLoadedDateRef = useRef<string | null>(null);
   
   const dateKey = format(currentDate, "yyyy-MM-dd");
@@ -103,13 +101,13 @@ export default function DiaryPage() {
   );
 
   const saveMutation = trpc.diary.save.useMutation({
-    onSuccess: (savedEntry) => {
+    onSuccess: (savedData) => {
       toast.success("Diário salvo com sucesso!");
-      // Atualiza o estado local imediatamente para garantir consistência
-      if (savedEntry) {
-         setTitle(savedEntry.title || "");
-         setContent(savedEntry.content || "");
-         setTags(savedEntry.tags ? savedEntry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
+      // Atualiza estado local imediatamente se disponível
+      if (savedData) {
+        setTitle(savedData.title || "");
+        setContent(savedData.content || "");
+        setTags(savedData.tags ? savedData.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
       }
       utils.diary.get.invalidate({ date: dateKey });
       utils.diary.list.invalidate();
@@ -126,37 +124,27 @@ export default function DiaryPage() {
       setTags([]);
       utils.diary.get.invalidate({ date: dateKey });
       utils.diary.list.invalidate();
-      utils.diary.tags.invalidate();
     },
     onError: () => toast.error("Erro ao excluir.")
   });
 
-  // CORREÇÃO: Lógica de carregamento mais segura
+  // CORREÇÃO 3: Lógica blindada de carregamento
   useEffect(() => {
-    // Se mudou a data e não estamos salvando, tenta carregar ou limpar
-    if (dateKey !== lastLoadedDateRef.current) {
-        if (entry) {
-            setTitle(entry.title || "");
-            setContent(entry.content || "");
-            setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
-            lastLoadedDateRef.current = dateKey;
-        } else if (!isLoading) {
-            // Só limpa se terminou de carregar e realmente não tem nada
-            setTitle("");
-            setContent("");
-            setTags([]);
-            lastLoadedDateRef.current = dateKey;
-        }
-    } else if (entry && !saveMutation.isPending) {
-        // Se a data é a mesma, só atualiza se veio dados novos e não estamos no meio de um save
-        // Isso evita que o refetch sobrescreva o que o usuário está digitando se ele não salvou
-        // Mas aqui assumimos que se 'entry' mudou, foi por um save externo ou load inicial
-        if (entry.content !== content && !content) { 
-             // Só sobrescreve se o local estiver vazio para evitar perder dados não salvos
-             setTitle(entry.title || "");
-             setContent(entry.content || "");
-             setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
-        }
+    const isDateChange = dateKey !== lastLoadedDateRef.current;
+
+    if (entry) {
+        // Se o servidor retornou dados, atualizamos
+        setTitle(entry.title || "");
+        setContent(entry.content || "");
+        setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
+        lastLoadedDateRef.current = dateKey;
+    } else if (isDateChange && !isLoading) {
+        // Só limpamos a tela SE a data mudou E o carregamento terminou
+        // Isso impede que o texto suma durante o "loading" do salvamento
+        setTitle("");
+        setContent("");
+        setTags([]);
+        lastLoadedDateRef.current = dateKey;
     }
   }, [entry, isLoading, dateKey]);
 
@@ -177,11 +165,12 @@ export default function DiaryPage() {
 
   const changeDate = (days: number) => {
     const newDate = days > 0 ? addDays(currentDate, days) : subDays(currentDate, Math.abs(days));
-    setCurrentDate(newDate);
+    // Navega atualizando a URL para manter consistência
+    setLocation(`/diario?date=${format(newDate, "yyyy-MM-dd")}`);
   };
 
   const goToDate = (dateStr: string) => {
-    setCurrentDate(parseISO(dateStr));
+    setLocation(`/diario?date=${dateStr}`);
     setShowEntriesModal(false);
     setSelectedTag(null);
     setSearchQuery("");
@@ -222,7 +211,7 @@ export default function DiaryPage() {
           <Button variant="outline" size="sm" onClick={() => setShowEntriesModal(true)}>
             <List className="w-4 h-4 mr-2" /> Ver Entradas
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+          <Button variant="outline" size="sm" onClick={() => setLocation(`/diario?date=${format(new Date(), 'yyyy-MM-dd')}`)}>
             <CalendarIcon className="w-4 h-4 mr-2" /> Hoje
           </Button>
         </div>
@@ -250,7 +239,7 @@ export default function DiaryPage() {
         </CardHeader>
         
         <CardContent className="p-6">
-          {isLoading && !content ? (
+          {isLoading && !title && !content ? (
             <div className="h-[400px] flex items-center justify-center text-muted-foreground">Carregando...</div>
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
