@@ -306,10 +306,12 @@ export async function getDiaryEntry(userId: number, dateStr: string): Promise<Di
   const db = await getDb();
   if (!db) return null;
   
+  // Convert string to Date with noon UTC (same as events)
+  const dateValue = new Date(dateStr + "T12:00:00Z");
   const result = await db.select().from(diaryEntries)
     .where(and(
       eq(diaryEntries.userId, userId),
-      eq(diaryEntries.date, new Date(dateStr + "T12:00:00Z"))
+      eq(diaryEntries.date, dateValue)
     ))
     .limit(1);
   
@@ -334,6 +336,7 @@ export async function upsertDiaryEntry(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
+  // Convert string to Date with noon UTC (same as events)
   const dateValue = new Date(dateStr + "T12:00:00Z");
   const existing = await getDiaryEntry(userId, dateStr);
   

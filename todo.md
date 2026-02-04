@@ -200,3 +200,12 @@
 - [x] DiaryPage: Atualização imediata do estado local após salvamento bem-sucedido
 - [x] CalendarPage: Implementar normalizeDateKey para garantir formato consistente
 - [x] CalendarPage: Usar normalizeDateKey em todas as operações de data (queries, navegação, eventos)
+
+## Investigação Bug Visualização Diário (04/02/2026)
+
+- [x] Investigar como data é salva no banco (server/db.ts - upsertDiaryEntry)
+- [x] Investigar como data é buscada do banco (server/db.ts - getDiaryEntry)
+- [x] Verificar formato de data no schema (drizzle/schema.ts - diary_entries)
+- [x] Corrigir comparação de datas entre frontend (YYYY-MM-DD string) e backend
+- [x] Garantir que query trpc.diary.get use mesmo formato que foi salvo
+- [x] Aplicar mesma solução de eventos (new Date com T12:00:00Z)
