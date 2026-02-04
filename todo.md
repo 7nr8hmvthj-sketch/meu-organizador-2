@@ -191,3 +191,12 @@
 - [x] DiaryPage: Lógica blindada que só limpa campos se data mudou E banco retornou vazio
 - [x] CalendarPage: Botão "Abrir Diário" usa format(selectedDate, 'yyyy-MM-dd') para garantir data correta
 - [x] CalendarPage: Query trpc.diary.get usa selectedDateKey formatada corretamente
+
+## Correções Manipulação Data String (04/02/2026)
+
+- [x] DiaryPage: Implementar toLocalISODate para extrair YYYY-MM-DD sem conversão UTC
+- [x] DiaryPage: Usar dateKey (string) ao invés de Date object para queries
+- [x] DiaryPage: Lógica blindada com lastLoadedKeyRef para evitar limpeza durante salvamento
+- [x] DiaryPage: Atualização imediata do estado local após salvamento bem-sucedido
+- [x] CalendarPage: Implementar normalizeDateKey para garantir formato consistente
+- [x] CalendarPage: Usar normalizeDateKey em todas as operações de data (queries, navegação, eventos)

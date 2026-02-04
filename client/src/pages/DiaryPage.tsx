@@ -22,7 +22,7 @@ import {
   List,
   FileText
 } from "lucide-react";
-import { format, addDays, subDays, isToday } from "date-fns";
+import { format, addDays, subDays, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useSearch, useLocation } from "wouter";
@@ -48,27 +48,33 @@ const TAG_SUGGESTIONS = [
   "gratidão", "meta", "ideia", "importante", "humor"
 ];
 
+// Helper para garantir data consistente (YYYY-MM-DD)
+// Usa a data local do navegador para criar a string, evitando conversões UTC indesejadas
+const toLocalISODate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export default function DiaryPage() {
   const searchString = useSearch();
   const [, setLocation] = useLocation();
   
-  // CORREÇÃO 1: Força a interpretação da data para 12:00 (Meio-dia)
-  // Isso impede que o fuso horário (UTC-3) jogue a data para o dia anterior (ex: 04 virar 03)
+  // Recupera a data da URL ou usa hoje
   const getDateFromUrl = () => {
     const params = new URLSearchParams(searchString);
     const dateParam = params.get('date');
     if (dateParam) {
-      try {
-        return new Date(dateParam + "T12:00:00");
-      } catch {
-        return new Date();
-      }
+      // Cria a data no meio do dia para evitar problemas de fuso
+      return new Date(dateParam + "T12:00:00"); 
     }
     return new Date();
   };
   
   const [currentDate, setCurrentDate] = useState(getDateFromUrl);
   
+  // Sincroniza estado com URL
   useEffect(() => {
     setCurrentDate(getDateFromUrl());
   }, [searchString]);
@@ -83,10 +89,12 @@ export default function DiaryPage() {
   const [activeTab, setActiveTab] = useState("write");
   const [showEntriesModal, setShowEntriesModal] = useState(false);
   
-  // CORREÇÃO 2: Ref para impedir que o formulário seja limpo enquanto salva
-  const lastLoadedDateRef = useRef<string | null>(null);
-  
-  const dateKey = format(currentDate, "yyyy-MM-dd");
+  // A chave para buscar no banco é SEMPRE a string YYYY-MM-DD
+  const dateKey = toLocalISODate(currentDate);
+
+  // Ref para controlar o carregamento e evitar limpar tela indevidamente
+  const lastLoadedKeyRef = useRef<string>("");
+
   const utils = trpc.useUtils();
   
   const { data: entry, isLoading } = trpc.diary.get.useQuery({ date: dateKey });
@@ -105,18 +113,14 @@ export default function DiaryPage() {
     onSuccess: (savedData) => {
       toast.success("Salvo com sucesso!");
       
-      // CORREÇÃO 3: Atualiza a tela IMEDIATAMENTE com os dados salvos
-      // Isso garante que a visualização funcione mesmo se o banco demorar
+      // Atualiza o estado local imediatamente
       if (savedData) {
         setTitle(savedData.title || title);
         setContent(savedData.content || content);
         setTags(savedData.tags ? savedData.tags.split(",").map(t => t.trim()).filter(Boolean) : tags);
-      } else {
-        // Fallback: mantém o que está na tela
-        setTitle(title);
-        setContent(content);
       }
       
+      // Força atualização dos caches
       utils.diary.get.invalidate({ date: dateKey });
       utils.diary.list.invalidate();
       utils.diary.tags.invalidate();
@@ -136,26 +140,34 @@ export default function DiaryPage() {
     onError: () => toast.error("Erro ao excluir.")
   });
 
-  // CORREÇÃO 4: Lógica blindada de carregamento
+  // Lógica de Carregamento Robusta
   useEffect(() => {
-    // Só atualiza se a data mudou OU se recebemos dados novos do banco
-    const isDateChange = dateKey !== lastLoadedDateRef.current;
-
-    if (entry) {
-        // Se o banco retornou algo, mostramos
-        setTitle(entry.title || "");
-        setContent(entry.content || "");
-        setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
-        lastLoadedDateRef.current = dateKey;
-    } else if (isDateChange && !isLoading) {
-        // Se mudou a data e o banco disse que não tem nada, limpamos.
-        // MAS: Se estamos na mesma data (ex: salvando), NÃO limpamos.
-        setTitle("");
-        setContent("");
-        setTags([]);
-        lastLoadedDateRef.current = dateKey;
+    // Se mudamos de dia, precisamos resetar ou carregar novos dados
+    if (dateKey !== lastLoadedKeyRef.current) {
+        if (entry) {
+            // Chegou dados do novo dia
+            setTitle(entry.title || "");
+            setContent(entry.content || "");
+            setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
+            lastLoadedKeyRef.current = dateKey;
+        } else if (!isLoading) {
+            // Terminou de carregar e não tem nada: limpa a tela
+            setTitle("");
+            setContent("");
+            setTags([]);
+            lastLoadedKeyRef.current = dateKey;
+        }
+    } else if (entry && !saveMutation.isPending) {
+        // Estamos no mesmo dia. Se o banco trouxe dados diferentes do que temos
+        // (ex: salvou em outra aba), atualizamos. Mas só se não estivermos digitando.
+        // Aqui assumimos que se o 'content' local está vazio, podemos preencher.
+        if (!content && entry.content) {
+             setTitle(entry.title || "");
+             setContent(entry.content || "");
+             setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
+        }
     }
-  }, [entry, isLoading, dateKey]);
+  }, [entry, isLoading, dateKey, content, saveMutation.isPending]);
 
   const handleSave = () => {
     saveMutation.mutate({ 
@@ -174,10 +186,11 @@ export default function DiaryPage() {
 
   const changeDate = (days: number) => {
     const newDate = days > 0 ? addDays(currentDate, days) : subDays(currentDate, Math.abs(days));
-    setLocation(`/diario?date=${format(newDate, "yyyy-MM-dd")}`);
+    setLocation(`/diario?date=${toLocalISODate(newDate)}`);
   };
 
   const goToDate = (dateStr: string) => {
+    // dateStr vem do banco, geralmente YYYY-MM-DD
     setLocation(`/diario?date=${dateStr}`);
     setShowEntriesModal(false);
     setSelectedTag(null);
@@ -213,7 +226,7 @@ export default function DiaryPage() {
           <Button variant="outline" size="sm" onClick={() => setShowEntriesModal(true)}>
             <List className="w-4 h-4 mr-2" /> Entradas
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setLocation(`/diario?date=${format(new Date(), 'yyyy-MM-dd')}`)}>
+          <Button variant="outline" size="sm" onClick={() => setLocation(`/diario?date=${toLocalISODate(new Date())}`)}>
             <CalendarIcon className="w-4 h-4 mr-2" /> Hoje
           </Button>
         </div>
@@ -254,7 +267,7 @@ export default function DiaryPage() {
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Escreva aqui..."
-                  className="min-h-[300px] text-base leading-relaxed p-4 font-mono"
+                  className="min-h-[300px] text-base leading-relaxed p-4 resize-y bg-background font-mono"
                 />
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center gap-2"><Tag className="w-4 h-4" /> Tags</label>
@@ -308,6 +321,7 @@ export default function DiaryPage() {
                   {displayEntries.map((e) => (
                     <Card key={String(e.date)} className="cursor-pointer hover:bg-accent" onClick={() => goToDate(String(e.date))}>
                       <CardContent className="p-4">
+                        {/* Garante que a data na lista use formatação consistente */}
                         <p className="text-sm text-muted-foreground">{format(new Date(String(e.date) + "T12:00:00"), "dd 'de' MMMM, yyyy", { locale: ptBR })}</p>
                         {e.title && <h4 className="font-semibold">{e.title}</h4>}
                         {e.content && <p className="text-sm line-clamp-2 text-muted-foreground">{e.content}</p>}
