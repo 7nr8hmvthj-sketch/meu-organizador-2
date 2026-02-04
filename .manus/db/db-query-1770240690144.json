@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, userId, date, title, LEFT(content, 50) as content_preview, tags, createdAt FROM diary_entries ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, userId, date, title, LEFT(content, 50) as content_preview, tags, createdAt FROM diary_entries ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "90007",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "teste 26",
+      "content_preview": "teste 26",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 21:30:20"
+    },
+    {
+      "id": "90006",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "teste 25",
+      "content_preview": "teste 25",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 21:20:31"
+    },
+    {
+      "id": "90005",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "NULL",
+      "content_preview": "teste 05",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:58:30"
+    },
+    {
+      "id": "90004",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "teste 05",
+      "content_preview": "teste 05",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:54:49"
+    },
+    {
+      "id": "90003",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "teste 28",
+      "content_preview": "teste 28",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:53:13"
+    },
+    {
+      "id": "90002",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "NULL",
+      "content_preview": "teste 4",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:41:11"
+    },
+    {
+      "id": "90001",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "teste 3",
+      "content_preview": "teste 3",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:40:57"
+    },
+    {
+      "id": "60003",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "teste",
+      "content_preview": "teste 2 ",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:10:25"
+    },
+    {
+      "id": "60002",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "NULL",
+      "content_preview": "Teste 2",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 20:09:17"
+    },
+    {
+      "id": "60001",
+      "userId": "1",
+      "date": "2026-02-04",
+      "title": "NULL",
+      "content_preview": "Teste",
+      "tags": "NULL",
+      "createdAt": "2026-02-04 19:57:30"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdate\ttitle\tcontent_preview\ttags\tcreatedAt\n90007\t1\t2026-02-04\tteste 26\tteste 26\tNULL\t2026-02-04 21:30:20\n90006\t1\t2026-02-04\tteste 25\tteste 25\tNULL\t2026-02-04 21:20:31\n90005\t1\t2026-02-04\tNULL\tteste 05\tNULL\t2026-02-04 20:58:30\n90004\t1\t2026-02-04\tteste 05\tteste 05\tNULL\t2026-02-04 20:54:49\n90003\t1\t2026-02-04\tteste 28\tteste 28\tNULL\t2026-02-04 20:53:13\n90002\t1\t2026-02-04\tNULL\tteste 4\tNULL\t2026-02-04 20:41:11\n90001\t1\t2026-02-04\tteste 3\tteste 3\tNULL\t2026-02-04 20:40:57\n60003\t1\t2026-02-04\tteste\tteste 2 \tNULL\t2026-02-04 20:10:25\n60002\t1\t2026-02-04\tNULL\tTeste 2\tNULL\t2026-02-04 20:09:17\n60001\t1\t2026-02-04\tNULL\tTeste\tNULL\t2026-02-04 19:57:30\n",
+  "stderr": "",
+  "execution_time_ms": 98
+}

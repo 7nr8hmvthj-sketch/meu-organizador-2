@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, userId, date, CAST(date AS DATETIME) as date_datetime, title FROM diary_entries WHERE userId = 1 ORDER BY id DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, userId, date, CAST(date AS DATETIME) as date_datetime, title FROM diary_entries WHERE userId = 1 ORDER BY id DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "90007",
+      "userId": "1",
+      "date": "2026-02-04",
+      "date_datetime": "2026-02-04 00:00:00",
+      "title": "teste 26"
+    },
+    {
+      "id": "90006",
+      "userId": "1",
+      "date": "2026-02-04",
+      "date_datetime": "2026-02-04 00:00:00",
+      "title": "teste 25"
+    },
+    {
+      "id": "90005",
+      "userId": "1",
+      "date": "2026-02-04",
+      "date_datetime": "2026-02-04 00:00:00",
+      "title": "NULL"
+    },
+    {
+      "id": "90004",
+      "userId": "1",
+      "date": "2026-02-04",
+      "date_datetime": "2026-02-04 00:00:00",
+      "title": "teste 05"
+    },
+    {
+      "id": "90003",
+      "userId": "1",
+      "date": "2026-02-04",
+      "date_datetime": "2026-02-04 00:00:00",
+      "title": "teste 28"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdate\tdate_datetime\ttitle\n90007\t1\t2026-02-04\t2026-02-04 00:00:00\tteste 26\n90006\t1\t2026-02-04\t2026-02-04 00:00:00\tteste 25\n90005\t1\t2026-02-04\t2026-02-04 00:00:00\tNULL\n90004\t1\t2026-02-04\t2026-02-04 00:00:00\tteste 05\n90003\t1\t2026-02-04\t2026-02-04 00:00:00\tteste 28\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

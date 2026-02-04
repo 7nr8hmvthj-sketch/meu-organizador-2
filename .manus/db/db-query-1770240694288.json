@@ -1,0 +1,45 @@
+{
+  "query": "SELECT id, userId, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') as date_formatted, date as date_raw, title FROM diary_entries ORDER BY createdAt DESC LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, userId, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') as date_formatted, date as date_raw, title FROM diary_entries ORDER BY createdAt DESC LIMIT 5;",
+  "rows": [
+    {
+      "id": "90007",
+      "userId": "1",
+      "date_formatted": "2026-02-04 00:00:00",
+      "date_raw": "2026-02-04",
+      "title": "teste 26"
+    },
+    {
+      "id": "90006",
+      "userId": "1",
+      "date_formatted": "2026-02-04 00:00:00",
+      "date_raw": "2026-02-04",
+      "title": "teste 25"
+    },
+    {
+      "id": "90005",
+      "userId": "1",
+      "date_formatted": "2026-02-04 00:00:00",
+      "date_raw": "2026-02-04",
+      "title": "NULL"
+    },
+    {
+      "id": "90004",
+      "userId": "1",
+      "date_formatted": "2026-02-04 00:00:00",
+      "date_raw": "2026-02-04",
+      "title": "teste 05"
+    },
+    {
+      "id": "90003",
+      "userId": "1",
+      "date_formatted": "2026-02-04 00:00:00",
+      "date_raw": "2026-02-04",
+      "title": "teste 28"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdate_formatted\tdate_raw\ttitle\n90007\t1\t2026-02-04 00:00:00\t2026-02-04\tteste 26\n90006\t1\t2026-02-04 00:00:00\t2026-02-04\tteste 25\n90005\t1\t2026-02-04 00:00:00\t2026-02-04\tNULL\n90004\t1\t2026-02-04 00:00:00\t2026-02-04\tteste 05\n90003\t1\t2026-02-04 00:00:00\t2026-02-04\tteste 28\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

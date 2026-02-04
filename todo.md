@@ -209,3 +209,13 @@
 - [x] Corrigir comparação de datas entre frontend (YYYY-MM-DD string) e backend
 - [x] Garantir que query trpc.diary.get use mesmo formato que foi salvo
 - [x] Aplicar mesma solução de eventos (new Date com T12:00:00Z)
+
+## Investigação Profunda Bug Diário - Entradas Não Aparecem (04/02/2026)
+
+- [x] Verificar dados reais no banco (SELECT * FROM diary_entries) - formato exato da coluna date
+- [x] Comparar query de list (funciona) vs query de get (não funciona)
+- [x] Analisar conversão de data no retorno (getUTCFullYear, getUTCMonth, getUTCDate)
+- [x] Verificar se problema está na comparação ou na conversão de retorno
+- [x] Testar query SQL direta no banco para confirmar dados existem
+- [x] Descoberta: MySQL DATE ignora hora ao salvar, retorna meia-noite ao ler
+- [x] Solução: Usar DATE() SQL function para comparar apenas parte de data

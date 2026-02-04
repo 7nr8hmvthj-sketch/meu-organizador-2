@@ -306,12 +306,11 @@ export async function getDiaryEntry(userId: number, dateStr: string): Promise<Di
   const db = await getDb();
   if (!db) return null;
   
-  // Convert string to Date with noon UTC (same as events)
-  const dateValue = new Date(dateStr + "T12:00:00Z");
+  // Use DATE() SQL function to compare only date part (MySQL DATE column ignores time)
   const result = await db.select().from(diaryEntries)
     .where(and(
       eq(diaryEntries.userId, userId),
-      eq(diaryEntries.date, dateValue)
+      sql`DATE(${diaryEntries.date}) = ${dateStr}`
     ))
     .limit(1);
   
@@ -336,21 +335,21 @@ export async function upsertDiaryEntry(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Convert string to Date with noon UTC (same as events)
-  const dateValue = new Date(dateStr + "T12:00:00Z");
   const existing = await getDiaryEntry(userId, dateStr);
   
   if (existing) {
+    // Update using DATE() comparison to match any time on that date
     await db.update(diaryEntries)
       .set({ title, content, tags })
       .where(and(
         eq(diaryEntries.userId, userId),
-        eq(diaryEntries.date, dateValue)
+        sql`DATE(${diaryEntries.date}) = ${dateStr}`
       ));
   } else {
+    // Insert with date string (MySQL DATE column will handle it)
     await db.insert(diaryEntries).values({
       userId,
-      date: dateValue,
+      date: dateStr as any,
       title,
       content,
       tags
