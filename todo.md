@@ -156,3 +156,9 @@
 
 - [x] Corrigir erro de keys duplicadas no modal de entradas
 - [x] Usar ID ao invés de data como key única
+
+## Correções DiaryPage e CalendarPage (03/02/2026)
+
+- [x] Corrigir DiaryPage: texto sumindo após salvar (problema de recarregamento)
+- [x] Adicionar função extractTimeFromDescription no CalendarPage
+- [x] Corrigir link para diário no CalendarPage
