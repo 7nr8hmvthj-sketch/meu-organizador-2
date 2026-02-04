@@ -174,3 +174,11 @@
 - [x] DiaryPage: Implementar lastLoadedDateRef para impedir texto sumindo ao salvar
 - [x] CalendarPage: Garantir formato de data consistente com banco de dados
 - [x] CalendarPage: Adicionar extractTimeFromDescription no escopo correto
+
+## Correções Frontend Teimoso - Diário (04/02/2026)
+
+- [x] DiaryPage: Implementar lógica de "frontend teimoso" que não apaga conteúdo durante carregamento
+- [x] DiaryPage: Priorizar conteúdo em memória sobre resposta do banco após salvar
+- [x] DiaryPage: Visualização instantânea olha apenas para campos de texto (title, content)
+- [x] CalendarPage: Query robusta para buscar diário no calendário
+- [x] CalendarPage: Botão "Abrir Diário Completo" com formato de data correto
