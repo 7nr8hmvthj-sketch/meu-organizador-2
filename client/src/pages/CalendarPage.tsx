@@ -17,9 +17,7 @@ import { toast } from "sonner";
 
 function normalizeDateKey(dateInput: string | Date): string {
   if (!dateInput) return "";
-  if (typeof dateInput === 'string') {
-    return dateInput.split('T')[0];
-  }
+  if (typeof dateInput === 'string') return dateInput.split('T')[0];
   try {
     return dateInput.toISOString().split('T')[0];
   } catch {
@@ -134,7 +132,6 @@ export default function CalendarPage() {
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
 
-  // Query do diário para o dia selecionado (apenas admin)
   const selectedDateKey = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
   const { data: diaryEntry } = trpc.diary.get.useQuery(
     { date: selectedDateKey || "" },
@@ -224,7 +221,6 @@ export default function CalendarPage() {
 
   const handleAddTraining = () => {
     if (!selectedDate || !trainingType || !trainingTime) return toast.error("Preencha campos.");
-    if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(trainingTime)) return toast.error("Horário inválido.");
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
     createEventMutation.mutate({ date: dateStr, type: trainingType, description, isShift: false });

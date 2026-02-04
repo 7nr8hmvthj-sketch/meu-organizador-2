@@ -167,3 +167,10 @@
 
 - [x] Puxar alterações do commit 9cee872 do GitHub
 - [x] Aplicar correções definitivas do Diário
+
+## Correções Definitivas Diário - Bug Fuso Horário e Texto Sumindo (04/02/2026)
+
+- [x] DiaryPage: Forçar T12:00:00 na data para evitar bug de fuso horário (dia 4 virando dia 3)
+- [x] DiaryPage: Implementar lastLoadedDateRef para impedir texto sumindo ao salvar
+- [x] CalendarPage: Garantir formato de data consistente com banco de dados
+- [x] CalendarPage: Adicionar extractTimeFromDescription no escopo correto
