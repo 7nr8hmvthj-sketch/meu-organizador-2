@@ -22,7 +22,7 @@ import {
   List,
   FileText
 } from "lucide-react";
-import { format, addDays, subDays, isToday, parseISO } from "date-fns";
+import { format, addDays, subDays, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useSearch, useLocation } from "wouter";
@@ -52,13 +52,17 @@ export default function DiaryPage() {
   const searchString = useSearch();
   const [, setLocation] = useLocation();
   
-  // Recupera a data da URL ou usa hoje
+  // CORREÇÃO 1: Força a interpretação da data para 12:00 (Meio-dia)
+  // Isso impede que o fuso horário (UTC-3) jogue a data para o dia anterior (ex: 04 virar 03)
   const getDateFromUrl = () => {
     const params = new URLSearchParams(searchString);
     const dateParam = params.get('date');
     if (dateParam) {
-      // Adiciona hora fixa para evitar problemas de fuso na conversão
-      return new Date(dateParam + "T12:00:00");
+      try {
+        return new Date(dateParam + "T12:00:00");
+      } catch {
+        return new Date();
+      }
     }
     return new Date();
   };
@@ -79,8 +83,8 @@ export default function DiaryPage() {
   const [activeTab, setActiveTab] = useState("write");
   const [showEntriesModal, setShowEntriesModal] = useState(false);
   
-  // Ref para controlar se já carregamos dados para esta data
-  const loadedDateRef = useRef<string | null>(null);
+  // CORREÇÃO 2: Ref para impedir que o formulário seja limpo enquanto salva
+  const lastLoadedDateRef = useRef<string | null>(null);
   
   const dateKey = format(currentDate, "yyyy-MM-dd");
   const utils = trpc.useUtils();
@@ -101,14 +105,18 @@ export default function DiaryPage() {
     onSuccess: (savedData) => {
       toast.success("Salvo com sucesso!");
       
-      // Força a atualização dos dados locais com o que acabou de ser salvo
+      // CORREÇÃO 3: Atualiza a tela IMEDIATAMENTE com os dados salvos
+      // Isso garante que a visualização funcione mesmo se o banco demorar
       if (savedData) {
         setTitle(savedData.title || title);
         setContent(savedData.content || content);
         setTags(savedData.tags ? savedData.tags.split(",").map(t => t.trim()).filter(Boolean) : tags);
+      } else {
+        // Fallback: mantém o que está na tela
+        setTitle(title);
+        setContent(content);
       }
-
-      // Invalida queries para atualizar listas
+      
       utils.diary.get.invalidate({ date: dateKey });
       utils.diary.list.invalidate();
       utils.diary.tags.invalidate();
@@ -128,31 +136,24 @@ export default function DiaryPage() {
     onError: () => toast.error("Erro ao excluir.")
   });
 
-  // Lógica de carregamento corrigida: Prioriza não apagar o que o usuário vê
+  // CORREÇÃO 4: Lógica blindada de carregamento
   useEffect(() => {
-    // Se a data mudou em relação à última carregada
-    if (dateKey !== loadedDateRef.current) {
-        if (entry) {
-            // Se veio dado do banco, carrega
-            setTitle(entry.title || "");
-            setContent(entry.content || "");
-            setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
-            loadedDateRef.current = dateKey;
-        } else if (!isLoading) {
-            // Só limpa se terminou de carregar e veio vazio
-            setTitle("");
-            setContent("");
-            setTags([]);
-            loadedDateRef.current = dateKey;
-        }
-    } else if (entry) {
-        // Se a data é a mesma, só atualiza se os campos estiverem vazios (ex: reload de página)
-        // Isso evita sobrescrever o que o usuário está digitando
-        if (!title && !content && entry.content) {
-            setTitle(entry.title || "");
-            setContent(entry.content || "");
-            setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
-        }
+    // Só atualiza se a data mudou OU se recebemos dados novos do banco
+    const isDateChange = dateKey !== lastLoadedDateRef.current;
+
+    if (entry) {
+        // Se o banco retornou algo, mostramos
+        setTitle(entry.title || "");
+        setContent(entry.content || "");
+        setTags(entry.tags ? entry.tags.split(",").map(t => t.trim()).filter(Boolean) : []);
+        lastLoadedDateRef.current = dateKey;
+    } else if (isDateChange && !isLoading) {
+        // Se mudou a data e o banco disse que não tem nada, limpamos.
+        // MAS: Se estamos na mesma data (ex: salvando), NÃO limpamos.
+        setTitle("");
+        setContent("");
+        setTags([]);
+        lastLoadedDateRef.current = dateKey;
     }
   }, [entry, isLoading, dateKey]);
 
@@ -225,9 +226,7 @@ export default function DiaryPage() {
               <ChevronLeft className="w-5 h-5" /> Ontem
             </Button>
             <div className="text-center">
-              <CardTitle className="text-lg capitalize">
-                {format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
-              </CardTitle>
+              <CardTitle className="text-lg capitalize">{format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR })}</CardTitle>
               <p className="text-xs text-muted-foreground">
                 {format(currentDate, "yyyy")}
                 {isToday(currentDate) && <Badge variant="secondary" className="ml-2 text-xs">Hoje</Badge>}

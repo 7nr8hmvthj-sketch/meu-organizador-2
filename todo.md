@@ -182,3 +182,12 @@
 - [x] DiaryPage: Visualização instantânea olha apenas para campos de texto (title, content)
 - [x] CalendarPage: Query robusta para buscar diário no calendário
 - [x] CalendarPage: Botão "Abrir Diário Completo" com formato de data correto
+
+## Correções Definitivas Fuso Horário - Diário (04/02/2026)
+
+- [x] DiaryPage: Forçar T12:00:00 na URL para evitar fuso horário jogar data para dia anterior
+- [x] DiaryPage: Implementar lastLoadedDateRef para impedir limpeza durante salvamento
+- [x] DiaryPage: Atualizar tela imediatamente com dados salvos (fallback para dados locais)
+- [x] DiaryPage: Lógica blindada que só limpa campos se data mudou E banco retornou vazio
+- [x] CalendarPage: Botão "Abrir Diário" usa format(selectedDate, 'yyyy-MM-dd') para garantir data correta
+- [x] CalendarPage: Query trpc.diary.get usa selectedDateKey formatada corretamente

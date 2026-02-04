@@ -356,7 +356,7 @@ export default function CalendarPage() {
                       {diaryEntry.title && <p className="font-semibold not-italic text-foreground mb-1">{diaryEntry.title}</p>}
                       <p className="line-clamp-3">"{diaryEntry.content.substring(0, 200)}..."</p>
                     </div>
-                  ) : <span className="opacity-50">Nenhum registro.</span>}
+                  ) : <span className="opacity-50">Nenhum registro no diário para este dia.</span>}
                 </div>
               </div>
             )}
