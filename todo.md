@@ -219,3 +219,9 @@
 - [x] Testar query SQL direta no banco para confirmar dados existem
 - [x] Descoberta: MySQL DATE ignora hora ao salvar, retorna meia-noite ao ler
 - [x] Solução: Usar DATE() SQL function para comparar apenas parte de data
+
+## Ajuste Visual Calendário (04/02/2026)
+
+- [x] Aumentar altura mínima dos dias de 110px para 180px
+- [x] Exibir até 6 eventos por dia ao invés de 3
+- [x] Atualizar contador de eventos ocultos para refletir nova capacidade

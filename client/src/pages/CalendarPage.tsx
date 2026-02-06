@@ -321,11 +321,11 @@ export default function CalendarPage() {
               const dateStr = normalizeDateKey(day);
               const dayEvents = eventsByDate.get(dateStr) || [];
               return (
-                <button key={dateStr} onClick={() => handleDayClick(day)} className={`min-h-[110px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-40 bg-muted/20" : ""}`}>
+                <button key={dateStr} onClick={() => handleDayClick(day)} className={`min-h-[180px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-40 bg-muted/20" : ""}`}>
                   <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{format(day, "d")}</span>
                   <div className="w-full space-y-1 overflow-hidden">
-                    {dayEvents.slice(0, 3).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}>{getEventLabel(e)}</div>)}
-                    {dayEvents.length > 3 && <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 3} mais</div>}
+                    {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}>{getEventLabel(e)}</div>)}
+                    {dayEvents.length > 6 && <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 6} mais</div>}
                   </div>
                 </button>
               );
