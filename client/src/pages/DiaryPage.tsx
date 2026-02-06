@@ -214,7 +214,7 @@ export default function DiaryPage() {
   const hasContent = title || content || tags.length > 0;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-500">
+    <div className="space-y-3 max-w-full animate-in fade-in duration-500">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-primary">
@@ -263,12 +263,12 @@ export default function DiaryPage() {
 
               <TabsContent value="write" className="space-y-4">
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título (opcional)" className="text-lg font-bold" />
-                <Textarea 
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Escreva aqui..."
-                  className="min-h-[300px] text-base leading-relaxed p-4 resize-y bg-background font-mono"
-                />
+                  <Textarea 
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Escreva aqui..."
+                    className="min-h-[50vh] text-base leading-relaxed p-4 resize-y bg-background font-mono"
+                  />
                 <div className="space-y-2">
                   <label className="text-sm font-medium flex items-center gap-2"><Tag className="w-4 h-4" /> Tags</label>
                   <div className="flex flex-wrap gap-2">

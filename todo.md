@@ -225,3 +225,9 @@
 - [x] Aumentar altura mínima dos dias de 110px para 180px
 - [x] Exibir até 6 eventos por dia ao invés de 3
 - [x] Atualizar contador de eventos ocultos para refletir nova capacidade
+
+## Otimização de Layout - Full Width & Compact (06/02/2026)
+
+- [x] Expandir largura geral em App.tsx (remover container centralizado)
+- [x] Otimizar altura do calendário em CalendarPage.tsx (reduzir padding e min-height)
+- [x] Otimizar diário em DiaryPage.tsx (expandir largura e compactar espaçamento)

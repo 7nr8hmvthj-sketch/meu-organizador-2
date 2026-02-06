@@ -294,7 +294,7 @@ export default function CalendarPage() {
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-2 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-primary"><CalendarIcon className="w-6 h-6" /> Calendário</h1>
@@ -311,7 +311,7 @@ export default function CalendarPage() {
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
           </div>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-2">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(day => <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-2">{day}</div>)}
           </div>
@@ -321,7 +321,7 @@ export default function CalendarPage() {
               const dateStr = normalizeDateKey(day);
               const dayEvents = eventsByDate.get(dateStr) || [];
               return (
-                <button key={dateStr} onClick={() => handleDayClick(day)} className={`min-h-[180px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-40 bg-muted/20" : ""}`}>
+                <button key={dateStr} onClick={() => handleDayClick(day)} className={`min-h-[140px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-40 bg-muted/20" : ""}`}>
                   <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{format(day, "d")}</span>
                   <div className="w-full space-y-1 overflow-hidden">
                     {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}>{getEventLabel(e)}</div>)}

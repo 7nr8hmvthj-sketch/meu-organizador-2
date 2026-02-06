@@ -214,7 +214,7 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
     <div className="min-h-screen bg-background">
       <Navigation userRole={userRole} username={username} />
       <main className="lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0">
-        <div className="container py-6">
+        <div className="w-full px-4 py-4 lg:px-8 max-w-[1920px] mx-auto">
           <Switch>
             {userRole === "admin" && (
               <>
