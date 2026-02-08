@@ -42,6 +42,8 @@ function getEventColor(type: string, isPassed: boolean): string {
   if (typeLower.includes("zn")) return "text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200";
   if (typeLower.includes("apoio")) return "text-pink-700 bg-pink-50 dark:bg-pink-900/30 dark:text-pink-300 border-pink-200";
   if (typeLower.includes("noturno")) return "text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200";
+  if (typeLower.includes("home care")) return "text-teal-700 bg-teal-50 dark:bg-teal-900/30 dark:text-teal-300 border-teal-200";
+  if (typeLower.includes("lembrete")) return "text-gray-700 bg-gray-100 dark:bg-gray-800/30 dark:text-gray-300 border-gray-300";
   
   return "text-slate-700 bg-slate-50 dark:bg-slate-900/30 dark:text-slate-300 border-slate-200";
 }
@@ -73,6 +75,8 @@ const EVENT_TYPES = [
   { value: "Natação", label: "Natação" },
   { value: "Musculação", label: "Musculação" },
   { value: "Pilates", label: "Pilates" },
+  { value: "Home Care", label: "Home Care" },
+  { value: "Lembrete", label: "Lembrete" },
   { value: "Outro", label: "Outro (personalizado)" },
 ];
 
@@ -134,7 +138,7 @@ export default function CalendarPage() {
   const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
 
-  const { data: events = [] } = trpc.events.list.useQuery();
+  const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
 
@@ -149,6 +153,15 @@ export default function CalendarPage() {
   const isTrainer = authData?.user?.role === "trainer";
   const isAdmin = authData?.user?.role === "admin";
   const currentUsername = authData?.user?.username;
+  
+  // Filtro de privacidade: oculta Lembretes de trainers
+  const events = useMemo(() => {
+    return allEvents.filter(event => {
+      // Se for Lembrete e NAO for admin, esconde
+      if (event.type === "Lembrete" && !isAdmin) return false;
+      return true;
+    });
+  }, [allEvents, isAdmin]);
 
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {

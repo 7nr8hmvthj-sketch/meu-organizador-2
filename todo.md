@@ -231,3 +231,9 @@
 - [x] Expandir largura geral em App.tsx (remover container centralizado)
 - [x] Otimizar altura do calendário em CalendarPage.tsx (reduzir padding e min-height)
 - [x] Otimizar diário em DiaryPage.tsx (expandir largura e compactar espaçamento)
+
+## Novos Tipos de Eventos e Privacidade (06/02/2026)
+
+- [x] Adicionar "Home Care" e "Lembrete" em EVENT_TYPES
+- [x] Adicionar cores para Home Care (teal/ciano) e Lembrete (cinza)
+- [x] Implementar filtro de privacidade para Lembretes (ocultar de trainers)
