@@ -237,3 +237,11 @@
 - [x] Adicionar "Home Care" e "Lembrete" em EVENT_TYPES
 - [x] Adicionar cores para Home Care (teal/ciano) e Lembrete (cinza)
 - [x] Implementar filtro de privacidade para Lembretes (ocultar de trainers)
+
+## Visualização de Horários e Status Passado (08/02/2026)
+
+- [x] Atualizar getEventLabel em WeeklyCalendarPage.tsx para exibir período completo
+- [x] Adicionar campo isPassed no backend (server/routers.ts)
+- [x] Adicionar campo passedReason no backend (server/routers.ts)
+- [x] Implementar UI com checkbox de Passado em CalendarPage.tsx
+- [x] Atualizar função handleUpdateEvent para incluir isPassed

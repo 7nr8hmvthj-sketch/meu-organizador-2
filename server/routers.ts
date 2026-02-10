@@ -112,7 +112,7 @@ export const appRouter = router({
       }),
     
     update: protectedProcedure
-      .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional() }))
+      .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional(), isPassed: z.boolean().optional(), passedReason: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
         // Verifica se o usuário pode editar (admin ou criador do evento)
         const event = await db.getEventById(input.id);
@@ -130,6 +130,8 @@ export const appRouter = router({
         if (data.date) updateData.date = parseDateSafe(data.date);
         if (data.type) updateData.type = data.type;
         if (data.description !== undefined) updateData.description = data.description;
+        if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
+        if (data.passedReason !== undefined) updateData.passedReason = data.passedReason;
         return await db.updateEvent(id, 1, updateData);
       }),
     

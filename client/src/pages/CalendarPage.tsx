@@ -135,8 +135,9 @@ export default function CalendarPage() {
   const [eventTime, setEventTime] = useState<string>("");
   const [eventDescription, setEventDescription] = useState<string>("");
   
-  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string } | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string; isPassed?: boolean } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
+  const [isPassed, setIsPassed] = useState(false);
 
   const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
@@ -276,6 +277,7 @@ export default function CalendarPage() {
 
   const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {
     setEditingEvent({ ...event, date: normalizeDateKey(event.date) });
+    setIsPassed(event.isPassed || false);
     const matchedType = EVENT_TYPES.find(t => event.type.toLowerCase().includes(t.value.toLowerCase().split(" ")[0]));
     if (matchedType) { setEventType(matchedType.value); setCustomEventType(""); } 
     else { setEventType("Outro"); setCustomEventType(event.type); }
@@ -292,7 +294,7 @@ export default function CalendarPage() {
     if (!finalType) return toast.error("Digite o tipo.");
     let description = eventDescription || finalType;
     if (eventTime) description = `${description} ${eventTime}`;
-    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description });
+    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description, isPassed });
   };
 
   const handleDeleteClick = (event: { id: number; type: string }) => {
@@ -390,7 +392,7 @@ export default function CalendarPage() {
       {/* Outros modais mantidos iguais (AddEvent, AddTraining, Edit, Delete) */}
       <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}><DialogContent><DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select>{eventType === "Outro" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Personalizado" />}<Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} /><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddEvent}>Salvar</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining}>Salvar</Button></DialogFooter></DialogContent></Dialog>
-      <Dialog open={showEditModal} onOpenChange={setShowEditModal}><DialogContent><DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader><div className="space-y-4 py-4">{isAdmin ? <><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} /><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} /></> : <><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} /></>}</div><DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}><DialogContent><DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader><div className="space-y-4 py-4">{isAdmin ? <><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} /><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} /><div className="flex items-center space-x-2 mt-4"><input type="checkbox" id="is-passed" checked={isPassed} onChange={e => setIsPassed(e.target.checked)} className="w-4 h-4" /><Label htmlFor="is-passed">Marcar como Passado/Repassado</Label></div></> : <><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} /></>}</div><DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}><DialogContent><DialogHeader><DialogTitle>Excluir?</DialogTitle></DialogHeader><DialogFooter><Button variant="destructive" onClick={confirmDelete}>Excluir</Button></DialogFooter></DialogContent></Dialog>
     </div>
   );

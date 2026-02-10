@@ -44,6 +44,12 @@ function getEventColor(type: string, isPassed: boolean): string {
 function getEventLabel(event: { type?: string; description?: string | null }): string {
   const type = event.type || "";
   const desc = event.description || "";
+  
+  // Se o tipo contém intervalo de horário (ex: 7-13, 13-19, 19-01), retorna o tipo completo
+  if (/\d{1,2}-\d{1,2}/.test(type)) {
+    return type;
+  }
+  
   const typeLower = type.toLowerCase();
   
   const timeMatchColon = desc.match(/(\d{1,2}:\d{2})/) || type.match(/(\d{1,2}:\d{2})/);
