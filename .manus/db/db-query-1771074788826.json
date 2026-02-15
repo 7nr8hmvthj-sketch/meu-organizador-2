@@ -1,0 +1,3444 @@
+{
+  "query": "SELECT DATE(date) as data, type, description, isPassed FROM events WHERE userId = 1 ORDER BY data ASC",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT DATE(date) as data, type, description, isPassed FROM events WHERE userId = 1 ORDER BY data ASC",
+  "rows": [
+    {
+      "data": "2026-01-01",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-01",
+      "type": "7-19 troca com a Lygia !!!",
+      "description": "7-19 troca com a Lygia !!!",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-02",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN melissa fixo mari grupo sexta 11/11",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-02",
+      "type": "ZN 7-13",
+      "description": "Manhã maicon passei Lygia - Grupo 15/05",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-03",
+      "type": "ZN 7-13",
+      "description": "Marco Antônio 03/11 fiz apoio",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-03",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-04",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN amanda noturno 02/11 Carlos",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-04",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã camila manha",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-05",
+      "type": "Musculação",
+      "description": "teste 13:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-05",
+      "type": "Pilates",
+      "description": "membros inferiores 19:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-05",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-05",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-06",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-06",
+      "type": "ZN 13-19",
+      "description": "Tarde Igor - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-06",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 fixo juh",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-06",
+      "type": "Pilates",
+      "description": "ULTIMO TESTE AMEM 12:12",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-07",
+      "type": "Noturno (19-07)",
+      "description": "Noturno jédsica pvd 03/11 amanda pvd 07/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-07",
+      "type": "ZN 7-13",
+      "description": "Manhã mari pvd 04/01 - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-07",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-08",
+      "type": "ZN 7-13",
+      "description": "Manhã Yana pvd 07/01 - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-08",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 pascoal",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-08",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN fixo da lygia patricia",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-08",
+      "type": "Passei Matheus",
+      "description": "Passei Matheus",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-09",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN melissa fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-09",
+      "type": "ZN 7-13",
+      "description": "Manhã juh, 08/01, original thiagopassei juh - Grupo 15/05",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-09",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-10",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-10",
+      "type": "ZN 7-13",
+      "description": "Noturno origirinal bruna",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-10",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-11",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-12",
+      "type": "Samila",
+      "description": "Samila",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-12",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-13",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 fixo passei pascoal",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-13",
+      "type": "HC 7-13",
+      "description": "HC manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-13",
+      "type": "Musculação",
+      "description": "fghghgh 10:35",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-13",
+      "type": "Pilates",
+      "description": "ggfgfgfg 16:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-13",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-14",
+      "type": "HC 7-13",
+      "description": "HC manha romerson",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-14",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-14",
+      "type": "Pessoal",
+      "description": "Tarde pessoal marcos passei Juh - Grupo 15/05",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-15",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-15",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN fixo da lygia passei samila ",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-16",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN melissa fixo confirmar trcoa sabado maria - Confirmar passagem manu",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-17",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-17",
+      "type": "ZN 7-13",
+      "description": "Noturno Lygia - Passou no pvd 13/01",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-18",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã maicon",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-19",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-19",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-20",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 fixo juh",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-20",
+      "type": "HC 7-13",
+      "description": "HC manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-20",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-21",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-22",
+      "type": "Passei fixo patricia",
+      "description": "Passei fixo patricia",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-22",
+      "type": "HC 7-13",
+      "description": "HC 12",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-23",
+      "type": "ZN 7-13",
+      "description": "Manhã Juh Hammes  - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-23",
+      "type": "ZN 7-13",
+      "description": "Noturno ZN melissa fixo allna",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-24",
+      "type": "Formatura",
+      "description": "Formatura",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-24",
+      "type": "Noturno (19-07)",
+      "description": "Noturno origirinal bruna Mari confirmado",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-24",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-25",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã bruna grupo 22/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-26",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-26",
+      "type": "HC 13-19",
+      "description": "Tarde",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-26",
+      "type": "ZN 13-19",
+      "description": "Tarde pascoal / Ariane Altoé - Grupo 15/05",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-27",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-27",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 fixo grupo 27/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-27",
+      "type": "HC 7-13",
+      "description": "HC manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-28",
+      "type": "Pilates",
+      "description": "Pilates 19",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-28",
+      "type": "Virginia 15:30",
+      "description": "Virginia 15:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-28",
+      "type": "Pessoal",
+      "description": "Terapia às 13",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-28",
+      "type": "Nutri 10:00",
+      "description": "Nutri 10:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-28",
+      "type": "Acad 7:30",
+      "description": "Acad 7:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-28",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-29",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-29",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 pascoal passei luiz",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-29",
+      "type": "Musculação",
+      "description": "Acad 7:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-29",
+      "type": "Pilates",
+      "description": "Pilates 19",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-30",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-01-30",
+      "type": "Apoio (19-01)",
+      "description": "Fixo 5 sexta apoio lais",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-30",
+      "type": "Noturno (19-07)",
+      "description": "Noturno origirinal bruna allana",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-31",
+      "type": "ZN 7-13",
+      "description": "Fixo 5ª sabado manha perdi esse",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-01-31",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-01",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã maickon grupo 06/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-02",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh pssei amanda 26/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-02",
+      "type": "Pilates",
+      "description": "Pilates 18:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-02",
+      "type": "Musculação",
+      "description": "Peito, ombros e tríceps  15:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-03",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-03",
+      "type": "Musculação",
+      "description": "Quadríceps e abdutores  15:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-04",
+      "type": "ZN 13-19",
+      "description": "Tarde pascoal - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-04",
+      "type": "Musculação",
+      "description": "Costas e bíceps. 08:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-05",
+      "type": "Musculação",
+      "description": "Posteriores e glúteo  06:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-05",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-06",
+      "type": "Pilates",
+      "description": "Pilates 18:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-06",
+      "type": "Noturno (19-07)",
+      "description": "Noturno fixo ainda 1 sexta alanna 29/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-06",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-06",
+      "type": "Musculação",
+      "description": "Panturrilha e abdômen 16:15",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-07",
+      "type": "ZN 13-19",
+      "description": "Tarde pela Samila - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-07",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-08",
+      "type": "visita hd pedro henrique",
+      "description": "visita hd pedro henrique 15:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-08",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-09",
+      "type": "HC 7-13",
+      "description": "13-19 13:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-09",
+      "type": "HC 7-13",
+      "description": "HC fixo + 6 matheus",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-10",
+      "type": "Musculação",
+      "description": "Quadríceps e adutores  15:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-10",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-11",
+      "type": "ZN 7-13",
+      "description": "Manhã mari pvd 15/12 - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-11",
+      "type": "Pilates",
+      "description": "Pilates na Chair, foco em Membros Inferiores e Mobilização de Coluna. 17:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-11",
+      "type": "Musculação",
+      "description": "Peito, ombros e tríceps  15:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-11",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-12",
+      "type": "Lembrete",
+      "description": "marcar visita paciente jheovani 15:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-12",
+      "type": "Home Care",
+      "description": "VISITA DOMICILIAR - ALDEMIR  13:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-12",
+      "type": "HC 7-13",
+      "description": "Passei rafa",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-12",
+      "type": "Musculação",
+      "description": "Costas e bíceps  06:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-12",
+      "type": "ZN 7-13",
+      "description": "lugar da samila 07:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-13",
+      "type": "Pilates",
+      "description": "no Cadillac, Mobilização de Coluna, Core e Membros Superiores (Reposição) 17:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-13",
+      "type": "Home Care",
+      "description": "Reunião HomeDoctor pela manhã 09:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-13",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-13",
+      "type": "Musculação",
+      "description": "Glúteo, Posteriores e panturrilha. 08:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-14",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-14",
+      "type": "Home Care",
+      "description": "virgínia 15:30",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-14",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-14",
+      "type": "Noturno (19-07)",
+      "description": "Noturno origirinal bruna myrian pvd",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-15",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-16",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-17",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-18",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 paula pvd 06/01",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-18",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-18",
+      "type": "ZN 7-13",
+      "description": "Manhã mari pvd 15/12 - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-19",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-19",
+      "type": "Pilates",
+      "description": "Reformer com foco em Mobilidade de coluna, Alongamento de Membros Inferiores e Foco em Core. 16:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-20",
+      "type": "Maratona de Plantão",
+      "description": "Maratona de Plantão",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-20",
+      "type": "Pilates",
+      "description": "Solo com Mobilidade de Coluna e quadril, fortalecimento de Membros Superiores e foco em Core. 17:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-20",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-21",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-21",
+      "type": "Possivel plantao maria alana 29/01",
+      "description": "Possivel plantao maria alana 29/01",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-21",
+      "type": "ZN 7-13",
+      "description": "Manhã plantao maria a confirmar - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-22",
+      "type": "Noturno 19-7",
+      "description": "julia b no pvd 07/02 19:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-22",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-23",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-24",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-24",
+      "type": "Tati",
+      "description": "Tati",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-24",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-25",
+      "type": "Pilates",
+      "description": "Chair- Foco em Membros Inferiores e Mobilização de Coluna. 17:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-25",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-26",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-27",
+      "type": "Pilates",
+      "description": "Cadillac- Foco em Mobilidade de coluna, abdômen e Membros Superiores 17:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-27",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-02-28",
+      "type": "Noturno (19-07)",
+      "description": "Noturno origirinal troquei mari por 12/02",
+      "isPassed": "1"
+    },
+    {
+      "data": "2026-02-28",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-01",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-01",
+      "type": "Noturno 19-7",
+      "description": "Lugar Betini 11/02 19:00",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-02",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-03",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-04",
+      "type": "10:30 Nutri",
+      "description": "10:30 Nutri",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-04",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-05",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-06",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-06",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-07",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-08",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-09",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-09",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-10",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-10",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-11",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-12",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-13",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-14",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-14",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-14",
+      "type": "ZN 7-13",
+      "description": "Noturno origirinal bruna",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-15",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-16",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-17",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-18",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-19",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-20",
+      "type": "Psiq",
+      "description": "Psiq",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-20",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-21",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-21",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-22",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-23",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-24",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-24",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-25",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-26",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-27",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-28",
+      "type": "ZN 7-13",
+      "description": "Noturno origirinal bruna",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-28",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-29",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-30",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-30",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-31",
+      "type": "Tati",
+      "description": "Tati",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-03-31",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-01",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-02",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-03",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-03",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-04",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-05",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-06",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-06",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-07",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-07",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-08",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-09",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-10",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-11",
+      "type": "ZN 7-13",
+      "description": "Noturno origirinal bruna",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-11",
+      "type": "Preencher mais 2 e 4 sabado da bruna",
+      "description": "Preencher mais 2 e 4 sabado da bruna",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-11",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-11",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-12",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-13",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-13",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-14",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-15",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-16",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-17",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-18",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-18",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-19",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-20",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-20",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-21",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-21",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-22",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-23",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-24",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-25",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-26",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-27",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-27",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-28",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-29",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-04-30",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-01",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-01",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-02",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-03",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-04",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-04",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-05",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-05",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-06",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-07",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-08",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-09",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-09",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-10",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-11",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-11",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-12",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-13",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-14",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-15",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-16",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-16",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-17",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-18",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-18",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-19",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-19",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-20",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-21",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-22",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-23",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-24",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-25",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-25",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-26",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-27",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-28",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-29",
+      "type": "ZN 7-13",
+      "description": "Fixo 5ª sexta 19-01",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-29",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-30",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-30",
+      "type": "ZN 7-13",
+      "description": "Fixo 5ª sabado manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-05-31",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-01",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-01",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-02",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-02",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-03",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-04",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-05",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-05",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-06",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-07",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-08",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-08",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-09",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-10",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-11",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-12",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-13",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-13",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-14",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-15",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-15",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-16",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-16",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-17",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-18",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-19",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-20",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-20",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-21",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-22",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-22",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-23",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-24",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-25",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-26",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-27",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-28",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-29",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-29",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-30",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-06-30",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-01",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-02",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-03",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-03",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-04",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-05",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-06",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-06",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-07",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-08",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-09",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-10",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-11",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-11",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-12",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-13",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-13",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-14",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-14",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-15",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-16",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-17",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-18",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-18",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-19",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-20",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-20",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-21",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-22",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-23",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-24",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-25",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-26",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-27",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-27",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-28",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-28",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-29",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-30",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-31",
+      "type": "Apoio (19-01)",
+      "description": "Fixo 5ª sexta Apoio",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-07-31",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-01",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-02",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-03",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-03",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-04",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-05",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-06",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-07",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-07",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-08",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-08",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-09",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-10",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-10",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-11",
+      "type": "Cancelar Gemini",
+      "description": "Cancelar Gemini - Meu, Lygia, Júlia M, myriam, gi",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-11",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-11",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-12",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-13",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-14",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-15",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-15",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-16",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-17",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-17",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-18",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-19",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-20",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-21",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-22",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-23",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-24",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-24",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-25",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-25",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-26",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-27",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-28",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-29",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-29",
+      "type": "ZN 7-13",
+      "description": "Fixo 5ª sabado manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-30",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-31",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-08-31",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-01",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-03",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-04",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-04",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-05",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-06",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-07",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-07",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-08",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-08",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-09",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-10",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-11",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-12",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-12",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-13",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-14",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-14",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-15",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-17",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-18",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-19",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-19",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-20",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-21",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-21",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-22",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-22",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-24",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-25",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-26",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-27",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-28",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-28",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-29",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-09-30",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-01",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-02",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-03",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-04",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-05",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-05",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-06",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-06",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-07",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-08",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-09",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-10",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-10",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-11",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-12",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-12",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-13",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-14",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-15",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-17",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-17",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-18",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-19",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-19",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-20",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-20",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-21",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-22",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-24",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-25",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-26",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-26",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-27",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-28",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-29",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-30",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-30",
+      "type": "Apoio (19-01)",
+      "description": "Fixo 5ª sexta Apoio",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-31",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-10-31",
+      "type": "ZN 7-13",
+      "description": "Fixo 5ª sabado manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-01",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-02",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-03",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-03",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-04",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-05",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-06",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-06",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-07",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-08",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-09",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-09",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-10",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-11",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-12",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-13",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-14",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-14",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-15",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-16",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-17",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-17",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-18",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-19",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-20",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-21",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-21",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-22",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-23",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-24",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-25",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-26",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-27",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-28",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-29",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-30",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-11-30",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-01",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-01",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-02",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-03",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-04",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-04",
+      "type": "ZN 7-13",
+      "description": "Noturno fixo ainda 1 sexta",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-05",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-06",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-07",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-07",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-08",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-09",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-10",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-11",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-12",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-12",
+      "type": "ZN 7-13",
+      "description": "Manhã 2° sabado fixo - Grupo 15/05",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-13",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-14",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-14",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-15",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-15",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-16",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-17",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-18",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-19",
+      "type": "ZN 7-13",
+      "description": "3° sabado manhã fixo maria fernanda",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-19",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-20",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-21",
+      "type": "ZN 13-19",
+      "description": "Corredor tarde juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-21",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-22",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-23",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-24",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-25",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-26",
+      "type": "Natação",
+      "description": "Natação 12:10",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-27",
+      "type": "ZN 7-13",
+      "description": "ZN Manhã",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-28",
+      "type": "HC 13-19",
+      "description": "HC tarde fixo",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-28",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-29",
+      "type": "ZN 13-19",
+      "description": "ZN 13-19 Fixo c Juh",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-29",
+      "type": "Natação",
+      "description": "Natação 11:40",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-30",
+      "type": "Natação",
+      "description": "Natação 20:45",
+      "isPassed": "0"
+    },
+    {
+      "data": "2026-12-31",
+      "type": "HC 7-13",
+      "description": "HC manha",
+      "isPassed": "0"
+    }
+  ],
+  "messages": [
+    "2026-01-17\tZN 7-13\tManhã maria fernanda a confirmar - Grupo 15/0",
+    "Fiz tarde troquei amanda\t0",
+    "2026-02-03\tTERAPIA\tanti-heroi? não, vilão. eu sou o protagonista;",
+    "anotar os gastos. esqueci, esqueci, esqueci. um pedido de ajuda? minha mente não dá conta de lembrar de tudo. é preciso anotar 10:30\t0",
+    "2026-02-12\tNoturno (19-07)\tNoturno origirinal mari troca apoio - Grupinho 26/01 troca pelo apoio com Laís ",
+    "Passei apoio Alana 29/01\t1",
+    "2026-02-15\tLembrete\tinserir na agenda os dias de leitura, e a programação do clube de leitura; entre no hotmart e veja os comunicados e os comentário, insira na agenda pelo manus os eventos. ",
+    "insira também outros eventos de lazer na agenda para substituirmos pelo jogar devagar 15:30\t0",
+    "2026-02-16\tZN 7-13\tManha 7-13",
+    "Lugar marcelo",
+    " 07:00\t0",
+    "2026-02-17\tZN 13-19\tLUGAR DA LÍVIA, GRUPO, PVD 08/02",
+    " 13:00\t0"
+  ],
+  "stdout": "data\ttype\tdescription\tisPassed\n2026-01-01\tHC 7-13\tHC manha\t1\n2026-01-01\t7-19 troca com a Lygia !!!\t7-19 troca com a Lygia !!!\t0\n2026-01-02\tNatação\tNatação 20:45\t0\n2026-01-02\tZN 7-13\tNoturno ZN melissa fixo mari grupo sexta 11/11\t1\n2026-01-02\tZN 7-13\tManhã maicon passei Lygia - Grupo 15/05\t1\n2026-01-03\tZN 7-13\tMarco Antônio 03/11 fiz apoio\t0\n2026-01-03\tNatação\tNatação 12:10\t0\n2026-01-04\tZN 7-13\tNoturno ZN amanda noturno 02/11 Carlos\t1\n2026-01-04\tZN 7-13\tZN Manhã camila manha\t1\n2026-01-05\tMusculação\tteste 13:30\t0\n2026-01-05\tPilates\tmembros inferiores 19:00\t0\n2026-01-05\tZN 13-19\tCorredor tarde juh\t0\n2026-01-05\tNatação\tNatação 20:45\t0\n2026-01-06\tNatação\tNatação 11:40\t0\n2026-01-06\tZN 13-19\tTarde Igor - Grupo 15/05\t0\n2026-01-06\tZN 13-19\tZN 13-19 fixo juh\t1\n2026-01-06\tPilates\tULTIMO TESTE AMEM 12:12\t0\n2026-01-07\tNoturno (19-07)\tNoturno jédsica pvd 03/11 amanda pvd 07/01\t1\n2026-01-07\tZN 7-13\tManhã mari pvd 04/01 - Grupo 15/05\t0\n2026-01-07\tNatação\tNatação 20:45\t0\n2026-01-08\tZN 7-13\tManhã Yana pvd 07/01 - Grupo 15/05\t0\n2026-01-08\tZN 13-19\tZN 13-19 pascoal\t0\n2026-01-08\tZN 7-13\tNoturno ZN fixo da lygia patricia\t1\n2026-01-08\tPassei Matheus\tPassei Matheus\t1\n2026-01-09\tZN 7-13\tNoturno ZN melissa fixo\t0\n2026-01-09\tZN 7-13\tManhã juh, 08/01, original thiagopassei juh - Grupo 15/05\t1\n2026-01-09\tNatação\tNatação 20:45\t0\n2026-01-10\tNatação\tNatação 12:10\t0\n2026-01-10\tZN 7-13\tNoturno origirinal bruna\t0\n2026-01-10\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-01-11\tZN 7-13\tZN Manhã\t0\n2026-01-12\tSamila\tSamila\t0\n2026-01-12\tNatação\tNatação 20:45\t0\n2026-01-13\tZN 13-19\tZN 13-19 fixo passei pascoal\t1\n2026-01-13\tHC 7-13\tHC manhã\t0\n2026-01-13\tMusculação\tfghghgh 10:35\t0\n2026-01-13\tPilates\tggfgfgfg 16:30\t0\n2026-01-13\tNatação\tNatação 11:40\t0\n2026-01-14\tHC 7-13\tHC manha romerson\t0\n2026-01-14\tNatação\tNatação 20:45\t0\n2026-01-14\tPessoal\tTarde pessoal marcos passei Juh - Grupo 15/05\t1\n2026-01-15\tHC 7-13\tHC manha\t0\n2026-01-15\tZN 7-13\tNoturno ZN fixo da lygia passei samila \t1\n2026-01-16\tNatação\tNatação 20:45\t0\n2026-01-16\tZN 7-13\tNoturno ZN melissa fixo confirmar trcoa sabado maria - Confirmar passagem manu\t1\n2026-01-17\tNatação\tNatação 12:10\t0\n2026-01-17\tZN 7-13\tManhã maria fernanda a confirmar - Grupo 15/0\nFiz tarde troquei amanda\t0\n2026-01-17\tZN 7-13\tNoturno Lygia - Passou no pvd 13/01\t0\n2026-01-18\tZN 7-13\tZN Manhã maicon\t1\n2026-01-19\tZN 13-19\tCorredor tarde juh\t0\n2026-01-19\tNatação\tNatação 20:45\t0\n2026-01-20\tZN 13-19\tZN 13-19 fixo juh\t1\n2026-01-20\tHC 7-13\tHC manhã\t0\n2026-01-20\tNatação\tNatação 11:40\t0\n2026-01-21\tNatação\tNatação 20:45\t0\n2026-01-22\tPassei fixo patricia\tPassei fixo patricia\t1\n2026-01-22\tHC 7-13\tHC 12\t0\n2026-01-23\tNatação\tNatação 20:45\t0\n2026-01-23\tZN 7-13\tManhã Juh Hammes  - Grupo 15/05\t0\n2026-01-23\tZN 7-13\tNoturno ZN melissa fixo allna\t1\n2026-01-24\tFormatura\tFormatura\t0\n2026-01-24\tNoturno (19-07)\tNoturno origirinal bruna Mari confirmado\t1\n2026-01-24\tNatação\tNatação 12:10\t0\n2026-01-25\tZN 7-13\tZN Manhã bruna grupo 22/01\t1\n2026-01-26\tNatação\tNatação 20:45\t0\n2026-01-26\tHC 13-19\tTarde\t0\n2026-01-26\tZN 13-19\tTarde pascoal / Ariane Altoé - Grupo 15/05\t1\n2026-01-27\tNatação\tNatação 11:40\t0\n2026-01-27\tZN 13-19\tZN 13-19 fixo grupo 27/01\t1\n2026-01-27\tHC 7-13\tHC manhã\t0\n2026-01-28\tPilates\tPilates 19\t0\n2026-01-28\tVirginia 15:30\tVirginia 15:30\t0\n2026-01-28\tPessoal\tTerapia às 13\t0\n2026-01-28\tNutri 10:00\tNutri 10:00\t0\n2026-01-28\tAcad 7:30\tAcad 7:30\t0\n2026-01-28\tNatação\tNatação 20:45\t0\n2026-01-29\tHC 7-13\tHC manha\t0\n2026-01-29\tZN 13-19\tZN 13-19 pascoal passei luiz\t1\n2026-01-29\tMusculação\tAcad 7:30\t0\n2026-01-29\tPilates\tPilates 19\t0\n2026-01-30\tNatação\tNatação 20:45\t0\n2026-01-30\tApoio (19-01)\tFixo 5 sexta apoio lais\t1\n2026-01-30\tNoturno (19-07)\tNoturno origirinal bruna allana\t1\n2026-01-31\tZN 7-13\tFixo 5ª sabado manha perdi esse\t1\n2026-01-31\tNatação\tNatação 12:10\t0\n2026-02-01\tZN 7-13\tZN Manhã maickon grupo 06/01\t1\n2026-02-02\tNatação\tNatação 20:45\t0\n2026-02-02\tZN 13-19\tCorredor tarde juh pssei amanda 26/01\t1\n2026-02-02\tPilates\tPilates 18:00\t0\n2026-02-02\tMusculação\tPeito, ombros e tríceps  15:30\t0\n2026-02-03\tNatação\tNatação 11:40\t0\n2026-02-03\tTERAPIA\tanti-heroi? não, vilão. eu sou o protagonista;\nanotar os gastos. esqueci, esqueci, esqueci. um pedido de ajuda? minha mente não dá conta de lembrar de tudo. é preciso anotar 10:30\t0\n2026-02-03\tMusculação\tQuadríceps e abdutores  15:30\t0\n2026-02-04\tZN 13-19\tTarde pascoal - Grupo 15/05\t0\n2026-02-04\tMusculação\tCostas e bíceps. 08:30\t0\n2026-02-05\tMusculação\tPosteriores e glúteo  06:00\t0\n2026-02-05\tHC 7-13\tHC manha\t0\n2026-02-06\tPilates\tPilates 18:00\t0\n2026-02-06\tNoturno (19-07)\tNoturno fixo ainda 1 sexta alanna 29/01\t1\n2026-02-06\tNatação\tNatação 20:45\t0\n2026-02-06\tMusculação\tPanturrilha e abdômen 16:15\t0\n2026-02-07\tZN 13-19\tTarde pela Samila - Grupo 15/05\t0\n2026-02-07\tNatação\tNatação 12:10\t0\n2026-02-08\tvisita hd pedro henrique\tvisita hd pedro henrique 15:00\t0\n2026-02-08\tZN 7-13\tZN Manhã\t0\n2026-02-09\tHC 7-13\t13-19 13:00\t0\n2026-02-09\tHC 7-13\tHC fixo + 6 matheus\t0\n2026-02-10\tMusculação\tQuadríceps e adutores  15:30\t0\n2026-02-10\tNatação\tNatação 11:40\t0\n2026-02-11\tZN 7-13\tManhã mari pvd 15/12 - Grupo 15/05\t0\n2026-02-11\tPilates\tPilates na Chair, foco em Membros Inferiores e Mobilização de Coluna. 17:00\t0\n2026-02-11\tMusculação\tPeito, ombros e tríceps  15:00\t0\n2026-02-11\tNatação\tNatação 20:45\t0\n2026-02-12\tLembrete\tmarcar visita paciente jheovani 15:00\t0\n2026-02-12\tNoturno (19-07)\tNoturno origirinal mari troca apoio - Grupinho 26/01 troca pelo apoio com Laís \nPassei apoio Alana 29/01\t1\n2026-02-12\tHome Care\tVISITA DOMICILIAR - ALDEMIR  13:30\t0\n2026-02-12\tHC 7-13\tPassei rafa\t1\n2026-02-12\tMusculação\tCostas e bíceps  06:00\t0\n2026-02-12\tZN 7-13\tlugar da samila 07:00\t0\n2026-02-13\tPilates\tno Cadillac, Mobilização de Coluna, Core e Membros Superiores (Reposição) 17:00\t0\n2026-02-13\tHome Care\tReunião HomeDoctor pela manhã 09:30\t0\n2026-02-13\tNatação\tNatação 20:45\t0\n2026-02-13\tMusculação\tGlúteo, Posteriores e panturrilha. 08:00\t0\n2026-02-14\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-02-14\tHome Care\tvirgínia 15:30\t0\n2026-02-14\tNatação\tNatação 12:10\t0\n2026-02-14\tNoturno (19-07)\tNoturno origirinal bruna myrian pvd\t1\n2026-02-15\tZN 7-13\tZN Manhã\t0\n2026-02-15\tLembrete\tinserir na agenda os dias de leitura, e a programação do clube de leitura; entre no hotmart e veja os comunicados e os comentário, insira na agenda pelo manus os eventos. \n\ninsira também outros eventos de lazer na agenda para substituirmos pelo jogar devagar 15:30\t0\n2026-02-16\tZN 13-19\tCorredor tarde juh\t0\n2026-02-16\tZN 7-13\tManha 7-13\nLugar marcelo\n 07:00\t0\n2026-02-16\tNatação\tNatação 20:45\t0\n2026-02-17\tNatação\tNatação 11:40\t0\n2026-02-17\tZN 13-19\tLUGAR DA LÍVIA, GRUPO, PVD 08/02\n 13:00\t0\n2026-02-18\tZN 13-19\tZN 13-19 paula pvd 06/01\t0\n2026-02-18\tNatação\tNatação 20:45\t0\n2026-02-18\tZN 7-13\tManhã mari pvd 15/12 - Grupo 15/05\t0\n2026-02-19\tHC 7-13\tHC manha\t0\n2026-02-19\tPilates\tReformer com foco em Mobilidade de coluna, Alongamento de Membros Inferiores e Foco em Core. 16:00\t0\n2026-02-20\tMaratona de Plantão\tMaratona de Plantão\t0\n2026-02-20\tPilates\tSolo com Mobilidade de Coluna e quadril, fortalecimento de Membros Superiores e foco em Core. 17:00\t0\n2026-02-20\tNatação\tNatação 20:45\t0\n2026-02-21\tNatação\tNatação 12:10\t0\n2026-02-21\tPossivel plantao maria alana 29/01\tPossivel plantao maria alana 29/01\t1\n2026-02-21\tZN 7-13\tManhã plantao maria a confirmar - Grupo 15/05\t0\n2026-02-22\tNoturno 19-7\tjulia b no pvd 07/02 19:00\t0\n2026-02-22\tZN 7-13\tZN Manhã\t0\n2026-02-23\tHC 13-19\tHC tarde fixo\t0\n2026-02-23\tNatação\tNatação 20:45\t0\n2026-02-24\tZN 13-19\tZN 13-19 fixo\t0\n2026-02-24\tTati\tTati\t0\n2026-02-24\tNatação\tNatação 11:40\t0\n2026-02-25\tPilates\tChair- Foco em Membros Inferiores e Mobilização de Coluna. 17:00\t0\n2026-02-25\tNatação\tNatação 20:45\t0\n2026-02-26\tHC 7-13\tHC manha\t0\n2026-02-27\tPilates\tCadillac- Foco em Mobilidade de coluna, abdômen e Membros Superiores 17:00\t0\n2026-02-27\tNatação\tNatação 20:45\t0\n2026-02-28\tNoturno (19-07)\tNoturno origirinal troquei mari por 12/02\t1\n2026-02-28\tNatação\tNatação 12:10\t0\n2026-03-01\tZN 7-13\tZN Manhã\t0\n2026-03-01\tNoturno 19-7\tLugar Betini 11/02 19:00\t0\n2026-03-02\tNatação\tNatação 20:45\t0\n2026-03-02\tZN 13-19\tCorredor tarde juh\t0\n2026-03-03\tNatação\tNatação 11:40\t0\n2026-03-04\t10:30 Nutri\t10:30 Nutri\t0\n2026-03-04\tNatação\tNatação 20:45\t0\n2026-03-05\tHC 7-13\tHC manha\t0\n2026-03-06\tNatação\tNatação 20:45\t0\n2026-03-06\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-03-07\tNatação\tNatação 12:10\t0\n2026-03-08\tZN 7-13\tZN Manhã\t0\n2026-03-09\tNatação\tNatação 20:45\t0\n2026-03-09\tHC 13-19\tHC tarde fixo\t0\n2026-03-10\tNatação\tNatação 11:40\t0\n2026-03-10\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-03-11\tNatação\tNatação 20:45\t0\n2026-03-12\tHC 7-13\tHC manha\t0\n2026-03-13\tNatação\tNatação 20:45\t0\n2026-03-14\tNatação\tNatação 12:10\t0\n2026-03-14\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-03-14\tZN 7-13\tNoturno origirinal bruna\t0\n2026-03-15\tZN 7-13\tZN Manhã\t0\n2026-03-16\tNatação\tNatação 20:45\t0\n2026-03-16\tZN 13-19\tCorredor tarde juh\t0\n2026-03-17\tNatação\tNatação 11:40\t0\n2026-03-18\tNatação\tNatação 20:45\t0\n2026-03-19\tHC 7-13\tHC manha\t0\n2026-03-20\tPsiq\tPsiq\t0\n2026-03-20\tNatação\tNatação 20:45\t0\n2026-03-21\tNatação\tNatação 12:10\t0\n2026-03-21\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-03-22\tZN 7-13\tZN Manhã\t0\n2026-03-23\tNatação\tNatação 20:45\t0\n2026-03-23\tHC 13-19\tHC tarde fixo\t0\n2026-03-24\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-03-24\tNatação\tNatação 11:40\t0\n2026-03-25\tNatação\tNatação 20:45\t0\n2026-03-26\tHC 7-13\tHC manha\t0\n2026-03-27\tNatação\tNatação 20:45\t0\n2026-03-28\tZN 7-13\tNoturno origirinal bruna\t0\n2026-03-28\tNatação\tNatação 12:10\t0\n2026-03-29\tZN 7-13\tZN Manhã\t0\n2026-03-30\tZN 13-19\tCorredor tarde juh\t0\n2026-03-30\tNatação\tNatação 20:45\t0\n2026-03-31\tTati\tTati\t0\n2026-03-31\tNatação\tNatação 11:40\t0\n2026-04-01\tNatação\tNatação 20:45\t0\n2026-04-02\tHC 7-13\tHC manha\t0\n2026-04-03\tNatação\tNatação 20:45\t0\n2026-04-03\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-04-04\tNatação\tNatação 12:10\t0\n2026-04-05\tZN 7-13\tZN Manhã\t0\n2026-04-06\tNatação\tNatação 20:45\t0\n2026-04-06\tHC 13-19\tHC tarde fixo\t0\n2026-04-07\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-04-07\tNatação\tNatação 11:40\t0\n2026-04-08\tNatação\tNatação 20:45\t0\n2026-04-09\tHC 7-13\tHC manha\t0\n2026-04-10\tNatação\tNatação 20:45\t0\n2026-04-11\tZN 7-13\tNoturno origirinal bruna\t0\n2026-04-11\tPreencher mais 2 e 4 sabado da bruna\tPreencher mais 2 e 4 sabado da bruna\t0\n2026-04-11\tNatação\tNatação 12:10\t0\n2026-04-11\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-04-12\tZN 7-13\tZN Manhã\t0\n2026-04-13\tNatação\tNatação 20:45\t0\n2026-04-13\tZN 13-19\tCorredor tarde juh\t0\n2026-04-14\tNatação\tNatação 11:40\t0\n2026-04-15\tNatação\tNatação 20:45\t0\n2026-04-16\tHC 7-13\tHC manha\t0\n2026-04-17\tNatação\tNatação 20:45\t0\n2026-04-18\tNatação\tNatação 12:10\t0\n2026-04-18\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-04-19\tZN 7-13\tZN Manhã\t0\n2026-04-20\tHC 13-19\tHC tarde fixo\t0\n2026-04-20\tNatação\tNatação 20:45\t0\n2026-04-21\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-04-21\tNatação\tNatação 11:40\t0\n2026-04-22\tNatação\tNatação 20:45\t0\n2026-04-23\tHC 7-13\tHC manha\t0\n2026-04-24\tNatação\tNatação 20:45\t0\n2026-04-25\tNatação\tNatação 12:10\t0\n2026-04-26\tZN 7-13\tZN Manhã\t0\n2026-04-27\tZN 13-19\tCorredor tarde juh\t0\n2026-04-27\tNatação\tNatação 20:45\t0\n2026-04-28\tNatação\tNatação 11:40\t0\n2026-04-29\tNatação\tNatação 20:45\t0\n2026-04-30\tHC 7-13\tHC manha\t0\n2026-05-01\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-05-01\tNatação\tNatação 20:45\t0\n2026-05-02\tNatação\tNatação 12:10\t0\n2026-05-03\tZN 7-13\tZN Manhã\t0\n2026-05-04\tHC 13-19\tHC tarde fixo\t0\n2026-05-04\tNatação\tNatação 20:45\t0\n2026-05-05\tNatação\tNatação 11:40\t0\n2026-05-05\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-05-06\tNatação\tNatação 20:45\t0\n2026-05-07\tHC 7-13\tHC manha\t0\n2026-05-08\tNatação\tNatação 20:45\t0\n2026-05-09\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-05-09\tNatação\tNatação 12:10\t0\n2026-05-10\tZN 7-13\tZN Manhã\t0\n2026-05-11\tZN 13-19\tCorredor tarde juh\t0\n2026-05-11\tNatação\tNatação 20:45\t0\n2026-05-12\tNatação\tNatação 11:40\t0\n2026-05-13\tNatação\tNatação 20:45\t0\n2026-05-14\tHC 7-13\tHC manha\t0\n2026-05-15\tNatação\tNatação 20:45\t0\n2026-05-16\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-05-16\tNatação\tNatação 12:10\t0\n2026-05-17\tZN 7-13\tZN Manhã\t0\n2026-05-18\tNatação\tNatação 20:45\t0\n2026-05-18\tHC 13-19\tHC tarde fixo\t0\n2026-05-19\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-05-19\tNatação\tNatação 11:40\t0\n2026-05-20\tNatação\tNatação 20:45\t0\n2026-05-21\tHC 7-13\tHC manha\t0\n2026-05-22\tNatação\tNatação 20:45\t0\n2026-05-23\tNatação\tNatação 12:10\t0\n2026-05-24\tZN 7-13\tZN Manhã\t0\n2026-05-25\tNatação\tNatação 20:45\t0\n2026-05-25\tZN 13-19\tCorredor tarde juh\t0\n2026-05-26\tNatação\tNatação 11:40\t0\n2026-05-27\tNatação\tNatação 20:45\t0\n2026-05-28\tHC 7-13\tHC manha\t0\n2026-05-29\tZN 7-13\tFixo 5ª sexta 19-01\t0\n2026-05-29\tNatação\tNatação 20:45\t0\n2026-05-30\tNatação\tNatação 12:10\t0\n2026-05-30\tZN 7-13\tFixo 5ª sabado manhã\t0\n2026-05-31\tZN 7-13\tZN Manhã\t0\n2026-06-01\tHC 13-19\tHC tarde fixo\t0\n2026-06-01\tNatação\tNatação 20:45\t0\n2026-06-02\tNatação\tNatação 11:40\t0\n2026-06-02\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-06-03\tNatação\tNatação 20:45\t0\n2026-06-04\tHC 7-13\tHC manha\t0\n2026-06-05\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-06-05\tNatação\tNatação 20:45\t0\n2026-06-06\tNatação\tNatação 12:10\t0\n2026-06-07\tZN 7-13\tZN Manhã\t0\n2026-06-08\tNatação\tNatação 20:45\t0\n2026-06-08\tZN 13-19\tCorredor tarde juh\t0\n2026-06-09\tNatação\tNatação 11:40\t0\n2026-06-10\tNatação\tNatação 20:45\t0\n2026-06-11\tHC 7-13\tHC manha\t0\n2026-06-12\tNatação\tNatação 20:45\t0\n2026-06-13\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-06-13\tNatação\tNatação 12:10\t0\n2026-06-14\tZN 7-13\tZN Manhã\t0\n2026-06-15\tHC 13-19\tHC tarde fixo\t0\n2026-06-15\tNatação\tNatação 20:45\t0\n2026-06-16\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-06-16\tNatação\tNatação 11:40\t0\n2026-06-17\tNatação\tNatação 20:45\t0\n2026-06-18\tHC 7-13\tHC manha\t0\n2026-06-19\tNatação\tNatação 20:45\t0\n2026-06-20\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-06-20\tNatação\tNatação 12:10\t0\n2026-06-21\tZN 7-13\tZN Manhã\t0\n2026-06-22\tZN 13-19\tCorredor tarde juh\t0\n2026-06-22\tNatação\tNatação 20:45\t0\n2026-06-23\tNatação\tNatação 11:40\t0\n2026-06-24\tNatação\tNatação 20:45\t0\n2026-06-25\tHC 7-13\tHC manha\t0\n2026-06-26\tNatação\tNatação 20:45\t0\n2026-06-27\tNatação\tNatação 12:10\t0\n2026-06-28\tZN 7-13\tZN Manhã\t0\n2026-06-29\tHC 13-19\tHC tarde fixo\t0\n2026-06-29\tNatação\tNatação 20:45\t0\n2026-06-30\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-06-30\tNatação\tNatação 11:40\t0\n2026-07-01\tNatação\tNatação 20:45\t0\n2026-07-02\tHC 7-13\tHC manha\t0\n2026-07-03\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-07-03\tNatação\tNatação 20:45\t0\n2026-07-04\tNatação\tNatação 12:10\t0\n2026-07-05\tZN 7-13\tZN Manhã\t0\n2026-07-06\tZN 13-19\tCorredor tarde juh\t0\n2026-07-06\tNatação\tNatação 20:45\t0\n2026-07-07\tNatação\tNatação 11:40\t0\n2026-07-08\tNatação\tNatação 20:45\t0\n2026-07-09\tHC 7-13\tHC manha\t0\n2026-07-10\tNatação\tNatação 20:45\t0\n2026-07-11\tNatação\tNatação 12:10\t0\n2026-07-11\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-07-12\tZN 7-13\tZN Manhã\t0\n2026-07-13\tNatação\tNatação 20:45\t0\n2026-07-13\tHC 13-19\tHC tarde fixo\t0\n2026-07-14\tNatação\tNatação 11:40\t0\n2026-07-14\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-07-15\tNatação\tNatação 20:45\t0\n2026-07-16\tHC 7-13\tHC manha\t0\n2026-07-17\tNatação\tNatação 20:45\t0\n2026-07-18\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-07-18\tNatação\tNatação 12:10\t0\n2026-07-19\tZN 7-13\tZN Manhã\t0\n2026-07-20\tZN 13-19\tCorredor tarde juh\t0\n2026-07-20\tNatação\tNatação 20:45\t0\n2026-07-21\tNatação\tNatação 11:40\t0\n2026-07-22\tNatação\tNatação 20:45\t0\n2026-07-23\tHC 7-13\tHC manha\t0\n2026-07-24\tNatação\tNatação 20:45\t0\n2026-07-25\tNatação\tNatação 12:10\t0\n2026-07-26\tZN 7-13\tZN Manhã\t0\n2026-07-27\tNatação\tNatação 20:45\t0\n2026-07-27\tHC 13-19\tHC tarde fixo\t0\n2026-07-28\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-07-28\tNatação\tNatação 11:40\t0\n2026-07-29\tNatação\tNatação 20:45\t0\n2026-07-30\tHC 7-13\tHC manha\t0\n2026-07-31\tApoio (19-01)\tFixo 5ª sexta Apoio\t0\n2026-07-31\tNatação\tNatação 20:45\t0\n2026-08-01\tNatação\tNatação 12:10\t0\n2026-08-02\tZN 7-13\tZN Manhã\t0\n2026-08-03\tZN 13-19\tCorredor tarde juh\t0\n2026-08-03\tNatação\tNatação 20:45\t0\n2026-08-04\tNatação\tNatação 11:40\t0\n2026-08-05\tNatação\tNatação 20:45\t0\n2026-08-06\tHC 7-13\tHC manha\t0\n2026-08-07\tNatação\tNatação 20:45\t0\n2026-08-07\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-08-08\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-08-08\tNatação\tNatação 12:10\t0\n2026-08-09\tZN 7-13\tZN Manhã\t0\n2026-08-10\tNatação\tNatação 20:45\t0\n2026-08-10\tHC 13-19\tHC tarde fixo\t0\n2026-08-11\tCancelar Gemini\tCancelar Gemini - Meu, Lygia, Júlia M, myriam, gi\t0\n2026-08-11\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-08-11\tNatação\tNatação 11:40\t0\n2026-08-12\tNatação\tNatação 20:45\t0\n2026-08-13\tHC 7-13\tHC manha\t0\n2026-08-14\tNatação\tNatação 20:45\t0\n2026-08-15\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-08-15\tNatação\tNatação 12:10\t0\n2026-08-16\tZN 7-13\tZN Manhã\t0\n2026-08-17\tZN 13-19\tCorredor tarde juh\t0\n2026-08-17\tNatação\tNatação 20:45\t0\n2026-08-18\tNatação\tNatação 11:40\t0\n2026-08-19\tNatação\tNatação 20:45\t0\n2026-08-20\tHC 7-13\tHC manha\t0\n2026-08-21\tNatação\tNatação 20:45\t0\n2026-08-22\tNatação\tNatação 12:10\t0\n2026-08-23\tZN 7-13\tZN Manhã\t0\n2026-08-24\tNatação\tNatação 20:45\t0\n2026-08-24\tHC 13-19\tHC tarde fixo\t0\n2026-08-25\tNatação\tNatação 11:40\t0\n2026-08-25\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-08-26\tNatação\tNatação 20:45\t0\n2026-08-27\tHC 7-13\tHC manha\t0\n2026-08-28\tNatação\tNatação 20:45\t0\n2026-08-29\tNatação\tNatação 12:10\t0\n2026-08-29\tZN 7-13\tFixo 5ª sabado manhã\t0\n2026-08-30\tZN 7-13\tZN Manhã\t0\n2026-08-31\tZN 13-19\tCorredor tarde juh\t0\n2026-08-31\tNatação\tNatação 20:45\t0\n2026-09-01\tNatação\tNatação 11:40\t0\n2026-09-02\tNatação\tNatação 20:45\t0\n2026-09-03\tHC 7-13\tHC manha\t0\n2026-09-04\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-09-04\tNatação\tNatação 20:45\t0\n2026-09-05\tNatação\tNatação 12:10\t0\n2026-09-06\tZN 7-13\tZN Manhã\t0\n2026-09-07\tHC 13-19\tHC tarde fixo\t0\n2026-09-07\tNatação\tNatação 20:45\t0\n2026-09-08\tNatação\tNatação 11:40\t0\n2026-09-08\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-09-09\tNatação\tNatação 20:45\t0\n2026-09-10\tHC 7-13\tHC manha\t0\n2026-09-11\tNatação\tNatação 20:45\t0\n2026-09-12\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-09-12\tNatação\tNatação 12:10\t0\n2026-09-13\tZN 7-13\tZN Manhã\t0\n2026-09-14\tNatação\tNatação 20:45\t0\n2026-09-14\tZN 13-19\tCorredor tarde juh\t0\n2026-09-15\tNatação\tNatação 11:40\t0\n2026-09-16\tNatação\tNatação 20:45\t0\n2026-09-17\tHC 7-13\tHC manha\t0\n2026-09-18\tNatação\tNatação 20:45\t0\n2026-09-19\tNatação\tNatação 12:10\t0\n2026-09-19\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-09-20\tZN 7-13\tZN Manhã\t0\n2026-09-21\tHC 13-19\tHC tarde fixo\t0\n2026-09-21\tNatação\tNatação 20:45\t0\n2026-09-22\tNatação\tNatação 11:40\t0\n2026-09-22\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-09-23\tNatação\tNatação 20:45\t0\n2026-09-24\tHC 7-13\tHC manha\t0\n2026-09-25\tNatação\tNatação 20:45\t0\n2026-09-26\tNatação\tNatação 12:10\t0\n2026-09-27\tZN 7-13\tZN Manhã\t0\n2026-09-28\tZN 13-19\tCorredor tarde juh\t0\n2026-09-28\tNatação\tNatação 20:45\t0\n2026-09-29\tNatação\tNatação 11:40\t0\n2026-09-30\tNatação\tNatação 20:45\t0\n2026-10-01\tHC 7-13\tHC manha\t0\n2026-10-02\tNatação\tNatação 20:45\t0\n2026-10-02\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-10-03\tNatação\tNatação 12:10\t0\n2026-10-04\tZN 7-13\tZN Manhã\t0\n2026-10-05\tNatação\tNatação 20:45\t0\n2026-10-05\tHC 13-19\tHC tarde fixo\t0\n2026-10-06\tNatação\tNatação 11:40\t0\n2026-10-06\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-10-07\tNatação\tNatação 20:45\t0\n2026-10-08\tHC 7-13\tHC manha\t0\n2026-10-09\tNatação\tNatação 20:45\t0\n2026-10-10\tNatação\tNatação 12:10\t0\n2026-10-10\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-10-11\tZN 7-13\tZN Manhã\t0\n2026-10-12\tNatação\tNatação 20:45\t0\n2026-10-12\tZN 13-19\tCorredor tarde juh\t0\n2026-10-13\tNatação\tNatação 11:40\t0\n2026-10-14\tNatação\tNatação 20:45\t0\n2026-10-15\tHC 7-13\tHC manha\t0\n2026-10-16\tNatação\tNatação 20:45\t0\n2026-10-17\tNatação\tNatação 12:10\t0\n2026-10-17\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-10-18\tZN 7-13\tZN Manhã\t0\n2026-10-19\tHC 13-19\tHC tarde fixo\t0\n2026-10-19\tNatação\tNatação 20:45\t0\n2026-10-20\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-10-20\tNatação\tNatação 11:40\t0\n2026-10-21\tNatação\tNatação 20:45\t0\n2026-10-22\tHC 7-13\tHC manha\t0\n2026-10-23\tNatação\tNatação 20:45\t0\n2026-10-24\tNatação\tNatação 12:10\t0\n2026-10-25\tZN 7-13\tZN Manhã\t0\n2026-10-26\tZN 13-19\tCorredor tarde juh\t0\n2026-10-26\tNatação\tNatação 20:45\t0\n2026-10-27\tNatação\tNatação 11:40\t0\n2026-10-28\tNatação\tNatação 20:45\t0\n2026-10-29\tHC 7-13\tHC manha\t0\n2026-10-30\tNatação\tNatação 20:45\t0\n2026-10-30\tApoio (19-01)\tFixo 5ª sexta Apoio\t0\n2026-10-31\tNatação\tNatação 12:10\t0\n2026-10-31\tZN 7-13\tFixo 5ª sabado manhã\t0\n2026-11-01\tZN 7-13\tZN Manhã\t0\n2026-11-02\tNatação\tNatação 20:45\t0\n2026-11-02\tHC 13-19\tHC tarde fixo\t0\n2026-11-03\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-11-03\tNatação\tNatação 11:40\t0\n2026-11-04\tNatação\tNatação 20:45\t0\n2026-11-05\tHC 7-13\tHC manha\t0\n2026-11-06\tNatação\tNatação 20:45\t0\n2026-11-06\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-11-07\tNatação\tNatação 12:10\t0\n2026-11-08\tZN 7-13\tZN Manhã\t0\n2026-11-09\tZN 13-19\tCorredor tarde juh\t0\n2026-11-09\tNatação\tNatação 20:45\t0\n2026-11-10\tNatação\tNatação 11:40\t0\n2026-11-11\tNatação\tNatação 20:45\t0\n2026-11-12\tHC 7-13\tHC manha\t0\n2026-11-13\tNatação\tNatação 20:45\t0\n2026-11-14\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-11-14\tNatação\tNatação 12:10\t0\n2026-11-15\tZN 7-13\tZN Manhã\t0\n2026-11-16\tNatação\tNatação 20:45\t0\n2026-11-16\tHC 13-19\tHC tarde fixo\t0\n2026-11-17\tNatação\tNatação 11:40\t0\n2026-11-17\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-11-18\tNatação\tNatação 20:45\t0\n2026-11-19\tHC 7-13\tHC manha\t0\n2026-11-20\tNatação\tNatação 20:45\t0\n2026-11-21\tNatação\tNatação 12:10\t0\n2026-11-21\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-11-22\tZN 7-13\tZN Manhã\t0\n2026-11-23\tNatação\tNatação 20:45\t0\n2026-11-23\tZN 13-19\tCorredor tarde juh\t0\n2026-11-24\tNatação\tNatação 11:40\t0\n2026-11-25\tNatação\tNatação 20:45\t0\n2026-11-26\tHC 7-13\tHC manha\t0\n2026-11-27\tNatação\tNatação 20:45\t0\n2026-11-28\tNatação\tNatação 12:10\t0\n2026-11-29\tZN 7-13\tZN Manhã\t0\n2026-11-30\tHC 13-19\tHC tarde fixo\t0\n2026-11-30\tNatação\tNatação 20:45\t0\n2026-12-01\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-12-01\tNatação\tNatação 11:40\t0\n2026-12-02\tNatação\tNatação 20:45\t0\n2026-12-03\tHC 7-13\tHC manha\t0\n2026-12-04\tNatação\tNatação 20:45\t0\n2026-12-04\tZN 7-13\tNoturno fixo ainda 1 sexta\t0\n2026-12-05\tNatação\tNatação 12:10\t0\n2026-12-06\tZN 7-13\tZN Manhã\t0\n2026-12-07\tZN 13-19\tCorredor tarde juh\t0\n2026-12-07\tNatação\tNatação 20:45\t0\n2026-12-08\tNatação\tNatação 11:40\t0\n2026-12-09\tNatação\tNatação 20:45\t0\n2026-12-10\tHC 7-13\tHC manha\t0\n2026-12-11\tNatação\tNatação 20:45\t0\n2026-12-12\tNatação\tNatação 12:10\t0\n2026-12-12\tZN 7-13\tManhã 2° sabado fixo - Grupo 15/05\t0\n2026-12-13\tZN 7-13\tZN Manhã\t0\n2026-12-14\tHC 13-19\tHC tarde fixo\t0\n2026-12-14\tNatação\tNatação 20:45\t0\n2026-12-15\tNatação\tNatação 11:40\t0\n2026-12-15\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-12-16\tNatação\tNatação 20:45\t0\n2026-12-17\tHC 7-13\tHC manha\t0\n2026-12-18\tNatação\tNatação 20:45\t0\n2026-12-19\tZN 7-13\t3° sabado manhã fixo maria fernanda\t0\n2026-12-19\tNatação\tNatação 12:10\t0\n2026-12-20\tZN 7-13\tZN Manhã\t0\n2026-12-21\tZN 13-19\tCorredor tarde juh\t0\n2026-12-21\tNatação\tNatação 20:45\t0\n2026-12-22\tNatação\tNatação 11:40\t0\n2026-12-23\tNatação\tNatação 20:45\t0\n2026-12-24\tHC 7-13\tHC manha\t0\n2026-12-25\tNatação\tNatação 20:45\t0\n2026-12-26\tNatação\tNatação 12:10\t0\n2026-12-27\tZN 7-13\tZN Manhã\t0\n2026-12-28\tHC 13-19\tHC tarde fixo\t0\n2026-12-28\tNatação\tNatação 20:45\t0\n2026-12-29\tZN 13-19\tZN 13-19 Fixo c Juh\t0\n2026-12-29\tNatação\tNatação 11:40\t0\n2026-12-30\tNatação\tNatação 20:45\t0\n2026-12-31\tHC 7-13\tHC manha\t0\n",
+  "stderr": "",
+  "execution_time_ms": 348
+}

@@ -245,3 +245,11 @@
 - [x] Adicionar campo passedReason no backend (server/routers.ts)
 - [x] Implementar UI com checkbox de Passado em CalendarPage.tsx
 - [x] Atualizar função handleUpdateEvent para incluir isPassed
+
+## Correções Auditoria P1+P2 (15/02/2026)
+
+- [x] Filtro de Lembretes no WeeklyCalendarPage (privacidade)
+- [x] passShift para adminProcedure (segurança)
+- [x] Criar dateUtils.ts com normalizeDateKey unificada (consistência)
+- [x] Refatorar CalendarPage e WeeklyCalendarPage para usar dateUtils.ts
+- [x] Adicionar cores Home Care e Lembrete no WeeklyCalendarPage (visual)

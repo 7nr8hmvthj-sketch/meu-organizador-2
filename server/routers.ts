@@ -137,7 +137,7 @@ export const appRouter = router({
         return await db.updateEvent(id, 1, updateData);
       }),
     
-    passShift: protectedProcedure
+    passShift: adminProcedure
       .input(z.object({ id: z.number(), reason: z.string() }))
       .mutation(async ({ input }) => await db.updateEvent(input.id, 1, { isPassed: true, passedReason: input.reason })),
     

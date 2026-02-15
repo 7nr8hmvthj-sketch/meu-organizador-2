@@ -11,20 +11,9 @@ import { ChevronLeft, ChevronRight, Pencil, Trash2, Plus } from "lucide-react";
 import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { normalizeDateKey } from "@/lib/dateUtils";
 
 // --- HELPERS ---
-
-function normalizeDateKey(dateInput: string | Date): string {
-  if (!dateInput) return "";
-  if (typeof dateInput === 'string') {
-    return dateInput.split('T')[0];
-  }
-  try {
-    return dateInput.toISOString().split('T')[0];
-  } catch {
-    return format(dateInput, 'yyyy-MM-dd');
-  }
-}
 
 function getEventColor(type: string, isPassed: boolean): string {
   if (isPassed) return "bg-gray-100 dark:bg-gray-800 border-gray-300 text-gray-400";
@@ -37,6 +26,8 @@ function getEventColor(type: string, isPassed: boolean): string {
   if (typeLower.includes("zn")) return "bg-amber-50 dark:bg-amber-900/30 border-amber-300 text-amber-700 dark:text-amber-300";
   if (typeLower.includes("noturno")) return "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 text-indigo-700 dark:text-indigo-300";
   if (typeLower.includes("apoio")) return "bg-pink-50 dark:bg-pink-900/30 border-pink-300 text-pink-700 dark:text-pink-300";
+  if (typeLower.includes("home care")) return "bg-teal-50 dark:bg-teal-900/30 border-teal-300 text-teal-700 dark:text-teal-300";
+  if (typeLower.includes("lembrete")) return "bg-gray-100 dark:bg-gray-800/30 border-gray-300 text-gray-700 dark:text-gray-300";
   
   return "bg-slate-50 dark:bg-slate-900/30 border-slate-300 text-slate-700 dark:text-slate-300";
 }
@@ -99,11 +90,20 @@ export default function WeeklyCalendarPage() {
   const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
 
-  const { data: events = [] } = trpc.events.list.useQuery();
+  const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
 
   const currentUsername = authData?.user?.username;
+  const isAdmin = authData?.user?.role === "admin";
+
+  // Filtro de privacidade: oculta Lembretes de trainers
+  const events = useMemo(() => {
+    return allEvents.filter(event => {
+      if (event.type === "Lembrete" && !isAdmin) return false;
+      return true;
+    });
+  }, [allEvents, isAdmin]);
 
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {

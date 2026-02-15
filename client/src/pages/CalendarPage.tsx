@@ -12,24 +12,9 @@ import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { normalizeDateKey } from "@/lib/dateUtils";
 
 // --- HELPERS ---
-
-// Helper crucial: Transforma data em YYYY-MM-DD usando hora local
-function normalizeDateKey(dateInput: string | Date): string {
-  if (!dateInput) return "";
-  
-  // Se for string, tenta extrair a parte da data
-  if (typeof dateInput === 'string') {
-     return dateInput.split('T')[0];
-  }
-  
-  // Se for Date object, extrai ano, mês e dia locais
-  const year = dateInput.getFullYear();
-  const month = String(dateInput.getMonth() + 1).padStart(2, '0');
-  const day = String(dateInput.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 function getEventColor(type: string, isPassed: boolean): string {
   if (isPassed) return "text-gray-400 bg-gray-50 dark:bg-gray-900/30 border-gray-200";
