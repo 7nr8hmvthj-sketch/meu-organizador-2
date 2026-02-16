@@ -262,3 +262,10 @@
 
 - [x] Corrigir getMedicationLogsByDate para usar DATE() SQL
 - [x] Corrigir deleteMedicationLog para usar DATE() SQL
+
+## Correção Parser CSV na Aba Comparação (16/02/2026)
+
+- [x] Aceitar delimitadores ; e , no CSV
+- [x] Converter datas DD/MM/AAAA para YYYY-MM-DD
+- [x] Adicionar logs de erro detalhados no backend
+- [ ] Testar upload e visualização de divergências
