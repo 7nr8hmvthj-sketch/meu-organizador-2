@@ -258,7 +258,7 @@ export async function getMedicationLogsByDate(userId: number, date: string): Pro
   return await db.select().from(medicationLogs)
     .where(and(
       eq(medicationLogs.userId, userId),
-      eq(medicationLogs.takenDate, new Date(date))
+      sql`DATE(${medicationLogs.takenDate}) = ${date}`
     ));
 }
 
@@ -269,7 +269,7 @@ export async function deleteMedicationLog(medicationId: number, userId: number, 
   await db.delete(medicationLogs).where(and(
     eq(medicationLogs.medicationId, medicationId),
     eq(medicationLogs.userId, userId),
-    eq(medicationLogs.takenDate, new Date(date))
+    sql`DATE(${medicationLogs.takenDate}) = ${date}`
   ));
   return true;
 }

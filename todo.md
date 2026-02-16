@@ -253,3 +253,12 @@
 - [x] Criar dateUtils.ts com normalizeDateKey unificada (consistência)
 - [x] Refatorar CalendarPage e WeeklyCalendarPage para usar dateUtils.ts
 - [x] Adicionar cores Home Care e Lembrete no WeeklyCalendarPage (visual)
+
+## Bug Grid Calendário Desalinhado (15/02/2026)
+
+- [ ] Corrigir desalinhamento cabeçalho vs grid de datas no CalendarPage.tsx
+
+## Correção DATE() SQL em Medicamentos (15/02/2026)
+
+- [x] Corrigir getMedicationLogsByDate para usar DATE() SQL
+- [x] Corrigir deleteMedicationLog para usar DATE() SQL
