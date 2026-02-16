@@ -35,7 +35,15 @@ export const comparisonRouter = router({
     .input(z.object({ csvContent: z.string() }))
     .query(async ({ input, ctx }) => {
       try {
+        // Debug: Log primeiras linhas
         const lines = input.csvContent.split("\n").filter(l => l.trim());
+        console.log("[CSV Parser] Total de linhas:", lines.length);
+        console.log("[CSV Parser] Primeiras 3 linhas:");
+        lines.slice(0, 3).forEach((line, idx) => {
+          console.log(`  Linha ${idx}: ${line.substring(0, 100)}${line.length > 100 ? '...' : ''}`);
+        });
+        console.log("[CSV Parser] Tipo de input.csvContent:", typeof input.csvContent);
+        console.log("[CSV Parser] Tamanho do conteúdo:", input.csvContent.length, "caracteres");
         
         if (lines.length < 2) {
           throw new Error("CSV vazio ou sem dados");
@@ -151,8 +159,14 @@ export const comparisonRouter = router({
           csvSummary: csvSummary.sort((a, b) => a.month.localeCompare(b.month)),
         };
       } catch (error) {
-        console.error("[CSV Parser] Erro:", error);
-        throw new Error(`Erro ao processar CSV: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : "";
+        console.error("[CSV Parser] ERRO CRÍTICO:");
+        console.error("  Mensagem:", errorMsg);
+        console.error("  Stack:", errorStack);
+        console.error("  Tipo:", typeof error);
+        console.error("  Objeto completo:", error);
+        throw new Error(`CSV Parser Error: ${errorMsg}`);
       }
     }),
 });

@@ -269,3 +269,12 @@
 - [x] Converter datas DD/MM/AAAA para YYYY-MM-DD
 - [x] Adicionar logs de erro detalhados no backend
 - [ ] Testar upload e visualização de divergências
+
+## Debug Parser CSV - Erro Persistente (16/02/2026)
+
+- [x] Adicionar console.log das primeiras 3 linhas do CSV recebido
+- [x] Adicionar log do Content-Type do arquivo
+- [x] Melhorar mensagem de erro no catch para mostrar error.message
+- [x] Criar teste.csv de exemplo para validar lógica isoladamente
+- [x] Validar parser isoladamente - FUNCIONA CORRETAMENTE
+- [ ] Testar upload novamente e verificar erro real no frontend
