@@ -101,6 +101,56 @@ function extractTimeFromDescription(desc: string): string {
   return match ? match[0] : "";
 }
 
+// --- CALCULADOR DE HORAS ZN (Dia 20 ao 19) ---
+function calculateZNHours(events: any[], targetDate: Date): number {
+  // Define o período: dia 20 do mês anterior até o dia 19 do mês atual
+  const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 20);
+  const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 19, 23, 59, 59);
+  let totalHours = 0;
+  events.forEach(event => {
+    if (event.isPassed) return; // Ignora os repassados
+    // Normaliza data para evitar bug de fuso horário
+    const eventDate = new Date(event.date + 'T12:00:00Z');
+    
+    // Verifica se o evento cai dentro do nosso ciclo (20 a 19)
+    if (eventDate >= startDate && eventDate <= endDate) {
+      const type = (event.type || "").toLowerCase();
+      const desc = (event.description || "").toLowerCase();
+      const fullText = `${type} ${desc}`;
+      // Regra de Exclusão
+      if (fullText.includes("hc") || fullText.includes("home care") || fullText.includes("lembrete")) return;
+      // Regra de Inclusão
+      if (
+        fullText.includes("zn") || 
+        fullText.includes("zona norte") || 
+        fullText.includes("noturno") || 
+        fullText.includes("apoio") || 
+        fullText.includes("observação") || 
+        fullText.includes("observacao")
+      ) {
+        // Extrai o horário (ex: "7-13" ou "19-07")
+        let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
+        
+        // Se não achou no texto, tenta achar no dicionário de horas padrão
+        if (!timeMatch && SHIFT_HOURS[type]) {
+          timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
+        }
+        if (timeMatch) {
+          const startHour = parseInt(timeMatch[1], 10);
+          const endHour = parseInt(timeMatch[2], 10);
+          
+          let diff = endHour - startHour;
+          // Matemática da Madrugada: se terminar menor que começar, soma 24 (ex: 19h as 07h = -12 + 24 = 12h)
+          if (diff < 0) diff += 24; 
+          
+          totalHours += diff;
+        }
+      }
+    }
+  });
+  return totalHours;
+}
+
 export default function CalendarPage() {
   const [, navigate] = useLocation();
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -327,6 +377,15 @@ export default function CalendarPage() {
                     {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}>{getEventLabel(e)}</div>)}
                     {dayEvents.length > 6 && <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 6} mais</div>}
                   </div>
+                  {/* Bloco Contabilizador de Horas ZN */}
+                  {format(day, "d") === "19" && isAdmin && (
+                    <div 
+                      onClick={(e) => e.stopPropagation()} 
+                      className="mt-auto mb-1 w-[95%] mx-auto bg-slate-800 text-slate-100 dark:bg-slate-200 dark:text-slate-800 text-[10px] font-bold py-1 px-1 rounded shadow-sm text-center cursor-default z-10"
+                    >
+                      Total ZN: {calculateZNHours(allEvents, day)}h
+                    </div>
+                  )}
                 </button>
               );
             })}

@@ -278,3 +278,9 @@
 - [x] Criar teste.csv de exemplo para validar lógica isoladamente
 - [x] Validar parser isoladamente - FUNCIONA CORRETAMENTE
 - [ ] Testar upload novamente e verificar erro real no frontend
+
+## Calculador de Horas ZN no Dia 19 (16/02/2026)
+
+- [x] Adicionar função calculateZNHours antes de export default function CalendarPage()
+- [x] Adicionar caixinha visual no dia 19 do calendário
+- [ ] Testar contabilização de horas (período 20 a 19, ignora repassados e HC)
