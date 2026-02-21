@@ -284,3 +284,9 @@
 - [x] Adicionar função calculateZNHours antes de export default function CalendarPage()
 - [x] Adicionar caixinha visual no dia 19 do calendário
 - [ ] Testar contabilização de horas (período 20 a 19, ignora repassados e HC)
+
+## Correção Plantões 2º e 4º Sábados - Original da Bruna (21/02/2026)
+
+- [x] Buscar eventos com descrição "original da bruna" (não encontrados)
+- [x] Calcular 2º e 4º sábados de fevereiro a dezembro/2026
+- [x] Inserir 22 plantões noturnos (19-07) com descrição "original da bruna" nesses sábados
