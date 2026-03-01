@@ -1,9 +1,0 @@
-{
-  "query": "INSERT INTO events (userId, date, type, description, isShift, isPassed, isCancelled, createdAt) VALUES\n(1, '2026-12-18', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-19', 'Natação', 'Natação 12:10', 0, 0, 0, NOW()),\n(1, '2026-12-21', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-22', 'Natação', 'Natação 11:40', 0, 0, 0, NOW()),\n(1, '2026-12-23', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-25', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-26', 'Natação', 'Natação 12:10', 0, 0, 0, NOW()),\n(1, '2026-12-28', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-29', 'Natação', 'Natação 11:40', 0, 0, 0, NOW()),\n(1, '2026-12-30', 'Natação', 'Natação 20:45', 0, 0, 0, NOW());",
-  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute INSERT INTO events (userId, date, type, description, isShift, isPassed, isCancelled, createdAt) VALUES\n(1, '2026-12-18', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-19', 'Natação', 'Natação 12:10', 0, 0, 0, NOW()),\n(1, '2026-12-21', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-22', 'Natação', 'Natação 11:40', 0, 0, 0, NOW()),\n(1, '2026-12-23', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-25', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-26', 'Natação', 'Natação 12:10', 0, 0, 0, NOW()),\n(1, '2026-12-28', 'Natação', 'Natação 20:45', 0, 0, 0, NOW()),\n(1, '2026-12-29', 'Natação', 'Natação 11:40', 0, 0, 0, NOW()),\n(1, '2026-12-30', 'Natação', 'Natação 20:45', 0, 0, 0, NOW());",
-  "rows": [],
-  "messages": [],
-  "stdout": "",
-  "stderr": "",
-  "execution_time_ms": 50
-}

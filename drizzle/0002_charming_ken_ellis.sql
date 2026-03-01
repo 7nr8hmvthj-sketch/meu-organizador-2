@@ -1,1 +1,0 @@
-ALTER TABLE `events` ADD `createdBy` varchar(50);
