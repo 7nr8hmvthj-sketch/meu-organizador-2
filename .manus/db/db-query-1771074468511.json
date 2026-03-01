@@ -1,0 +1,14 @@
+{
+  "query": "SELECT COUNT(*) as total, COUNT(CASE WHEN isPassed = true THEN 1 END) as passed FROM events WHERE userId = 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT COUNT(*) as total, COUNT(CASE WHEN isPassed = true THEN 1 END) as passed FROM events WHERE userId = 1",
+  "rows": [
+    {
+      "total": "576",
+      "passed": "34"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\tpassed\n576\t34\n",
+  "stderr": "",
+  "execution_time_ms": 667
+}

@@ -1,0 +1,70 @@
+{
+  "query": "SELECT id, date, type, description FROM events WHERE type = 'Natação' ORDER BY date LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, date, type, description FROM events WHERE type = 'Natação' ORDER BY date LIMIT 10;",
+  "rows": [
+    {
+      "id": "60001",
+      "date": "2026-01-02",
+      "type": "Natação",
+      "description": "Natação 20:45"
+    },
+    {
+      "id": "60261",
+      "date": "2026-01-02",
+      "type": "Natação",
+      "description": "Natação 20:45"
+    },
+    {
+      "id": "30287",
+      "date": "2026-01-03",
+      "type": "Natação",
+      "description": "Natação 20:45"
+    },
+    {
+      "id": "60002",
+      "date": "2026-01-03",
+      "type": "Natação",
+      "description": "Natação 12:10"
+    },
+    {
+      "id": "30547",
+      "date": "2026-01-03",
+      "type": "Natação",
+      "description": "Natação 20:45"
+    },
+    {
+      "id": "60262",
+      "date": "2026-01-03",
+      "type": "Natação",
+      "description": "Natação 12:10"
+    },
+    {
+      "id": "30548",
+      "date": "2026-01-04",
+      "type": "Natação",
+      "description": "Natação 12:10"
+    },
+    {
+      "id": "30288",
+      "date": "2026-01-04",
+      "type": "Natação",
+      "description": "Natação 12:10"
+    },
+    {
+      "id": "60003",
+      "date": "2026-01-05",
+      "type": "Natação",
+      "description": "Natação 20:45"
+    },
+    {
+      "id": "60263",
+      "date": "2026-01-05",
+      "type": "Natação",
+      "description": "Natação 20:45"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdate\ttype\tdescription\n60001\t2026-01-02\tNatação\tNatação 20:45\n60261\t2026-01-02\tNatação\tNatação 20:45\n30287\t2026-01-03\tNatação\tNatação 20:45\n60002\t2026-01-03\tNatação\tNatação 12:10\n30547\t2026-01-03\tNatação\tNatação 20:45\n60262\t2026-01-03\tNatação\tNatação 12:10\n30548\t2026-01-04\tNatação\tNatação 12:10\n30288\t2026-01-04\tNatação\tNatação 12:10\n60003\t2026-01-05\tNatação\tNatação 20:45\n60263\t2026-01-05\tNatação\tNatação 20:45\n",
+  "stderr": "",
+  "execution_time_ms": 55
+}

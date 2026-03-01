@@ -1,0 +1,24 @@
+{
+  "query": "SELECT id, date, type, description, isPassed FROM events WHERE date = '2026-01-01' ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, date, type, description, isPassed FROM events WHERE date = '2026-01-01' ORDER BY id;",
+  "rows": [
+    {
+      "id": "1",
+      "date": "2026-01-01",
+      "type": "HC Manhã",
+      "description": "HC manha",
+      "isPassed": "1"
+    },
+    {
+      "id": "2",
+      "date": "2026-01-01",
+      "type": "Zona Norte (Manhã)",
+      "description": "7-19 troca com a Lygia !!!",
+      "isPassed": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdate\ttype\tdescription\tisPassed\n1\t2026-01-01\tHC Manhã\tHC manha\t1\n2\t2026-01-01\tZona Norte (Manhã)\t7-19 troca com a Lygia !!!\t0\n",
+  "stderr": "",
+  "execution_time_ms": 398
+}

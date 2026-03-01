@@ -1,0 +1,9 @@
+{
+  "query": "DELETE e1 FROM events e1\nINNER JOIN events e2 \nWHERE e1.id > e2.id \n  AND e1.userId = e2.userId \n  AND e1.date = e2.date \n  AND e1.type = e2.type \n  AND e1.description = e2.description;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute DELETE e1 FROM events e1\nINNER JOIN events e2 \nWHERE e1.id > e2.id \n  AND e1.userId = e2.userId \n  AND e1.date = e2.date \n  AND e1.type = e2.type \n  AND e1.description = e2.description;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 415
+}
