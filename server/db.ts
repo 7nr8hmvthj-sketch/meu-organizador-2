@@ -494,3 +494,49 @@ export async function resetExpensesPaidStatus(userId: number): Promise<void> {
     console.error("[Database] Reset expenses failed:", error);
   }
 }
+
+// ============ EVENT FUNCTIONS (CREATE/UPDATE) ============
+
+export async function createEvent(eventData: InsertEvent): Promise<Event | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.insert(events).values(eventData).returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Create event failed:", error);
+    throw error;
+  }
+}
+
+export async function updateEvent(id: number, userId: number, data: Partial<InsertEvent>): Promise<Event | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db
+      .update(events)
+      .set({ ...data, updatedAt: new Date() })
+      .where(sql`${events.id} = ${id} AND ${events.userId} = ${userId}`)
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Update event failed:", error);
+    throw error;
+  }
+}
+
+export async function getEventById(id: number): Promise<Event | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db
+      .select()
+      .from(events)
+      .where(sql`${events.id} = ${id}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Get event by id failed:", error);
+    return null;
+  }
+}
