@@ -86,7 +86,10 @@ export const comparisonRouter = router({
         
         // Get agenda events (userId do contexto ou default 1)
         const userId = ctx.user?.id || 1;
-        const agendaEvents = await db.getEventsByUserId(userId);
+        // Get all events for this year - use a date range
+        const startDate = '2026-01-01';
+        const endDate = '2026-12-31';
+        const agendaEvents = await db.getEventsByDateRange(userId, startDate, endDate);
         console.log(`[CSV Parser] ${agendaEvents.length} eventos na agenda`);
         
         // Compare

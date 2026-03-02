@@ -1,5 +1,6 @@
-import { eq, and, gte, lte, sql, or, like } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "../drizzle/schema";
 import { 
   InsertUser, users, 
   events, InsertEvent, Event,
@@ -10,19 +11,53 @@ import {
   diaryEntries, InsertDiaryEntry, DiaryEntry
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
+import { sql } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _client: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  // Se já tem conexão, testa se ainda está viva
+  if (_db && _client) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.log('[Database] Testing existing connection...');
+      await _client`SELECT 1`;
+      console.log('[Database] Existing connection is healthy');
+      return _db;
+    } catch (e) {
+      console.warn('[Database] Existing connection is dead, creating new one...');
+      try { _client.end(); } catch (err) { /* ignore */ }
       _db = null;
+      _client = null;
     }
   }
-  return _db;
+
+  // Se não tem URL, não pode conectar
+  if (!ENV.databaseUrl) {
+    console.error('[Database] DATABASE_URL not set in ENV');
+    return null;
+  }
+
+  try {
+    _client = postgres(ENV.databaseUrl, {
+      ssl: { rejectUnauthorized: false },
+      prepare: false,
+      connect_timeout: 30,
+      idle_timeout: 20
+    });
+
+    // Testa a conexão
+    await _client`SELECT 1`;
+    _db = drizzle(_client, { schema });
+    return _db;
+  } catch (error) {
+    console.error('[Database] Connection failed:', error instanceof Error ? error.message : error);
+    console.error('[Database] Full error:', error);
+    try { _client?.end(); } catch (e) { /* ignore */ }
+    _db = null;
+    _client = null;
+    return null;
+  }
 }
 
 // ============ USER FUNCTIONS ============
@@ -48,409 +83,414 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     type TextField = (typeof textFields)[number];
 
     const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
+      if (user[field] !== undefined) {
+        values[field] = user[field];
+        updateSet[field] = user[field];
+      }
     };
 
-    textFields.forEach(assignNullable);
+    assignNullable("name");
+    assignNullable("email");
+    assignNullable("loginMethod");
 
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
-    }
     if (user.role !== undefined) {
       values.role = user.role;
       updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
     }
 
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
+    const timestamp = new Date();
+    updateSet.updatedAt = timestamp;
 
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    await db
+      .insert(users)
+      .values(values)
+      .onConflictDoUpdate({
+        target: users.openId,
+        set: updateSet,
+      });
   } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
+    console.error("[Database] Upsert user failed:", error);
     throw error;
   }
 }
 
-export async function getUserByOpenId(openId: string) {
+export async function getUserByOpenId(openId: string): Promise<InsertUser | null> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get user: database not available");
-    return undefined;
+    return null;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
+  try {
+    const result = await db
+      .select()
+      .from(users)
+      .where(sql`${users.openId} = ${openId}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Get user by openId failed:", error);
+    return null;
+  }
 }
 
-// ============ EVENTS FUNCTIONS ============
-
-export async function createEvent(event: InsertEvent): Promise<Event> {
+export async function getUserById(id: number): Promise<InsertUser | null> {
   const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(events).values(event);
-  const inserted = await db.select().from(events).where(eq(events.id, Number(result[0].insertId))).limit(1);
-  return inserted[0];
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(users)
+      .where(sql`${users.id} = ${id}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Get user by id failed:", error);
+    return null;
+  }
 }
 
-export async function getEventById(id: number): Promise<Event | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const result = await db.select().from(events).where(eq(events.id, id)).limit(1);
-  return result[0] || null;
-}
+// ============ EVENT FUNCTIONS ============
 
-export async function getEventsByUserId(userId: number) {
+export async function getEventsByDate(userId: number, date: string): Promise<Event[]> {
   const db = await getDb();
-  if (!db) return [];
-  
-  const result = await db.select().from(events).where(eq(events.userId, userId)).orderBy(events.date);
-  
-  // Converter datas para string no formato YYYY-MM-DD usando UTC para evitar problemas de timezone
-  return result.map(event => ({
-    ...event,
-    date: event.date instanceof Date 
-      ? `${event.date.getUTCFullYear()}-${String(event.date.getUTCMonth() + 1).padStart(2, '0')}-${String(event.date.getUTCDate()).padStart(2, '0')}`
-      : String(event.date)
-  }));
+  if (!db) {
+    console.warn("[Database] Cannot get events: database not available");
+    return [];
+  }
+
+  try {
+    console.log(`[Database] getEventsByDate: userId=${userId}, date=${date}`);
+    const result = await db
+      .select()
+      .from(events)
+      .where(sql`${events.userId} = ${userId} AND DATE(${events.date}) = ${date}`)
+      .orderBy(sql`${events.date} DESC`);
+    console.log(`[Database] getEventsByDate returned ${result.length} events`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get events by date failed:", error);
+    return [];
+  }
 }
 
 export async function getEventsByDateRange(userId: number, startDate: string, endDate: string): Promise<Event[]> {
   const db = await getDb();
-  if (!db) return [];
-  
-  return await db.select().from(events)
-    .where(and(
-      eq(events.userId, userId),
-      gte(events.date, new Date(startDate)),
-      lte(events.date, new Date(endDate))
-    ))
-    .orderBy(events.date);
+  if (!db) {
+    console.warn("[Database] Cannot get events: database not available");
+    return [];
+  }
+  try {
+    const result = await db
+      .select()
+      .from(events)
+      .where(sql`${events.userId} = ${userId} AND DATE(${events.date}) >= ${startDate} AND DATE(${events.date}) <= ${endDate}`)
+      .orderBy(sql`${events.date} ASC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get events by date range failed:", error);
+    return [];
+  }
 }
 
-export async function updateEvent(id: number, userId: number, data: Partial<InsertEvent>): Promise<Event | null> {
+export async function upsertEvent(event: InsertEvent): Promise<Event | null> {
   const db = await getDb();
-  if (!db) return null;
-  
-  await db.update(events).set(data).where(and(eq(events.id, id), eq(events.userId, userId)));
-  const updated = await db.select().from(events).where(eq(events.id, id)).limit(1);
-  return updated[0] || null;
+  if (!db) {
+    console.warn("[Database] Cannot upsert event: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .insert(events)
+      .values(event)
+      .onConflictDoUpdate({
+        target: events.id,
+        set: {
+          type: event.type,
+          description: event.description,
+          isShift: event.isShift,
+          isPassed: event.isPassed,
+          passedReason: event.passedReason,
+          isCancelled: event.isCancelled,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Upsert event failed:", error);
+    return null;
+  }
 }
 
-export async function deleteEvent(id: number, userId: number): Promise<boolean> {
+export async function deleteEvent(id: number): Promise<boolean> {
   const db = await getDb();
-  if (!db) return false;
-  
-  const result = await db.delete(events).where(and(eq(events.id, id), eq(events.userId, userId)));
-  return true;
+  if (!db) {
+    console.warn("[Database] Cannot delete event: database not available");
+    return false;
+  }
+
+  try {
+    await db.delete(events).where(sql`${events.id} = ${id}`);
+    return true;
+  } catch (error) {
+    console.error("[Database] Delete event failed:", error);
+    return false;
+  }
 }
 
-// ============ EXPENSES FUNCTIONS ============
-
-export async function createExpense(expense: InsertExpense): Promise<Expense> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(expenses).values(expense);
-  const inserted = await db.select().from(expenses).where(eq(expenses.id, Number(result[0].insertId))).limit(1);
-  return inserted[0];
-}
-
-export async function getExpensesByUserId(userId: number): Promise<Expense[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  return await db.select().from(expenses).where(eq(expenses.userId, userId)).orderBy(expenses.dueDay);
-}
-
-export async function updateExpense(id: number, userId: number, data: Partial<InsertExpense>): Promise<Expense | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  await db.update(expenses).set(data).where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
-  const updated = await db.select().from(expenses).where(eq(expenses.id, id)).limit(1);
-  return updated[0] || null;
-}
-
-export async function deleteExpense(id: number, userId: number): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  
-  await db.delete(expenses).where(and(eq(expenses.id, id), eq(expenses.userId, userId)));
-  return true;
-}
-
-export async function resetExpensesPaidStatus(userId: number): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  
-  await db.update(expenses).set({ isPaid: false, paidMonth: null, paidYear: null }).where(eq(expenses.userId, userId));
-}
-
-// ============ MEDICATIONS FUNCTIONS ============
-
-export async function createMedication(medication: InsertMedication): Promise<Medication> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(medications).values(medication);
-  const inserted = await db.select().from(medications).where(eq(medications.id, Number(result[0].insertId))).limit(1);
-  return inserted[0];
-}
+// ============ MEDICATION FUNCTIONS ============
 
 export async function getMedicationsByUserId(userId: number): Promise<Medication[]> {
   const db = await getDb();
-  if (!db) return [];
-  
-  return await db.select().from(medications).where(eq(medications.userId, userId)).orderBy(medications.order);
-}
+  if (!db) {
+    console.warn("[Database] Cannot get medications: database not available");
+    return [];
+  }
 
-export async function updateMedication(id: number, userId: number, data: Partial<InsertMedication>): Promise<Medication | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  await db.update(medications).set(data).where(and(eq(medications.id, id), eq(medications.userId, userId)));
-  const updated = await db.select().from(medications).where(eq(medications.id, id)).limit(1);
-  return updated[0] || null;
-}
-
-export async function deleteMedication(id: number, userId: number): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  
-  await db.delete(medicationLogs).where(eq(medicationLogs.medicationId, id));
-  await db.delete(medications).where(and(eq(medications.id, id), eq(medications.userId, userId)));
-  return true;
-}
-
-// ============ MEDICATION LOGS FUNCTIONS ============
-
-export async function logMedicationTaken(log: InsertMedicationLog): Promise<MedicationLog> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const result = await db.insert(medicationLogs).values(log);
-  const inserted = await db.select().from(medicationLogs).where(eq(medicationLogs.id, Number(result[0].insertId))).limit(1);
-  return inserted[0];
+  try {
+    const result = await db
+      .select()
+      .from(medications)
+      .where(sql`${medications.userId} = ${userId}`)
+      .orderBy(sql`${medications.createdAt} ASC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get medications failed:", error);
+    return [];
+  }
 }
 
 export async function getMedicationLogsByDate(userId: number, date: string): Promise<MedicationLog[]> {
   const db = await getDb();
-  if (!db) return [];
-  
-  return await db.select().from(medicationLogs)
-    .where(and(
-      eq(medicationLogs.userId, userId),
-      sql`DATE(${medicationLogs.takenDate}) = ${date}`
-    ));
-}
-
-export async function deleteMedicationLog(medicationId: number, userId: number, date: string): Promise<boolean> {
-  const db = await getDb();
-  if (!db) return false;
-  
-  await db.delete(medicationLogs).where(and(
-    eq(medicationLogs.medicationId, medicationId),
-    eq(medicationLogs.userId, userId),
-    sql`DATE(${medicationLogs.takenDate}) = ${date}`
-  ));
-  return true;
-}
-
-// ============ USER PREFERENCES FUNCTIONS ============
-
-export async function getUserPreferences(userId: number): Promise<UserPreference | null> {
-  const db = await getDb();
-  if (!db) return null;
-  
-  const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
-  return result[0] || null;
-}
-
-export async function upsertUserPreferences(userId: number, prefs: Partial<InsertUserPreference>): Promise<UserPreference> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getUserPreferences(userId);
-  
-  if (existing) {
-    await db.update(userPreferences).set(prefs).where(eq(userPreferences.userId, userId));
-  } else {
-    await db.insert(userPreferences).values({ userId, ...prefs });
+  if (!db) {
+    console.warn("[Database] Cannot get medication logs: database not available");
+    return [];
   }
-  
-  const result = await db.select().from(userPreferences).where(eq(userPreferences.userId, userId)).limit(1);
-  return result[0];
+
+  try {
+    const result = await db
+      .select()
+      .from(medicationLogs)
+      .where(sql`${medicationLogs.userId} = ${userId} AND DATE(${medicationLogs.takenDate}) = ${date}`)
+      .orderBy(sql`${medicationLogs.takenAt} DESC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get medication logs by date failed:", error);
+    return [];
+  }
+}
+
+export async function insertMedicationLog(log: InsertMedicationLog): Promise<MedicationLog | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot insert medication log: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .insert(medicationLogs)
+      .values(log)
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Insert medication log failed:", error);
+    return null;
+  }
+}
+
+export async function deleteMedicationLog(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete medication log: database not available");
+    return false;
+  }
+
+  try {
+    await db.delete(medicationLogs).where(sql`${medicationLogs.id} = ${id}`);
+    return true;
+  } catch (error) {
+    console.error("[Database] Delete medication log failed:", error);
+    return false;
+  }
 }
 
 // ============ DIARY FUNCTIONS ============
 
 export async function getDiaryEntry(userId: number, dateStr: string): Promise<DiaryEntry | null> {
   const db = await getDb();
-  if (!db) return null;
-  
-  // Use DATE() SQL function to compare only date part (MySQL DATE column ignores time)
-  const result = await db.select().from(diaryEntries)
-    .where(and(
-      eq(diaryEntries.userId, userId),
-      sql`DATE(${diaryEntries.date}) = ${dateStr}`
-    ))
-    .limit(1);
-  
-  if (result[0]) {
-    return {
-      ...result[0],
-      date: result[0].date instanceof Date 
-        ? `${result[0].date.getUTCFullYear()}-${String(result[0].date.getUTCMonth() + 1).padStart(2, '0')}-${String(result[0].date.getUTCDate()).padStart(2, '0')}`
-        : String(result[0].date)
-    } as any;
+  if (!db) {
+    console.warn("[Database] Cannot get diary entry: database not available");
+    return null;
   }
-  return null;
-}
 
-export async function upsertDiaryEntry(
-  userId: number, 
-  dateStr: string, 
-  title: string | null, 
-  content: string | null, 
-  tags: string | null
-): Promise<DiaryEntry> {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-  
-  const existing = await getDiaryEntry(userId, dateStr);
-  
-  if (existing) {
-    // Update using DATE() comparison to match any time on that date
-    await db.update(diaryEntries)
-      .set({ title, content, tags })
-      .where(and(
-        eq(diaryEntries.userId, userId),
-        sql`DATE(${diaryEntries.date}) = ${dateStr}`
-      ));
-  } else {
-    // Insert with date string (MySQL DATE column will handle it)
-    await db.insert(diaryEntries).values({
-      userId,
-      date: dateStr as any,
-      title,
-      content,
-      tags
-    });
+  try {
+    const result = await db
+      .select()
+      .from(diaryEntries)
+      .where(sql`${diaryEntries.userId} = ${userId} AND DATE(${diaryEntries.date}) = ${dateStr}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Get diary entry failed:", error);
+    return null;
   }
-  
-  const result = await getDiaryEntry(userId, dateStr);
-  return result!;
 }
 
-export async function getDiaryEntriesByUserId(userId: number): Promise<DiaryEntry[]> {
+export async function upsertDiaryEntry(entry: InsertDiaryEntry): Promise<DiaryEntry | null> {
   const db = await getDb();
-  if (!db) return [];
-  
-  const result = await db.select().from(diaryEntries)
-    .where(eq(diaryEntries.userId, userId))
-    .orderBy(sql`${diaryEntries.date} DESC`);
-  
-  return result.map(entry => ({
-    ...entry,
-    date: entry.date instanceof Date 
-      ? `${entry.date.getUTCFullYear()}-${String(entry.date.getUTCMonth() + 1).padStart(2, '0')}-${String(entry.date.getUTCDate()).padStart(2, '0')}`
-      : String(entry.date)
-  })) as any[];
-}
+  if (!db) {
+    console.warn("[Database] Cannot upsert diary entry: database not available");
+    return null;
+  }
 
-export async function searchDiaryEntries(userId: number, searchTerm: string): Promise<DiaryEntry[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const searchPattern = `%${searchTerm}%`;
-  
-  const result = await db.select().from(diaryEntries)
-    .where(and(
-      eq(diaryEntries.userId, userId),
-      or(
-        like(diaryEntries.title, searchPattern),
-        like(diaryEntries.content, searchPattern),
-        like(diaryEntries.tags, searchPattern)
-      )
-    ))
-    .orderBy(sql`${diaryEntries.date} DESC`);
-  
-  return result.map(entry => ({
-    ...entry,
-    date: entry.date instanceof Date 
-      ? `${entry.date.getUTCFullYear()}-${String(entry.date.getUTCMonth() + 1).padStart(2, '0')}-${String(entry.date.getUTCDate()).padStart(2, '0')}`
-      : String(entry.date)
-  })) as any[];
-}
-
-export async function getDiaryEntriesByTag(userId: number, tag: string): Promise<DiaryEntry[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const tagPattern = `%${tag}%`;
-  
-  const result = await db.select().from(diaryEntries)
-    .where(and(
-      eq(diaryEntries.userId, userId),
-      like(diaryEntries.tags, tagPattern)
-    ))
-    .orderBy(sql`${diaryEntries.date} DESC`);
-  
-  return result.map(entry => ({
-    ...entry,
-    date: entry.date instanceof Date 
-      ? `${entry.date.getUTCFullYear()}-${String(entry.date.getUTCMonth() + 1).padStart(2, '0')}-${String(entry.date.getUTCDate()).padStart(2, '0')}`
-      : String(entry.date)
-  })) as any[];
-}
-
-export async function getAllDiaryTags(userId: number): Promise<string[]> {
-  const db = await getDb();
-  if (!db) return [];
-  
-  const result = await db.select({ tags: diaryEntries.tags })
-    .from(diaryEntries)
-    .where(eq(diaryEntries.userId, userId));
-  
-  const allTags = new Set<string>();
-  result.forEach(entry => {
-    if (entry.tags) {
-      entry.tags.split(',').forEach(tag => {
-        const trimmed = tag.trim();
-        if (trimmed) allTags.add(trimmed);
-      });
+  try {
+    // First, try to find existing entry for this date
+    const existing = await getDiaryEntry(entry.userId, entry.date as unknown as string);
+    
+    if (existing) {
+      // Update existing entry
+      const result = await db
+        .update(diaryEntries)
+        .set({
+          title: entry.title,
+          content: entry.content,
+          tags: entry.tags,
+          updatedAt: new Date(),
+        })
+        .where(sql`${diaryEntries.id} = ${existing.id}`)
+        .returning();
+      return result[0] || null;
+    } else {
+      // Insert new entry
+      const result = await db
+        .insert(diaryEntries)
+        .values(entry)
+        .returning();
+      return result[0] || null;
     }
-  });
-  
-  return Array.from(allTags).sort();
+  } catch (error) {
+    console.error("[Database] Upsert diary entry failed:", error);
+    return null;
+  }
 }
 
-export async function deleteDiaryEntry(userId: number, dateStr: string): Promise<boolean> {
+export async function getDiaryEntries(userId: number, startDate: string, endDate: string): Promise<DiaryEntry[]> {
   const db = await getDb();
-  if (!db) return false;
-  
-  const dateValue = new Date(dateStr + "T12:00:00Z");
-  await db.delete(diaryEntries).where(and(
-    eq(diaryEntries.userId, userId),
-    eq(diaryEntries.date, dateValue)
-  ));
-  return true;
+  if (!db) {
+    console.warn("[Database] Cannot get diary entries: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(diaryEntries)
+      .where(sql`${diaryEntries.userId} = ${userId} AND DATE(${diaryEntries.date}) >= ${startDate} AND DATE(${diaryEntries.date}) <= ${endDate}`)
+      .orderBy(sql`${diaryEntries.date} DESC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get diary entries failed:", error);
+    return [];
+  }
+}
+
+// ============ EXPENSE FUNCTIONS ============
+
+export async function getExpensesByUserId(userId: number): Promise<Expense[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get expenses: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(expenses)
+      .where(sql`${expenses.userId} = ${userId}`)
+      .orderBy(sql`${expenses.dueDay} ASC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get expenses failed:", error);
+    return [];
+  }
+}
+
+export async function createExpense(expense: InsertExpense): Promise<Expense | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create expense: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .insert(expenses)
+      .values(expense)
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Create expense failed:", error);
+    return null;
+  }
+}
+
+export async function updateExpense(id: number, userId: number, data: Partial<InsertExpense>): Promise<Expense | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update expense: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .update(expenses)
+      .set({ ...data, updatedAt: new Date() })
+      .where(sql`${expenses.id} = ${id} AND ${expenses.userId} = ${userId}`)
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Update expense failed:", error);
+    return null;
+  }
+}
+
+export async function deleteExpense(id: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete expense: database not available");
+    return false;
+  }
+
+  try {
+    await db.delete(expenses).where(sql`${expenses.id} = ${id} AND ${expenses.userId} = ${userId}`);
+    return true;
+  } catch (error) {
+    console.error("[Database] Delete expense failed:", error);
+    return false;
+  }
+}
+
+export async function resetExpensesPaidStatus(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot reset expenses: database not available");
+    return;
+  }
+
+  try {
+    await db
+      .update(expenses)
+      .set({ isPaid: false, paidMonth: null, paidYear: null })
+      .where(sql`${expenses.userId} = ${userId}`);
+  } catch (error) {
+    console.error("[Database] Reset expenses failed:", error);
+  }
 }

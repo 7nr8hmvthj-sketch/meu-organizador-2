@@ -1,34 +1,5 @@
 {
   "version": "7",
-  "dialect": "mysql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1768134817642,
-      "tag": "0000_worried_wong",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1768134943900,
-      "tag": "0001_wakeful_black_cat",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1769908185370,
-      "tag": "0002_charming_ken_ellis",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1770142319890,
-      "tag": "0003_dark_marvel_zombies",
-      "breakpoints": true
-    }
-  ]
+  "dialect": "postgresql",
+  "entries": []
 }

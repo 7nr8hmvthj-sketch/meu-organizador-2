@@ -1,0 +1,35 @@
+[
+  {
+    "id": 1,
+    "openId": "7akx7BxVWe9f9jMJbDk6f2",
+    "name": "Brendon Almeida Nunes",
+    "email": "mdjzz59g8y@privaterelay.appleid.com",
+    "loginMethod": "apple",
+    "role": "admin",
+    "createdAt": "2026-01-11T17:50:05.000Z",
+    "updatedAt": "2026-03-02T04:53:11.000Z",
+    "lastSignedIn": "2026-03-02T04:53:11.000Z"
+  },
+  {
+    "id": 150023,
+    "openId": "trainer_jessica",
+    "name": "JESSICA",
+    "email": null,
+    "loginMethod": "custom",
+    "role": "user",
+    "createdAt": "2026-01-31T20:05:34.000Z",
+    "updatedAt": "2026-01-31T20:05:34.000Z",
+    "lastSignedIn": "2026-01-31T20:05:34.000Z"
+  },
+  {
+    "id": 150024,
+    "openId": "trainer_isa",
+    "name": "ISA",
+    "email": null,
+    "loginMethod": "custom",
+    "role": "user",
+    "createdAt": "2026-01-31T20:05:34.000Z",
+    "updatedAt": "2026-01-31T20:05:34.000Z",
+    "lastSignedIn": "2026-01-31T20:05:34.000Z"
+  }
+]

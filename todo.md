@@ -290,3 +290,20 @@
 - [x] Buscar eventos com descrição "original da bruna" (não encontrados)
 - [x] Calcular 2º e 4º sábados de fevereiro a dezembro/2026
 - [x] Inserir 22 plantões noturnos (19-07) com descrição "original da bruna" nesses sábados
+
+
+## Migração para Supabase PostgreSQL (01/03/2026)
+
+- [x] Backup frio do banco TiDB (592 registros: 3 users + 589 events)
+- [x] Refatoração de drivers: remover mysql2, instalar postgres
+- [x] Refatoração schema.ts: mysqlTable → pgTable
+- [x] Refatoração db.ts: mysql2 → postgres-js driver
+- [x] Configuração SSL e prepare: false para Connection Pooler
+- [x] Criação de tabelas no Supabase (users, events, expenses, medications, etc)
+- [x] Injeção de 589 eventos no Supabase
+- [x] Mapeamento de colunas: camelCase → lowercase (userId → userid, etc)
+- [x] Verificação com Drizzle: 5 eventos retornados corretamente
+- [ ] Correção de erro 400 na API (tRPC query parameters)
+- [ ] Correção de erro de sincronização de usuário
+- [ ] Teste completo do calendário com eventos do Supabase
+- [ ] Teste de autenticação (USER, JESSICA, ISA)
