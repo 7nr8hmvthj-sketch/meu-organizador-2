@@ -202,38 +202,38 @@ export default function CalendarPage() {
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
       try {
-        toast.success("Evento adicionado com sucesso!");
-        utils.events.list.invalidate?.();
+        toast?.success?.("Evento adicionado com sucesso!");
+        utils?.events?.list?.invalidate?.();
         setShowAddTrainingModal?.(false);
         setShowAddEventModal?.(false);
-        if (typeof resetForm === 'function') resetForm();
+        if (typeof resetForm === 'function') resetForm?.();
       } catch (error) {
         console.error('[CalendarPage] Error in createEventMutation.onSuccess:', error);
       }
     },
-    onError: (error) => toast.error(`Erro: ${error.message}`),
+    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
   const updateEventMutation = trpc.events.update.useMutation({
     onSuccess: () => {
       try {
-        toast.success("Evento atualizado com sucesso!");
-        utils.events.list.invalidate?.();
+        toast?.success?.("Evento atualizado com sucesso!");
+        utils?.events?.list?.invalidate?.();
         setShowEditModal?.(false);
         setEditingEvent?.(null);
-        if (typeof resetForm === 'function') resetForm();
+        if (typeof resetForm === 'function') resetForm?.();
       } catch (error) {
         console.error('[CalendarPage] Error in updateEventMutation.onSuccess:', error);
       }
     },
-    onError: (error) => toast.error(`Erro: ${error.message}`),
+    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
   const deleteEventMutation = trpc.events.delete.useMutation({
     onSuccess: () => {
       try {
-        toast.success("Evento excluído com sucesso!");
-        utils.events.list.invalidate?.();
+        toast?.success?.("Evento excluído com sucesso!");
+        utils?.events?.list?.invalidate?.();
         setShowDeleteConfirm?.(false);
         setEventToDelete?.(null);
         setShowDayModal?.(false);
@@ -241,7 +241,7 @@ export default function CalendarPage() {
         console.error('[CalendarPage] Error in deleteEventMutation.onSuccess:', error);
       }
     },
-    onError: (error) => toast.error(`Erro: ${error.message}`),
+    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
   const resetForm = () => {

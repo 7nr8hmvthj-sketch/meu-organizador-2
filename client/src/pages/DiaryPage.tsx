@@ -111,33 +111,33 @@ export default function DiaryPage() {
 
   const saveMutation = trpc.diary.save.useMutation({
     onSuccess: (savedData) => {
-      toast.success("Salvo com sucesso!");
+      toast?.success?.("Salvo com sucesso!");
       
       // Atualiza o estado local imediatamente
       if (savedData) {
-        setTitle(savedData.title || title);
-        setContent(savedData.content || content);
-        setTags(savedData.tags ? savedData.tags.split(",").map(t => t.trim()).filter(Boolean) : tags);
+        setTitle?.(savedData?.title || title);
+        setContent?.(savedData?.content || content);
+        setTags?.(savedData?.tags ? savedData.tags.split(",").map(t => t.trim()).filter(Boolean) : tags);
       }
       
       // Força atualização dos caches
-      utils.diary.get.invalidate({ date: dateKey });
-      utils.diary.list.invalidate();
-      utils.diary.tags.invalidate();
+      utils?.diary?.get?.invalidate?.({ date: dateKey });
+      utils?.diary?.list?.invalidate?.();
+      utils?.diary?.tags?.invalidate?.();
     },
     onError: () => toast.error("Erro ao salvar.")
   });
 
   const deleteMutation = trpc.diary.delete.useMutation({
     onSuccess: () => {
-      toast.success("Excluído!");
-      setTitle("");
-      setContent("");
-      setTags([]);
-      utils.diary.get.invalidate({ date: dateKey });
-      utils.diary.list.invalidate();
+      toast?.success?.("Excluído!");
+      setTitle?.("");
+      setContent?.("");
+      setTags?.([]);
+      utils?.diary?.get?.invalidate?.({ date: dateKey });
+      utils?.diary?.list?.invalidate?.();
     },
-    onError: () => toast.error("Erro ao excluir.")
+    onError: () => toast?.error?.("Erro ao excluir.")
   });
 
   // Lógica de Carregamento Robusta

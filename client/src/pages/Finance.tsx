@@ -38,37 +38,37 @@ export default function FinancePage() {
   // Mutations
   const createMutation = trpc.expenses.create.useMutation({
     onSuccess: () => {
-      toast.success("Despesa adicionada!");
-      utils.expenses.list.invalidate();
-      closeModal();
+      toast?.success?.("Despesa adicionada!");
+      utils?.expenses?.list?.invalidate?.();
+      closeModal?.();
     },
     onError: (e) => toast.error(`Erro: ${e.message}`)
   });
 
   const updateMutation = trpc.expenses.update.useMutation({
     onSuccess: () => {
-      toast.success("Despesa atualizada!");
-      utils.expenses.list.invalidate();
-      closeModal();
+      toast?.success?.("Despesa atualizada!");
+      utils?.expenses?.list?.invalidate?.();
+      closeModal?.();
     },
-    onError: (e) => toast.error(`Erro: ${e.message}`)
+    onError: (e) => toast?.error?.(`Erro: ${e?.message}`)
   });
 
   const togglePaidMutation = trpc.expenses.togglePaid.useMutation({
-    onSuccess: () => utils.expenses.list.invalidate(),
+    onSuccess: () => utils?.expenses?.list?.invalidate?.(),
   });
 
   const deleteMutation = trpc.expenses.delete.useMutation({
     onSuccess: () => {
-      toast.success("Despesa removida.");
-      utils.expenses.list.invalidate();
+      toast?.success?.("Despesa removida.");
+      utils?.expenses?.list?.invalidate?.();
     },
   });
 
   const resetMutation = trpc.expenses.resetPaidStatus.useMutation({
     onSuccess: () => {
-      toast.success("Status de pagamento reiniciado para o novo mês.");
-      utils.expenses.list.invalidate();
+      toast?.success?.("Status de pagamento reiniciado para o novo mês.");
+      utils?.expenses?.list?.invalidate?.();
     }
   });
 

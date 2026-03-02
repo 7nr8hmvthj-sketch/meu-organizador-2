@@ -36,38 +36,38 @@ export default function Medications() {
   // Mutations
   const createMutation = trpc.medications.create.useMutation({
     onSuccess: () => {
-      utils.medications.list.invalidate();
-      setShowAddModal(false);
-      setNewName("");
-      toast.success("Medicamento adicionado!");
+      utils?.medications?.list?.invalidate?.();
+      setShowAddModal?.(false);
+      setNewName?.("");
+      toast?.success?.("Medicamento adicionado!");
     },
   });
 
   const updateMutation = trpc.medications.update.useMutation({
     onSuccess: () => {
-      utils.medications.list.invalidate();
-      setShowEditModal(false);
-      setSelectedMedication(null);
-      toast.success("Medicamento atualizado!");
+      utils?.medications?.list?.invalidate?.();
+      setShowEditModal?.(false);
+      setSelectedMedication?.(null);
+      toast?.success?.("Medicamento atualizado!");
     },
   });
 
   const deleteMutation = trpc.medications.delete.useMutation({
     onSuccess: () => {
-      utils.medications.list.invalidate();
-      toast.success("Medicamento excluído!");
+      utils?.medications?.list?.invalidate?.();
+      toast?.success?.("Medicamento excluído!");
     },
   });
 
   const logTakenMutation = trpc.medications.logTaken.useMutation({
     onSuccess: () => {
-      utils.medications.getLogs.invalidate({ date: todayStr });
+      utils?.medications?.getLogs?.invalidate?.({ date: todayStr });
     },
   });
 
   const undoTakenMutation = trpc.medications.undoTaken.useMutation({
     onSuccess: () => {
-      utils.medications.getLogs.invalidate({ date: todayStr });
+      utils?.medications?.getLogs?.invalidate?.({ date: todayStr });
     },
   });
 

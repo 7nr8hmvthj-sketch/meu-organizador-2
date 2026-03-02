@@ -107,33 +107,33 @@ export default function WeeklyCalendarPage() {
 
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
-      toast.success("Treino adicionado!");
-      utils.events.list.invalidate();
-      setShowAddTrainingModal(false);
-      resetForm();
+      toast?.success?.("Treino adicionado!");
+      utils?.events?.list?.invalidate?.();
+      setShowAddTrainingModal?.(false);
+      resetForm?.();
     },
     onError: (error) => toast.error(`Erro: ${error.message}`),
   });
 
   const updateEventMutation = trpc.events.update.useMutation({
     onSuccess: () => {
-      toast.success("Treino atualizado!");
-      utils.events.list.invalidate();
-      setShowEditModal(false);
-      setEditingEvent(null);
-      resetForm();
+      toast?.success?.("Treino atualizado!");
+      utils?.events?.list?.invalidate?.();
+      setShowEditModal?.(false);
+      setEditingEvent?.(null);
+      resetForm?.();
     },
-    onError: (error) => toast.error(`Erro: ${error.message}`),
+    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
   const deleteEventMutation = trpc.events.delete.useMutation({
     onSuccess: () => {
-      toast.success("Treino excluído!");
-      utils.events.list.invalidate();
-      setShowDeleteConfirm(false);
-      setEventToDelete(null);
+      toast?.success?.("Treino excluído!");
+      utils?.events?.list?.invalidate?.();
+      setShowDeleteConfirm?.(false);
+      setEventToDelete?.(null);
     },
-    onError: (error) => toast.error(`Erro: ${error.message}`),
+    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
   const resetForm = () => {

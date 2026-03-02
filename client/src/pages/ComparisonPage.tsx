@@ -22,19 +22,19 @@ export default function ComparisonPage() {
 
   const addEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
-      toast.success("✓ Plantão adicionado com sucesso");
+      toast?.success?.("✓ Plantão adicionado com sucesso");
     },
     onError: (error) => {
-      toast.error(`✗ Erro ao adicionar plantão: ${error.message}`);
+      toast?.error?.(`✗ Erro ao adicionar plantão: ${error?.message}`);
     },
   });
 
   const updateEventMutation = trpc.events.update.useMutation({
     onSuccess: () => {
-      toast.success("✓ Status atualizado com sucesso");
+      toast?.success?.("✓ Status atualizado com sucesso");
     },
     onError: (error) => {
-      toast.error(`✗ Erro ao atualizar status: ${error.message}`);
+      toast?.error?.(`✗ Erro ao atualizar status: ${error?.message}`);
     },
   });
 

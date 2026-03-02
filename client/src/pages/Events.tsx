@@ -51,58 +51,58 @@ export default function Events() {
   // Mutations
   const createMutation = trpc.events.create.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      setShowAddModal(false);
-      setNewDate("");
-      setNewDescription("");
-      toast.success("Evento criado com sucesso!");
+      utils?.events?.list?.invalidate?.();
+      setShowAddModal?.(false);
+      setNewDate?.("");
+      setNewDescription?.("");
+      toast?.success?.("Evento criado com sucesso!");
     },
   });
 
   const updateMutation = trpc.events.update.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      setShowEditModal(false);
-      setSelectedEvent(null);
-      toast.success("Evento atualizado!");
+      utils?.events?.list?.invalidate?.();
+      setShowEditModal?.(false);
+      setSelectedEvent?.(null);
+      toast?.success?.("Evento atualizado!");
     },
   });
 
   const passMutation = trpc.events.passShift.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      setShowPassModal(false);
-      setSelectedEvent(null);
-      setPassReason("");
-      toast.success("Plantão marcado como passado!");
+      utils?.events?.list?.invalidate?.();
+      setShowPassModal?.(false);
+      setSelectedEvent?.(null);
+      setPassReason?.("");
+      toast?.success?.("Plantão marcado como passado!");
     },
   });
 
   const undoPassMutation = trpc.events.undoPass.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      toast.success("Passagem desfeita!");
+      utils?.events?.list?.invalidate?.();
+      toast?.success?.("Passagem desfeita!");
     },
   });
 
   const cancelMutation = trpc.events.cancel.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      toast.success("Evento cancelado!");
+      utils?.events?.list?.invalidate?.();
+      toast?.success?.("Evento cancelado!");
     },
   });
 
   const undoCancelMutation = trpc.events.undoCancel.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      toast.success("Cancelamento desfeito!");
+      utils?.events?.list?.invalidate?.();
+      toast?.success?.("Cancelamento desfeito!");
     },
   });
 
   const deleteMutation = trpc.events.delete.useMutation({
     onSuccess: () => {
-      utils.events.list.invalidate();
-      toast.success("Evento excluído!");
+      utils?.events?.list?.invalidate?.();
+      toast?.success?.("Evento excluído!");
     },
   });
 
