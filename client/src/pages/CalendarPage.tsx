@@ -289,7 +289,10 @@ export default function CalendarPage() {
   };
 
   const handleAddTraining = () => {
-    if (!selectedDate || !trainingType || !trainingTime) return toast.error("Preencha campos.");
+    if (!selectedDate || !trainingType || !trainingTime) {
+      toast?.error?.("Preencha campos.");
+      return;
+    }
     try {
       const dateStr = normalizeDateKey(selectedDate);
       const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
@@ -311,7 +314,10 @@ export default function CalendarPage() {
   };
 
   const handleUpdateTraining = () => {
-    if (!editingEvent || !trainingType || !trainingTime) return toast.error("Preencha campos.");
+    if (!editingEvent || !trainingType || !trainingTime) {
+      toast?.error?.("Preencha campos.");
+      return;
+    }
     try {
       const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
       updateEventMutation.mutate({ id: editingEvent.id, type: trainingType, description });
@@ -322,9 +328,15 @@ export default function CalendarPage() {
   };
 
   const handleAddEvent = () => {
-    if (!selectedDate || !eventType) return toast.error("Selecione o tipo.");
+    if (!selectedDate || !eventType) {
+      toast?.error?.("Selecione o tipo.");
+      return;
+    }
     const finalType = eventType === "Outro" ? customEventType : eventType;
-    if (!finalType) return toast.error("Digite o tipo.");
+    if (!finalType) {
+      toast?.error?.("Digite o tipo.");
+      return;
+    }
     try {
       const dateStr = normalizeDateKey(selectedDate);
       let description = eventDescription || finalType;
@@ -351,9 +363,15 @@ export default function CalendarPage() {
   };
 
   const handleUpdateEvent = () => {
-    if (!editingEvent || !eventType) return toast.error("Selecione o tipo.");
+    if (!editingEvent || !eventType) {
+      toast?.error?.("Selecione o tipo.");
+      return;
+    }
     const finalType = eventType === "Outro" ? customEventType : eventType;
-    if (!finalType) return toast.error("Digite o tipo.");
+    if (!finalType) {
+      toast?.error?.("Digite o tipo.");
+      return;
+    }
     let description = eventDescription || finalType;
     if (eventTime) description = `${description} ${eventTime}`;
     updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description, isPassed });
