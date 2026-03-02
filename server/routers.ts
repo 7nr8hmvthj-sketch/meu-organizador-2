@@ -127,7 +127,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         const event = await db.createEvent({
           userId: 1, // Trainers agendam para o Admin
-          date: parseDateSafe(input.date),
+          date: input.date.substring(0, 10),
           type: input.type,
           description: input.description || null,
           isShift: input.isShift,
@@ -152,7 +152,7 @@ export const appRouter = router({
         
         const { id, ...data } = input;
         const updateData: Record<string, unknown> = {};
-        if (data.date) updateData.date = parseDateSafe(data.date);
+        if (data.date) updateData.date = data.date.substring(0, 10);
         if (data.type) updateData.type = data.type;
         if (data.description !== undefined) updateData.description = data.description;
         if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
