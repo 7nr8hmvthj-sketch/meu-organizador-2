@@ -202,10 +202,10 @@ export default function CalendarPage() {
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
       toast.success("Evento adicionado com sucesso!");
-      utils.events.list.invalidate();
+      utils.events.list.invalidate?.();
       setShowAddTrainingModal(false);
       setShowAddEventModal(false);
-      resetForm();
+      resetForm?.();
     },
     onError: (error) => toast.error(`Erro: ${error.message}`),
   });
@@ -213,10 +213,10 @@ export default function CalendarPage() {
   const updateEventMutation = trpc.events.update.useMutation({
     onSuccess: () => {
       toast.success("Evento atualizado com sucesso!");
-      utils.events.list.invalidate();
+      utils.events.list.invalidate?.();
       setShowEditModal(false);
       setEditingEvent(null);
-      resetForm();
+      resetForm?.();
     },
     onError: (error) => toast.error(`Erro: ${error.message}`),
   });
@@ -224,7 +224,7 @@ export default function CalendarPage() {
   const deleteEventMutation = trpc.events.delete.useMutation({
     onSuccess: () => {
       toast.success("Evento excluído com sucesso!");
-      utils.events.list.invalidate();
+      utils.events.list.invalidate?.();
       setShowDeleteConfirm(false);
       setEventToDelete(null);
       setShowDayModal(false);
@@ -278,9 +278,14 @@ export default function CalendarPage() {
 
   const handleAddTraining = () => {
     if (!selectedDate || !trainingType || !trainingTime) return toast.error("Preencha campos.");
-    const dateStr = normalizeDateKey(selectedDate);
-    const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
-    createEventMutation.mutate({ date: dateStr, type: trainingType, description, isShift: false });
+    try {
+      const dateStr = normalizeDateKey(selectedDate);
+      const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
+      createEventMutation.mutate({ date: dateStr, type: trainingType, description, isShift: false });
+    } catch (error) {
+      console.error('[CalendarPage] Error in handleAddTraining:', error);
+      toast.error("Erro ao salvar treino. Tente novamente.");
+    }
   };
 
   const handleEditTrainingClick = (event: typeof editableEvents[0]) => {
@@ -295,19 +300,29 @@ export default function CalendarPage() {
 
   const handleUpdateTraining = () => {
     if (!editingEvent || !trainingType || !trainingTime) return toast.error("Preencha campos.");
-    const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
-    updateEventMutation.mutate({ id: editingEvent.id, type: trainingType, description });
+    try {
+      const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
+      updateEventMutation.mutate({ id: editingEvent.id, type: trainingType, description });
+    } catch (error) {
+      console.error('[CalendarPage] Error in handleUpdateTraining:', error);
+      toast.error("Erro ao atualizar treino. Tente novamente.");
+    }
   };
 
   const handleAddEvent = () => {
     if (!selectedDate || !eventType) return toast.error("Selecione o tipo.");
     const finalType = eventType === "Outro" ? customEventType : eventType;
     if (!finalType) return toast.error("Digite o tipo.");
-    const dateStr = normalizeDateKey(selectedDate);
-    let description = eventDescription || finalType;
-    if (eventTime) description = `${description} ${eventTime}`;
-    const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => finalType.toLowerCase().includes(k));
-    createEventMutation.mutate({ date: dateStr, type: finalType, description, isShift });
+    try {
+      const dateStr = normalizeDateKey(selectedDate);
+      let description = eventDescription || finalType;
+      if (eventTime) description = `${description} ${eventTime}`;
+      const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => finalType.toLowerCase().includes(k));
+      createEventMutation.mutate({ date: dateStr, type: finalType, description, isShift });
+    } catch (error) {
+      console.error('[CalendarPage] Error in handleAddEvent:', error);
+      toast.error("Erro ao salvar evento. Tente novamente.");
+    }
   };
 
   const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {

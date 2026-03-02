@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Segunda 02/03: Mudar HC 13-19 para ZN 13-19\nUPDATE events \nSET type = 'ZN 13-19' \nWHERE userId = 1 \n  AND DATE(date) = '2026-03-02' \n  AND type = 'HC 13-19';\n\n-- Terça 03/03: Remover ZN 13-19 (deixar apenas ZN 7-13)\nDELETE FROM events \nWHERE userId = 1 \n  AND DATE(date) = '2026-03-03' \n  AND type = 'ZN 13-19';\n\n-- Verificar resultado\nSELECT DATE(date) as data, type, description \nFROM events \nWHERE userId = 1 \n  AND DATE(date) IN ('2026-03-02', '2026-03-03')\nORDER BY DATE(date), type;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute \n-- Segunda 02/03: Mudar HC 13-19 para ZN 13-19\nUPDATE events \nSET type = 'ZN 13-19' \nWHERE userId = 1 \n  AND DATE(date) = '2026-03-02' \n  AND type = 'HC 13-19';\n\n-- Terça 03/03: Remover ZN 13-19 (deixar apenas ZN 7-13)\nDELETE FROM events \nWHERE userId = 1 \n  AND DATE(date) = '2026-03-03' \n  AND type = 'ZN 13-19';\n\n-- Verificar resultado\nSELECT DATE(date) as data, type, description \nFROM events \nWHERE userId = 1 \n  AND DATE(date) IN ('2026-03-02', '2026-03-03')\nORDER BY DATE(date), type;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 3: Table 'gpihjob3nkeoe8wp6b5f8y.events' doesn't exist"
+  ]
+}
