@@ -307,3 +307,14 @@
 - [ ] Correção de erro de sincronização de usuário
 - [ ] Teste completo do calendário com eventos do Supabase
 - [ ] Teste de autenticação (USER, JESSICA, ISA)
+
+## Sistema de Recorrência Avançada (04/03/2026)
+
+- [x] Implementar createManyEvents() em server/db.ts
+- [x] Adicionar rota createMany em server/routers.ts
+- [x] Adicionar estados de recorrência em CalendarPage.tsx
+- [x] Implementar lógica de cálculo de datas (semanal/mensal)
+- [x] Adicionar UI de recorrência no modal
+- [ ] Testar recorrência semanal
+- [ ] Testar recorrência mensal por semanas específicas
+- [ ] Criar checkpoint e publicar

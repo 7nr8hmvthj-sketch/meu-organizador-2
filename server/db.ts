@@ -540,3 +540,14 @@ export async function getEventById(id: number): Promise<Event | null> {
     return null;
   }
 }
+
+export async function createManyEvents(eventsData: InsertEvent[]): Promise<Event[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    return await db.insert(events).values(eventsData).returning();
+  } catch (error) {
+    console.error("[Database] Create many events failed:", error);
+    throw error;
+  }
+}

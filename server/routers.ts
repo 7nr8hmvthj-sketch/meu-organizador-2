@@ -136,6 +136,26 @@ export const appRouter = router({
         return event ? normalizeEvent(event) : null;
       }),
     
+    createMany: protectedProcedure
+      .input(z.array(z.object({ 
+        date: z.string(), 
+        type: z.string(), 
+        description: z.string().optional(), 
+        isShift: z.boolean().default(true) 
+      })))
+      .mutation(async ({ input, ctx }) => {
+        const eventsToCreate = input.map(ev => ({
+          userId: 1,
+          date: ev.date.substring(0, 10),
+          type: ev.type,
+          description: ev.description || null,
+          isShift: ev.isShift,
+          createdBy: ctx.user.username,
+        }));
+        const results = await db.createManyEvents(eventsToCreate);
+        return results.map(normalizeEvent);
+      }),
+    
     update: protectedProcedure
       .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional(), isPassed: z.boolean().optional(), passedReason: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
