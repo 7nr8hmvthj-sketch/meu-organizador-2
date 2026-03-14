@@ -318,3 +318,10 @@
 - [ ] Testar recorrência semanal
 - [ ] Testar recorrência mensal por semanas específicas
 - [ ] Criar checkpoint e publicar
+
+## Correcao de Duplo Disparo (05/03/2026)
+
+- [x] Adicionar disabled={isPending || isLoading} ao botao "Salvar" do modal Novo Evento
+- [x] Adicionar disabled={isPending || isLoading} ao botao "Salvar" do modal Novo Treino
+- [x] Adicionar feedback visual "Salvando..." durante a requisicao
+- [ ] Publicar versao corrigida em producao
