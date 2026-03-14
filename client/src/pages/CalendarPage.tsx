@@ -407,9 +407,16 @@ export default function CalendarPage() {
   const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {
     setEditingEvent({ ...event, date: normalizeDateKey(event.date) });
     setIsPassed(event.isPassed || false);
-    const matchedType = EVENT_TYPES.find(t => event.type.toLowerCase().includes(t.value.toLowerCase().split(" ")[0]));
-    if (matchedType) { setEventType(matchedType.value); setCustomEventType(""); } 
-    else { setEventType("Outro"); setCustomEventType(event.type); }
+    // Correcao: Busca o tipo exato. Se nao achar, joga para 'Outro'
+    const exactMatch = EVENT_TYPES.find(t => t.value === event.type);
+    
+    if (exactMatch) {
+      setEventType(exactMatch.value);
+      setCustomEventType("");
+    } else {
+      setEventType("Outro");
+      setCustomEventType(event.type);
+    }
     const time = extractTimeFromDescription(event.description || "");
     setEventTime(time);
     setEventDescription((event.description || "").replace(event.type, "").replace(time, "").trim());

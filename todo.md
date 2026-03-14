@@ -325,3 +325,10 @@
 - [x] Adicionar disabled={isPending || isLoading} ao botao "Salvar" do modal Novo Treino
 - [x] Adicionar feedback visual "Salvando..." durante a requisicao
 - [ ] Publicar versao corrigida em producao
+
+## Correcao de Bug de Estado na Edicao (14/03/2026)
+
+- [x] Corrigir matching por substring em handleEditEventClick
+- [x] Implementar matching estrito (t.value === event.type)
+- [x] Testar edicao de ZN 7-13 e ZN 13-19 para confirmar correcao
+- [ ] Publicar versao corrigida em producao
