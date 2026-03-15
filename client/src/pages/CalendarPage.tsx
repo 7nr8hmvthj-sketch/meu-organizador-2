@@ -180,6 +180,24 @@ export default function CalendarPage() {
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [monthlyOccurrences, setMonthlyOccurrences] = useState<number[]>([1, 2, 3, 4, 5]);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("2026-12-31");
+  
+  // Time and color states
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [eventColor, setEventColor] = useState<string>("");
+  
+  const PREDEFINED_COLORS = [
+    { name: "Padrão Automático", value: "" },
+    { name: "Vermelho (HC)", value: "text-red-700 bg-red-50 dark:bg-red-900/30 border-red-200" },
+    { name: "Laranja (ZN - Padrão)", value: "text-amber-700 bg-amber-50 dark:bg-amber-900/30 border-amber-200" },
+    { name: "Amarelo (ZN - Observação)", value: "text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200" },
+    { name: "Azul (Natação/Geral)", value: "text-blue-700 bg-blue-50 dark:bg-blue-900/30 border-blue-200" },
+    { name: "Verde (Musculação/Geral)", value: "text-green-700 bg-green-50 dark:bg-green-900/30 border-green-200" },
+    { name: "Roxo (Terapia/Pilates)", value: "text-purple-700 bg-purple-50 dark:bg-purple-900/30 border-purple-200" },
+    { name: "Rosa (Apoio)", value: "text-pink-700 bg-pink-50 dark:bg-pink-900/30 border-pink-200" },
+    { name: "Turquesa (Home Care)", value: "text-teal-700 bg-teal-50 dark:bg-teal-900/30 border-teal-200" },
+    { name: "Cinza (Lembrete)", value: "text-gray-700 bg-gray-100 dark:bg-gray-800/30 border-gray-300" }
+  ];
 
   const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
@@ -365,7 +383,7 @@ export default function CalendarPage() {
       if (eventTime) description = `${description} ${eventTime}`;
       const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => finalType.toLowerCase().includes(k));
       if (!isRecurring) {
-        createEventMutation.mutate({ date: dateStr, type: finalType, description, isShift });
+        createEventMutation.mutate({ date: dateStr, type: finalType, description, startTime: startTime || undefined, endTime: endTime || undefined, color: eventColor || undefined, isShift });
       } else {
         const datesToCreate = [];
         let current = new Date(dateStr + 'T12:00:00Z');
@@ -396,7 +414,7 @@ export default function CalendarPage() {
             currMonth.setMonth(currMonth.getMonth() + recurrenceInterval);
           }
         }
-        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: finalType, description, isShift })));
+        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: finalType, description, startTime: startTime || undefined, endTime: endTime || undefined, color: eventColor || undefined, isShift })));
       }
     } catch (error) {
       console.error('[CalendarPage] Error in handleAddEvent:', error);
@@ -420,6 +438,10 @@ export default function CalendarPage() {
     const time = extractTimeFromDescription(event.description || "");
     setEventTime(time);
     setEventDescription((event.description || "").replace(event.type, "").replace(time, "").trim());
+    // Load new time and color fields
+    setStartTime(event.startTime || "");
+    setEndTime(event.endTime || "");
+    setEventColor(event.color || "");
     setShowDayModal(false);
     setShowEditModal(true);
   };
@@ -510,10 +532,10 @@ export default function CalendarPage() {
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
             {selectedDateEvents.length === 0 ? <p className="text-center text-muted-foreground py-8">Sem eventos.</p> : selectedDateEvents.map(event => (
-              <div key={event.id} className={`p-3 rounded-md border ${getEventColor(event.type, event.isPassed)}`}>
+              <div key={event.id} className={`p-3 rounded-md border ${event.color ? (event.isPassed ? "opacity-50 " + event.color : event.color) : getEventColor(event.type, event.isPassed)}`}>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2"><span className="font-semibold">{event.type}</span><span className="text-xs font-mono">{extractTimeFromDescription(event.description || "")}</span></div>
+                    <div className="flex items-center gap-2"><span className="font-semibold">{event.type}</span>{event.startTime && <span className="text-xs font-mono">{event.startTime}{event.endTime ? ' - ' + event.endTime : ''}</span>}</div>
                     {event.description && event.description !== event.type && <p className="text-sm mt-1 opacity-80">{event.description.replace(event.type, '').replace(extractTimeFromDescription(event.description || ""), '').trim()}</p>}
                   </div>
                   {isAdmin && <div className="flex gap-1 ml-2"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditEventClick(event)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => handleDeleteClick({ id: event.id, type: event.type })}><Trash2 className="w-4 h-4" /></Button></div>}
@@ -541,7 +563,7 @@ export default function CalendarPage() {
       </Dialog>
       
       {/* Outros modais mantidos iguais (AddEvent, AddTraining, Edit, Delete) */}
-      <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}><DialogContent><DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select>{eventType === "Outro" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Personalizado" />}<Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} /><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" /><div className="border-t pt-4 mt-4"><label className="flex items-center space-x-2 font-medium cursor-pointer"><input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-4 h-4" /><span>Repetir este evento</span></label>{isRecurring && (<div className="mt-3 pl-4 border-l-2 space-y-3"><Select value={recurrenceType} onValueChange={(v: any) => setRecurrenceType(v)}><SelectTrigger><SelectValue placeholder="Frequencia" /></SelectTrigger><SelectContent><SelectItem value="weekly">Semanal</SelectItem><SelectItem value="monthly">Mensal (Semanas Especificas)</SelectItem></SelectContent></Select>{recurrenceType === 'weekly' ? (<div className="flex items-center space-x-2 text-sm"><span>A cada</span><Input type="number" min="1" value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(Number(e.target.value))} className="w-20 h-8" /><span>semana(s)</span></div>) : (<div className="text-sm space-y-1"><span>Ocorrera nas seguintes semanas do mes:</span><div className="flex gap-3 mt-1">{[1, 2, 3, 4, 5].map(num => (<label key={num} className="flex items-center space-x-1 cursor-pointer"><input type="checkbox" checked={monthlyOccurrences.includes(num)} onChange={(e) => {if (e.target.checked) setMonthlyOccurrences([...monthlyOccurrences, num]); else setMonthlyOccurrences(monthlyOccurrences.filter(n => n !== num));}} className="w-4 h-4" /><span>{num}o</span></label>))}</div></div>)}<div className="text-sm"><span className="block mb-1">Repetir ate a data:</span><Input type="date" value={recurrenceEndDate} onChange={(e) => setRecurrenceEndDate(e.target.value)} /></div></div>)}</div></div><DialogFooter><Button onClick={handleAddEvent} disabled={createEventMutation.isPending || createEventMutation.isLoading || createManyMutation.isPending || createManyMutation.isLoading}>{createEventMutation.isPending || createManyMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}><DialogContent><DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select>{eventType === "Outro" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Personalizado" />}<div className="flex space-x-2"><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div></div><div className="space-y-1 mt-2"><label className="text-xs text-gray-500 block">Cor Personalizada</label><Select value={eventColor} onValueChange={setEventColor}><SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger><SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent></Select></div><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" /><div className="border-t pt-4 mt-4"><label className="flex items-center space-x-2 font-medium cursor-pointer"><input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-4 h-4" /><span>Repetir este evento</span></label>{isRecurring && (<div className="mt-3 pl-4 border-l-2 space-y-3"><Select value={recurrenceType} onValueChange={(v: any) => setRecurrenceType(v)}><SelectTrigger><SelectValue placeholder="Frequencia" /></SelectTrigger><SelectContent><SelectItem value="weekly">Semanal</SelectItem><SelectItem value="monthly">Mensal (Semanas Especificas)</SelectItem></SelectContent></Select>{recurrenceType === 'weekly' ? (<div className="flex items-center space-x-2 text-sm"><span>A cada</span><Input type="number" min="1" value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(Number(e.target.value))} className="w-20 h-8" /><span>semana(s)</span></div>) : (<div className="text-sm space-y-1"><span>Ocorrera nas seguintes semanas do mes:</span><div className="flex gap-3 mt-1">{[1, 2, 3, 4, 5].map(num => (<label key={num} className="flex items-center space-x-1 cursor-pointer"><input type="checkbox" checked={monthlyOccurrences.includes(num)} onChange={(e) => {if (e.target.checked) setMonthlyOccurrences([...monthlyOccurrences, num]); else setMonthlyOccurrences(monthlyOccurrences.filter(n => n !== num));}} className="w-4 h-4" /><span>{num}o</span></label>))}</div></div>)}<div className="text-sm"><span className="block mb-1">Repetir ate a data:</span><Input type="date" value={recurrenceEndDate} onChange={(e) => setRecurrenceEndDate(e.target.value)} /></div></div>)}</div></div><DialogFooter><Button onClick={handleAddEvent} disabled={createEventMutation.isPending || createEventMutation.isLoading || createManyMutation.isPending || createManyMutation.isLoading}>{createEventMutation.isPending || createManyMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining} disabled={createEventMutation.isPending || createEventMutation.isLoading}>{createEventMutation.isPending || createEventMutation.isLoading ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}><DialogContent><DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader><div className="space-y-4 py-4">{isAdmin ? <><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><Input type="time" value={eventTime} onChange={e => setEventTime(e.target.value)} /><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} /><div className="flex items-center space-x-2 mt-4"><input type="checkbox" id="is-passed" checked={isPassed} onChange={e => setIsPassed(e.target.checked)} className="w-4 h-4" /><Label htmlFor="is-passed">Marcar como Passado/Repassado</Label></div></> : <><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} /></>}</div><DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}><DialogContent><DialogHeader><DialogTitle>Excluir?</DialogTitle></DialogHeader><DialogFooter><Button variant="destructive" onClick={confirmDelete}>Excluir</Button></DialogFooter></DialogContent></Dialog>

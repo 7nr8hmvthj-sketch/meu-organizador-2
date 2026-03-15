@@ -33,6 +33,9 @@ export const events = pgTable("events", {
   date: date("date").notNull(),
   type: varchar("type", { length: 100 }).notNull(),
   description: text("description"),
+  startTime: varchar("starttime", { length: 5 }), // Formato HH:MM
+  endTime: varchar("endtime", { length: 5 }), // Formato HH:MM
+  color: varchar("color", { length: 50 }), // Classe Tailwind ou Hex
   isShift: boolean("isshift").default(true).notNull(),
   isPassed: boolean("ispassed").default(false).notNull(),
   passedReason: text("passedreason"),

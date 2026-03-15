@@ -332,3 +332,23 @@
 - [x] Implementar matching estrito (t.value === event.type)
 - [x] Testar edicao de ZN 7-13 e ZN 13-19 para confirmar correcao
 - [ ] Publicar versao corrigida em producao
+
+## Migracao de Banco de Dados - Cores e Horarios (14/03/2026)
+
+- [x] Atualizar schema da tabela events (drizzle/schema.ts)
+- [x] Adicionar colunas startTime, endTime, color
+- [x] Atualizar routers (create, createMany, update)
+- [x] Executar migracao com bypass de TLS (scripts/migracao_manual.ts)
+- [x] Validar que as 3 colunas foram criadas com sucesso
+- [ ] Atualizar frontend para usar novos campos (ETAPA 2)
+
+## ETAPA 2 - Frontend (Cores e Horarios) (15/03/2026)
+
+- [x] Adicionar estados startTime, endTime, eventColor
+- [x] Adicionar paleta PREDEFINED_COLORS
+- [x] Atualizar handleEditEventClick para carregar novos campos
+- [x] Atualizar handleAddEvent para incluir novos parametros
+- [x] Atualizar JSX do modal "Novo Evento" com inputs de horario e cores
+- [x] Atualizar renderizacao de eventos para exibir cores personalizadas
+- [x] Atualizar renderizacao para exibir startTime e endTime
+- [ ] Publicar em producao

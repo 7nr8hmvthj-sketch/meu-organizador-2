@@ -123,13 +123,16 @@ export const appRouter = router({
       }),
     
     create: protectedProcedure
-      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), isShift: z.boolean().default(true) }))
+      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true) }))
       .mutation(async ({ input, ctx }) => {
         const event = await db.createEvent({
           userId: 1, // Trainers agendam para o Admin
           date: input.date.substring(0, 10),
           type: input.type,
           description: input.description || null,
+          startTime: input.startTime || null,
+          endTime: input.endTime || null,
+          color: input.color || null,
           isShift: input.isShift,
           createdBy: ctx.user.username, // Salva quem criou o evento
         });
@@ -141,6 +144,9 @@ export const appRouter = router({
         date: z.string(), 
         type: z.string(), 
         description: z.string().optional(), 
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
+        color: z.string().optional(),
         isShift: z.boolean().default(true) 
       })))
       .mutation(async ({ input, ctx }) => {
@@ -149,6 +155,9 @@ export const appRouter = router({
           date: ev.date.substring(0, 10),
           type: ev.type,
           description: ev.description || null,
+          startTime: ev.startTime || null,
+          endTime: ev.endTime || null,
+          color: ev.color || null,
           isShift: ev.isShift,
           createdBy: ctx.user.username,
         }));
@@ -157,7 +166,7 @@ export const appRouter = router({
       }),
     
     update: protectedProcedure
-      .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional(), isPassed: z.boolean().optional(), passedReason: z.string().optional() }))
+      .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isPassed: z.boolean().optional(), passedReason: z.string().optional() }))
       .mutation(async ({ input, ctx }) => {
         // Verifica se o usuário pode editar (admin ou criador do evento)
         const event = await db.getEventById(input.id);
@@ -175,6 +184,9 @@ export const appRouter = router({
         if (data.date) updateData.date = data.date.substring(0, 10);
         if (data.type) updateData.type = data.type;
         if (data.description !== undefined) updateData.description = data.description;
+        if (data.startTime !== undefined) updateData.startTime = data.startTime || null;
+        if (data.endTime !== undefined) updateData.endTime = data.endTime || null;
+        if (data.color !== undefined) updateData.color = data.color || null;
         if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
         if (data.passedReason !== undefined) updateData.passedReason = data.passedReason;
         return await db.updateEvent(id, 1, updateData);
