@@ -390,12 +390,12 @@ export default function CalendarPage() {
       return;
     }
     try {
-      const finalColor = eventColor === "default" ? null : eventColor;
-      const descToSave = eventDescription ? eventDescription.trim() : null;
+      const finalColor = eventColor === "default" ? undefined : eventColor;
+      const descToSave = eventDescription ? eventDescription.trim() : undefined;
       const dateStr = normalizeDateKey(selectedDate);
       const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => typeToSave.toLowerCase().includes(k));
       if (!isRecurring) {
-        createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isShift });
+        createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift });
       } else {
         const datesToCreate = [];
         let current = new Date(dateStr + 'T12:00:00Z');
@@ -426,7 +426,7 @@ export default function CalendarPage() {
             currMonth.setMonth(currMonth.getMonth() + recurrenceInterval);
           }
         }
-        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isShift })));
+        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift })));
       }
     } catch (error) {
       console.error('[CalendarPage] Error in handleAddEvent:', error);
@@ -468,10 +468,10 @@ export default function CalendarPage() {
       toast?.error?.("Digite o tipo.");
       return;
     }
-    const finalColor = eventColor === "default" ? null : eventColor;
+    const finalColor = eventColor === "default" ? undefined : eventColor;
     let description = eventDescription || finalType;
     if (eventTime) description = `${description} ${eventTime}`;
-    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isPassed });
+    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description: description || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isPassed });
   };
 
   const handleDeleteClick = (event: { id: number; type: string }) => {
