@@ -384,19 +384,18 @@ export default function CalendarPage() {
       toast?.error?.("Selecione o tipo.");
       return;
     }
-    const finalType = eventType === "Outro" ? customEventType : eventType;
-    if (!finalType) {
+    const typeToSave = eventType === "Outro" ? customEventType : eventType;
+    if (!typeToSave) {
       toast?.error?.("Digite o tipo.");
       return;
     }
     try {
-      const dateStr = normalizeDateKey(selectedDate);
-      let description = eventDescription || finalType;
-      if (eventTime) description = `${description} ${eventTime}`;
-      const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => finalType.toLowerCase().includes(k));
       const finalColor = eventColor === "default" ? null : eventColor;
+      const descToSave = eventDescription ? eventDescription.trim() : null;
+      const dateStr = normalizeDateKey(selectedDate);
+      const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => typeToSave.toLowerCase().includes(k));
       if (!isRecurring) {
-        createEventMutation.mutate({ date: dateStr, type: finalType, description, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isShift });
+        createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isShift });
       } else {
         const datesToCreate = [];
         let current = new Date(dateStr + 'T12:00:00Z');
@@ -427,7 +426,7 @@ export default function CalendarPage() {
             currMonth.setMonth(currMonth.getMonth() + recurrenceInterval);
           }
         }
-        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: finalType, description, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isShift })));
+        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor, isShift })));
       }
     } catch (error) {
       console.error('[CalendarPage] Error in handleAddEvent:', error);
@@ -517,7 +516,7 @@ export default function CalendarPage() {
                 <button key={dateStr} onClick={() => handleDayClick(day)} className={`min-h-[140px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-40 bg-muted/20" : ""}`}>
                   <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{format(day, "d")}</span>
                   <div className="w-full space-y-1 overflow-hidden">
-                    {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}>{getEventLabel(e)}</div>)}
+                    {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}><span className="font-semibold mr-1">{e.startTime}</span>{getEventLabel(e)}</div>)}
                     {dayEvents.length > 6 && <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 6} mais</div>}
                   </div>
                   {/* Bloco Contabilizador de Horas ZN */}
@@ -550,7 +549,7 @@ export default function CalendarPage() {
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2"><span className="font-semibold">{event.type}</span>{event.startTime && <span className="text-xs font-mono">{event.startTime}{event.endTime ? ' - ' + event.endTime : ''}</span>}</div>
-                    {event.description && event.description !== event.type && <p className="text-sm mt-1 opacity-80">{event.description.replace(event.type, '').replace(extractTimeFromDescription(event.description || ""), '').trim()}</p>}
+                    {event.description && <div className="text-xs mt-0.5 opacity-80 whitespace-pre-wrap">{event.description}</div>}
                   </div>
                   {isAdmin && <div className="flex gap-1 ml-2"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditEventClick(event)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => handleDeleteClick({ id: event.id, type: event.type })}><Trash2 className="w-4 h-4" /></Button></div>}
                 </div>
