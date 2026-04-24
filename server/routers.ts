@@ -40,6 +40,7 @@ const VALID_CREDENTIALS = {
   "USER": { password: "Wert123.", role: "admin", userId: 1 },
   "JESSICA": { password: "123", role: "trainer", userId: 150023 },
   "ISA": { password: "123", role: "trainer", userId: 150024 },
+  "VEGANO": { password: "123", role: "admin", userId: 2 },
 };
 
 // Normaliza eventos do PostgreSQL (lowercase) para camelCase
