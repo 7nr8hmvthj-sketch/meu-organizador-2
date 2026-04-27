@@ -4,6 +4,7 @@ import { pgTable, serial, varchar, text, integer, boolean, timestamp, date, nume
 const roleEnum = pgEnum("role", ["user", "admin"]);
 const categoryEnum = pgEnum("category", ["fixed", "variable"]);
 const themeEnum = pgEnum("theme", ["light", "dark"]);
+const categoryTypeEnum = pgEnum("category_type", ["plantao", "treino", "pessoal", "saude", "outro"]);
 
 /**
  * Core user table backing auth flow.
@@ -126,3 +127,20 @@ export const diaryEntries = pgTable("diary_entries", {
 
 export type DiaryEntry = typeof diaryEntries.$inferSelect;
 export type InsertDiaryEntry = typeof diaryEntries.$inferInsert;
+
+/**
+ * Categories table - dynamic event categories with colors
+ */
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull().default("outro"),
+  icon: varchar("icon", { length: 50 }),
+  isDefault: boolean("isdefault").default(false).notNull(),
+  sortOrder: integer("sortorder").default(0).notNull(),
+  createdAt: timestamp("createdat", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;

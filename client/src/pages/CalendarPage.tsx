@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags } from "lucide-react";
+import CategoryManager from "./CategoryManager";
 import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -48,7 +49,8 @@ const SHIFT_HOURS: Record<string, string> = {
   "apoio (19-01)": "19-01",
 };
 
-const EVENT_TYPES = [
+// EVENT_TYPES agora é dinâmico - vem do banco via trpc.categories.list
+const FALLBACK_EVENT_TYPES = [
   { value: "HC 7-13", label: "HC 7-13 (Manhã)" },
   { value: "HC 13-19", label: "HC 13-19 (Tarde)" },
   { value: "ZN 7-13", label: "Zona Norte 7-13 (Manhã)" },
@@ -198,18 +200,55 @@ export default function CalendarPage() {
   const [endTime, setEndTime] = useState<string>("");
   const [eventColor, setEventColor] = useState<string>("default");
   
-  const PREDEFINED_COLORS = [
-    { name: "Padrão Automático", value: "default" },
-    { name: "Vermelho (HC)", value: "text-red-700 bg-red-50 dark:bg-red-900/30 border-red-200" },
-    { name: "Laranja (ZN - Padrão)", value: "text-amber-700 bg-amber-50 dark:bg-amber-900/30 border-amber-200" },
-    { name: "Amarelo (ZN - Observação)", value: "text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200" },
-    { name: "Azul (Natação/Geral)", value: "text-blue-700 bg-blue-50 dark:bg-blue-900/30 border-blue-200" },
-    { name: "Verde (Musculação/Geral)", value: "text-green-700 bg-green-50 dark:bg-green-900/30 border-green-200" },
-    { name: "Roxo (Terapia/Pilates)", value: "text-purple-700 bg-purple-50 dark:bg-purple-900/30 border-purple-200" },
-    { name: "Rosa (Apoio)", value: "text-pink-700 bg-pink-50 dark:bg-pink-900/30 border-pink-200" },
-    { name: "Turquesa (Home Care)", value: "text-teal-700 bg-teal-50 dark:bg-teal-900/30 border-teal-200" },
-    { name: "Cinza (Lembrete)", value: "text-gray-700 bg-gray-100 dark:bg-gray-800/30 border-gray-300" }
-  ];
+  // CategoryManager state
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+
+  // Categorias dinâmicas do banco
+  const { data: dbCategories = [] } = trpc.categories.list.useQuery();
+
+  // EVENT_TYPES dinâmico: usa banco se disponível, senão fallback
+  const EVENT_TYPES = useMemo(() => {
+    if (dbCategories.length > 0) {
+      const fromDb = dbCategories.map((cat: any) => ({ value: cat.name, label: cat.name }));
+      // Sempre adiciona "Outro" no final
+      if (!fromDb.find((t: any) => t.value === "Outro")) {
+        fromDb.push({ value: "Outro", label: "Outro (personalizado)" });
+      }
+      return fromDb;
+    }
+    return FALLBACK_EVENT_TYPES;
+  }, [dbCategories]);
+
+  // PREDEFINED_COLORS dinâmico: usa banco se disponível
+  const PREDEFINED_COLORS = useMemo(() => {
+    const colors = [{ name: "Padrão Automático", value: "default" }];
+    if (dbCategories.length > 0) {
+      dbCategories.forEach((cat: any) => {
+        if (cat.color && !colors.find(c => c.value === cat.color)) {
+          colors.push({ name: cat.name, value: cat.color });
+        }
+      });
+    } else {
+      colors.push(
+        { name: "Vermelho (HC)", value: "text-red-700 bg-red-50 dark:bg-red-900/30 border-red-200" },
+        { name: "Laranja (ZN)", value: "text-amber-700 bg-amber-50 dark:bg-amber-900/30 border-amber-200" },
+        { name: "Amarelo", value: "text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200" },
+        { name: "Azul", value: "text-blue-700 bg-blue-50 dark:bg-blue-900/30 border-blue-200" },
+        { name: "Verde", value: "text-green-700 bg-green-50 dark:bg-green-900/30 border-green-200" },
+        { name: "Roxo", value: "text-purple-700 bg-purple-50 dark:bg-purple-900/30 border-purple-200" },
+        { name: "Rosa", value: "text-pink-700 bg-pink-50 dark:bg-pink-900/30 border-pink-200" },
+        { name: "Turquesa", value: "text-teal-700 bg-teal-50 dark:bg-teal-900/30 border-teal-200" },
+        { name: "Cinza", value: "text-gray-700 bg-gray-100 dark:bg-gray-800/30 border-gray-300" }
+      );
+    }
+    return colors;
+  }, [dbCategories]);
+
+  // Função para buscar cor da categoria pelo nome
+  const getCategoryColor = (typeName: string): string | null => {
+    const cat = dbCategories.find((c: any) => c.name === typeName);
+    return cat?.color || null;
+  };
 
   const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
@@ -492,7 +531,10 @@ export default function CalendarPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2 text-primary"><CalendarIcon className="w-6 h-6" /> Calendário</h1>
           <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
+        <div className="flex gap-2">
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /> Categorias</Button>}
+          <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
+        </div>
       </div>
 
       <Card className="shadow-md">
@@ -580,6 +622,9 @@ export default function CalendarPage() {
       <Dialog open={showAddTrainingModal} onOpenChange={(open) => { setShowAddTrainingModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining} disabled={createEventMutation.isPending || createEventMutation.isLoading}>{createEventMutation.isPending || createEventMutation.isLoading ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader><div className="space-y-4 py-4">{isAdmin ? <><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><div className="flex space-x-2"><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div></div><div className="space-y-1 mt-2"><label className="text-xs text-gray-500 block">Cor Personalizada</label><Select value={eventColor} onValueChange={setEventColor}><SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger><SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value !== "default" && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent></Select></div><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} /><div className="flex items-center space-x-2 mt-4"><input type="checkbox" id="is-passed" checked={isPassed} onChange={e => setIsPassed(e.target.checked)} className="w-4 h-4" /><Label htmlFor="is-passed">Marcar como Passado/Repassado</Label></div></> : <><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} /></>}</div><DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter></DialogContent></Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={(open) => { setShowDeleteConfirm(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Excluir?</DialogTitle></DialogHeader><DialogFooter><Button variant="destructive" onClick={confirmDelete}>Excluir</Button></DialogFooter></DialogContent></Dialog>
+      
+      {/* Gerenciador de Categorias */}
+      <CategoryManager open={showCategoryManager} onOpenChange={setShowCategoryManager} />
     </div>
   );
 }

@@ -352,3 +352,32 @@
 - [x] Atualizar renderizacao de eventos para exibir cores personalizadas
 - [x] Atualizar renderizacao para exibir startTime e endTime
 - [ ] Publicar em producao
+
+
+## Plano Mestre de Aprimoramento (27/04/2026)
+
+### Fase 1: Gerenciador de Categorias Dinâmico
+- [x] Criar tabela `categories` no banco (id, name, color, type)
+- [x] Migração manual via script (bypass TLS)
+- [x] Backend: Router categories (list, create, update, delete)
+- [x] Script de seed para popular categorias existentes (HC, ZN, Pilates, etc.)
+- [x] Frontend: Componente CategoryManager.tsx
+- [x] Substituir PREDEFINED_COLORS e EVENT_TYPES por dados do banco
+- [x] Checkpoint Fase 1
+
+### Fase 2: Filtros Avançados de Visualização
+- [ ] Toggle/Switch no topo do calendário (Todos, Plantões, Pessoal/Saúde)
+- [ ] Atualizar useMemo de events para filtrar por toggle
+- [ ] Checkpoint Fase 2
+
+### Fase 3: Integração Financeira Básica (Dashboard)
+- [ ] Função backend para somar horas de plantão do mês
+- [ ] Painel recolhível (Accordion) com estimativa de horas + despesas fixas
+- [ ] Checkpoint Fase 3
+
+### Fase 4: Refatoração de Login
+- [ ] Mapear lógica atual de VALID_CREDENTIALS
+- [ ] Script para inserir usuários na tabela users com hash seguro
+- [ ] Alterar auth.simpleLogin para validar via banco
+- [ ] Testar exaustivamente login com credenciais antigas
+- [ ] Checkpoint Fase 4

@@ -58,6 +58,16 @@ const normalizeEvent = (event: any) => ({
 
 const normalizeEvents = (events: any[]) => events.map(normalizeEvent);
 
+// Normaliza categorias do PostgreSQL (lowercase) para camelCase
+const normalizeCategory = (cat: any) => ({
+  ...cat,
+  isDefault: cat.isdefault ?? cat.isDefault,
+  sortOrder: cat.sortorder ?? cat.sortOrder,
+  createdAt: cat.createdat ?? cat.createdAt,
+});
+
+const normalizeCategories = (cats: any[]) => cats.map(normalizeCategory);
+
 // Força meio-dia UTC para evitar bug de dia anterior por timezone
 const parseDateSafe = (dateString: string) => {
   if (dateString.length === 10) return new Date(`${dateString}T12:00:00Z`);
@@ -375,6 +385,60 @@ export const appRouter = router({
           return { success: true, message: 'Delete not yet implemented' };
         }
         return { success: false, message: 'Entry not found' };
+      }),
+  }),
+
+  // Categories router
+  categories: router({
+    list: publicProcedure.query(async () => {
+      const cats = await db.getCategories();
+      return normalizeCategories(cats);
+    }),
+    
+    create: adminProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        color: z.string().min(1),
+        type: z.string().default("outro"),
+        icon: z.string().optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const cat = await db.createCategory({
+          name: input.name,
+          color: input.color,
+          type: input.type,
+          icon: input.icon || null,
+          sortOrder: input.sortOrder || 0,
+        });
+        return cat ? normalizeCategory(cat) : null;
+      }),
+    
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        color: z.string().optional(),
+        type: z.string().optional(),
+        icon: z.string().optional(),
+        sortOrder: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        const updateData: Record<string, unknown> = {};
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.color !== undefined) updateData.color = data.color;
+        if (data.type !== undefined) updateData.type = data.type;
+        if (data.icon !== undefined) updateData.icon = data.icon;
+        if (data.sortOrder !== undefined) updateData.sortOrder = data.sortOrder;
+        const cat = await db.updateCategory(id, updateData);
+        return cat ? normalizeCategory(cat) : null;
+      }),
+    
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await db.deleteCategory(input.id);
       }),
   }),
 

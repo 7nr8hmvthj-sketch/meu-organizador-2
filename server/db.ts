@@ -8,7 +8,8 @@ import {
   medications, InsertMedication, Medication,
   medicationLogs, InsertMedicationLog, MedicationLog,
   userPreferences, InsertUserPreference, UserPreference,
-  diaryEntries, InsertDiaryEntry, DiaryEntry
+  diaryEntries, InsertDiaryEntry, DiaryEntry,
+  categories, InsertCategory, Category
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sql } from "drizzle-orm";
@@ -538,6 +539,63 @@ export async function getEventById(id: number): Promise<Event | null> {
   } catch (error) {
     console.error("[Database] Get event by id failed:", error);
     return null;
+  }
+}
+
+// ============ CATEGORY FUNCTIONS ============
+
+export async function getCategories(): Promise<Category[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    const result = await db
+      .select()
+      .from(categories)
+      .orderBy(sql`${categories.sortOrder} ASC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get categories failed:", error);
+    return [];
+  }
+}
+
+export async function createCategory(data: InsertCategory): Promise<Category | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.insert(categories).values(data).returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Create category failed:", error);
+    throw error;
+  }
+}
+
+export async function updateCategory(id: number, data: Partial<InsertCategory>): Promise<Category | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db
+      .update(categories)
+      .set(data)
+      .where(sql`${categories.id} = ${id}`)
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Update category failed:", error);
+    throw error;
+  }
+}
+
+export async function deleteCategory(id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.delete(categories).where(sql`${categories.id} = ${id}`);
+    return true;
+  } catch (error) {
+    console.error("[Database] Delete category failed:", error);
+    return false;
   }
 }
 
