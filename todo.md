@@ -366,9 +366,10 @@
 - [x] Checkpoint Fase 1
 
 ### Fase 2: Filtros Avançados de Visualização
-- [ ] Toggle/Switch no topo do calendário (Todos, Plantões, Pessoal/Saúde)
-- [ ] Atualizar useMemo de events para filtrar por toggle
-- [ ] Checkpoint Fase 2
+- [x] Toggle/Switch no topo do calendário (Todos, Plantões, Pessoal/Saúde)
+- [x] Atualizar useMemo de events para filtrar por toggle
+- [x] Cálculo ZN não afetado pelos filtros (usa allEvents)
+- [x] Checkpoint Fase 2
 
 ### Fase 3: Integração Financeira Básica (Dashboard)
 - [ ] Função backend para somar horas de plantão do mês

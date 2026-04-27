@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid } from "lucide-react";
 import CategoryManager from "./CategoryManager";
 import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
@@ -203,6 +203,10 @@ export default function CalendarPage() {
   // CategoryManager state
   const [showCategoryManager, setShowCategoryManager] = useState(false);
 
+  // Filtro de visualização
+  type CalendarFilter = "todos" | "plantoes" | "pessoal";
+  const [calendarFilter, setCalendarFilter] = useState<CalendarFilter>("todos");
+
   // Categorias dinâmicas do banco
   const { data: dbCategories = [] } = trpc.categories.list.useQuery();
 
@@ -345,11 +349,29 @@ export default function CalendarPage() {
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startDayOfWeek = getDay(monthStart);
 
+  // Helper: determina se um evento é plantão
+  const isShiftEvent = (event: any): boolean => {
+    if (event.isShift) return true;
+    const typeLower = (event.type || "").toLowerCase();
+    return ["hc", "zn", "zona norte", "noturno", "apoio", "corredor"].some(k => typeLower.includes(k));
+  };
+
+  // Eventos filtrados pela seleção do toggle (NÃO afeta cálculo ZN)
+  const filteredEvents = useMemo(() => {
+    if (calendarFilter === "todos") return events;
+    return events.filter(event => {
+      const isShift = isShiftEvent(event);
+      if (calendarFilter === "plantoes") return isShift;
+      if (calendarFilter === "pessoal") return !isShift;
+      return true;
+    });
+  }, [events, calendarFilter]);
+
   const eventsByDate = useMemo(() => {
-    const map = new Map<string, typeof events>();
+    const map = new Map<string, typeof filteredEvents>();
     const processedIds = new Set<number>();
-    if (!events) return map;
-    events.forEach(e => {
+    if (!filteredEvents) return map;
+    filteredEvents.forEach(e => {
       if (e.id && processedIds.has(e.id)) return;
       if (e.id) processedIds.add(e.id);
       const dateStr = normalizeDateKey(e.date);
@@ -357,7 +379,7 @@ export default function CalendarPage() {
       map.get(dateStr)!.push(e);
     });
     return map;
-  }, [events]);
+  }, [filteredEvents]);
 
   const selectedDateEvents = useMemo(() => {
     if (!selectedDate) return [];
@@ -543,6 +565,13 @@ export default function CalendarPage() {
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-5 h-5" /></Button>
             <CardTitle className="text-lg font-semibold capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</CardTitle>
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
+          </div>
+          {/* Filtros Avançados */}
+          <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t">
+            <Filter className="w-4 h-4 text-muted-foreground mr-1" />
+            <Button variant={calendarFilter === "todos" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("todos")}><LayoutGrid className="w-3 h-3 mr-1" /> Todos</Button>
+            <Button variant={calendarFilter === "plantoes" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("plantoes")}><Briefcase className="w-3 h-3 mr-1" /> Plantões</Button>
+            <Button variant={calendarFilter === "pessoal" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("pessoal")}><Heart className="w-3 h-3 mr-1" /> Pessoal/Saúde</Button>
           </div>
         </CardHeader>
         <CardContent className="pt-2">
