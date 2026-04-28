@@ -270,6 +270,26 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => await db.deleteExpense(input.id, ctx.user.userId)),
     
     resetPaidStatus: adminProcedure.mutation(async ({ ctx }) => { await db.resetExpensesPaidStatus(ctx.user.userId); return { success: true }; }),
+
+    // Resumo financeiro mensal: total de despesas fixas
+    monthlySummary: adminProcedure
+      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const allExpenses = await db.getExpensesByUserId(ctx.user.userId);
+        const fixedExpenses = allExpenses.filter(e => e.category === "fixed");
+        const variableExpenses = allExpenses.filter(e => e.category === "variable");
+        const totalFixed = fixedExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
+        const totalVariable = variableExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
+        return {
+          month: input.month,
+          year: input.year,
+          totalFixed,
+          totalVariable,
+          totalAll: totalFixed + totalVariable,
+          fixedCount: fixedExpenses.length,
+          variableCount: variableExpenses.length,
+        };
+      }),
   }),
 
   // Medications router

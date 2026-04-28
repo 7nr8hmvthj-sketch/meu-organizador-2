@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import CategoryManager from "./CategoryManager";
 import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
@@ -207,6 +208,10 @@ export default function CalendarPage() {
   type CalendarFilter = "todos" | "plantoes" | "pessoal";
   const [calendarFilter, setCalendarFilter] = useState<CalendarFilter>("todos");
 
+  // Painel financeiro
+  const [showFinancialPanel, setShowFinancialPanel] = useState(false);
+  const [hourlyRate, setHourlyRate] = useState<string>(localStorage.getItem('hourlyRate') || "35");
+
   // Categorias dinâmicas do banco
   const { data: dbCategories = [] } = trpc.categories.list.useQuery();
 
@@ -258,6 +263,60 @@ export default function CalendarPage() {
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
 
+  const isTrainer = authData?.user?.role === "trainer";
+  const isAdmin = authData?.user?.role === "admin";
+  const currentUsername = authData?.user?.username;
+
+  // Query de resumo financeiro mensal
+  const currentMonthNum = currentMonth.getMonth() + 1;
+  const currentYearNum = currentMonth.getFullYear();
+  const { data: financialSummary } = trpc.expenses.monthlySummary.useQuery(
+    { month: currentMonthNum, year: currentYearNum },
+    { enabled: !!isAdmin }
+  );
+
+  // Cálculo de horas totais do mês (usa allEvents, não filteredEvents)
+  const monthlyShiftHours = useMemo(() => {
+    if (!allEvents.length) return { zn: 0, hc: 0, noturno: 0, apoio: 0, total: 0 };
+    const startDate = new Date(currentYearNum, currentMonthNum - 2, 20);
+    const endDate = new Date(currentYearNum, currentMonthNum - 1, 19, 23, 59, 59);
+    let znHours = 0, hcHours = 0, noturnoHours = 0, apoioHours = 0;
+    allEvents.forEach((event: any) => {
+      if (event.isPassed) return;
+      const eventDate = new Date(event.date + 'T12:00:00Z');
+      if (eventDate < startDate || eventDate > endDate) return;
+      const type = (event.type || "").toLowerCase();
+      const desc = (event.description || "").toLowerCase();
+      const fullText = `${type} ${desc}`;
+      let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
+      if (!timeMatch && SHIFT_HOURS[type]) {
+        timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
+      }
+      if (!timeMatch) return;
+      const startHour = parseInt(timeMatch[1], 10);
+      const endHour = parseInt(timeMatch[2], 10);
+      let diff = endHour - startHour;
+      if (diff < 0) diff += 24;
+      if (fullText.includes("hc") || fullText.includes("home care")) {
+        hcHours += diff;
+      } else if (fullText.includes("noturno")) {
+        noturnoHours += diff;
+      } else if (fullText.includes("apoio")) {
+        apoioHours += diff;
+      } else if (fullText.includes("zn") || fullText.includes("zona norte") || fullText.includes("observação") || fullText.includes("observacao")) {
+        znHours += diff;
+      }
+    });
+    return { zn: znHours, hc: hcHours, noturno: noturnoHours, apoio: apoioHours, total: znHours + hcHours + noturnoHours + apoioHours };
+  }, [allEvents, currentMonthNum, currentYearNum]);
+
+  const estimatedEarnings = monthlyShiftHours.total * parseFloat(hourlyRate || "0");
+
+  const handleHourlyRateChange = (value: string) => {
+    setHourlyRate(value);
+    localStorage.setItem('hourlyRate', value);
+  };
+
   // GARANTIA DE DATA: Usa o mesmo helper do Diário para buscar
   const selectedDateKey = selectedDate ? normalizeDateKey(selectedDate) : null;
   
@@ -266,10 +325,6 @@ export default function CalendarPage() {
     { enabled: !!selectedDateKey && authData?.user?.role === "admin" }
   );
 
-  const isTrainer = authData?.user?.role === "trainer";
-  const isAdmin = authData?.user?.role === "admin";
-  const currentUsername = authData?.user?.username;
-  
   // Filtro de privacidade: oculta Lembretes de trainers
   const events = useMemo(() => {
     return allEvents.filter(event => {
@@ -574,6 +629,83 @@ export default function CalendarPage() {
             <Button variant={calendarFilter === "pessoal" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("pessoal")}><Heart className="w-3 h-3 mr-1" /> Pessoal/Saúde</Button>
           </div>
         </CardHeader>
+
+        {/* Painel Financeiro Recolhível - Apenas Admin */}
+        {isAdmin && (
+          <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
+            <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors border-b cursor-pointer">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <DollarSign className="w-4 h-4 text-emerald-600" />
+                <span>Painel Financeiro</span>
+                <span className="text-xs text-muted-foreground ml-2">({monthlyShiftHours.total}h | R$ {estimatedEarnings.toFixed(0)})</span>
+              </div>
+              {showFinancialPanel ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-4 py-3 bg-muted/10 border-b space-y-3">
+                {/* Resumo de Horas */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-md p-2 text-center">
+                    <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">ZN</div>
+                    <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{monthlyShiftHours.zn}h</div>
+                  </div>
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-md p-2 text-center">
+                    <div className="text-xs text-red-600 dark:text-red-400 font-medium">HC</div>
+                    <div className="text-lg font-bold text-red-700 dark:text-red-300">{monthlyShiftHours.hc}h</div>
+                  </div>
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-md p-2 text-center">
+                    <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Noturno</div>
+                    <div className="text-lg font-bold text-indigo-700 dark:text-indigo-300">{monthlyShiftHours.noturno}h</div>
+                  </div>
+                  <div className="bg-pink-50 dark:bg-pink-900/20 rounded-md p-2 text-center">
+                    <div className="text-xs text-pink-600 dark:text-pink-400 font-medium">Apoio</div>
+                    <div className="text-lg font-bold text-pink-700 dark:text-pink-300">{monthlyShiftHours.apoio}h</div>
+                  </div>
+                </div>
+
+                {/* Totais e Estimativa */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="flex items-center gap-2 bg-card border rounded-md p-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Total Horas</div>
+                      <div className="text-sm font-bold">{monthlyShiftHours.total}h</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-card border rounded-md p-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Estimativa Ganhos</div>
+                      <div className="text-sm font-bold text-emerald-600">R$ {estimatedEarnings.toFixed(2)}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-card border rounded-md p-2">
+                    <DollarSign className="w-4 h-4 text-red-500" />
+                    <div>
+                      <div className="text-[10px] text-muted-foreground">Despesas Fixas</div>
+                      <div className="text-sm font-bold text-red-500">R$ {financialSummary?.totalFixed?.toFixed(2) || "0.00"}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Valor/Hora e Saldo */}
+                <div className="flex items-center gap-3 pt-1 border-t">
+                  <div className="flex items-center gap-1">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">R$/hora:</label>
+                    <Input type="number" value={hourlyRate} onChange={e => handleHourlyRateChange(e.target.value)} className="w-20 h-7 text-xs" />
+                  </div>
+                  <div className="flex-1 text-right">
+                    <span className="text-xs text-muted-foreground">Saldo Estimado: </span>
+                    <span className={`text-sm font-bold ${(estimatedEarnings - (financialSummary?.totalFixed || 0)) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                      R$ {(estimatedEarnings - (financialSummary?.totalFixed || 0)).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
         <CardContent className="pt-2">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(day => <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-2">{day}</div>)}

@@ -372,9 +372,13 @@
 - [x] Checkpoint Fase 2
 
 ### Fase 3: Integração Financeira Básica (Dashboard)
-- [ ] Função backend para somar horas de plantão do mês
-- [ ] Painel recolhível (Accordion) com estimativa de horas + despesas fixas
-- [ ] Checkpoint Fase 3
+- [x] Função backend para somar horas de plantão do mês (monthlySummary route)
+- [x] Tabela expenses criada no banco de dados remoto
+- [x] Painel recolhível (Collapsible) com horas por tipo (ZN/HC/Noturno/Apoio)
+- [x] Estimativa de ganhos com R$/hora editável (localStorage)
+- [x] Cruzamento: Total Horas vs Despesas Fixas vs Saldo Estimado
+- [x] Testes vitest passando (13/13)
+- [x] Checkpoint Fase 3
 
 ### Fase 4: Refatoração de Login
 - [ ] Mapear lógica atual de VALID_CREDENTIALS
