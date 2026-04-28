@@ -144,3 +144,19 @@ export const categories = pgTable("categories", {
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = typeof categories.$inferInsert;
+
+/**
+ * Monthly adjustments - stores RH confirmed hours for conciliation
+ */
+export const monthlyAdjustments = pgTable("monthly_adjustments", {
+  id: serial("id").primaryKey(),
+  userId: integer("userid").notNull(),
+  month: integer("month").notNull(),
+  year: integer("year").notNull(),
+  rhHoursZN: numeric("rhhourszn", { precision: 10, scale: 2 }),
+  rhHoursHC: numeric("rhhourshc", { precision: 10, scale: 2 }),
+  updatedAt: timestamp("updatedat", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type MonthlyAdjustment = typeof monthlyAdjustments.$inferSelect;
+export type InsertMonthlyAdjustment = typeof monthlyAdjustments.$inferInsert;

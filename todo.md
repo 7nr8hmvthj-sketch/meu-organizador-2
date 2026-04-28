@@ -426,3 +426,16 @@
 - [x] Backend: Trocar 'corredor' por 'observação' no breakdown ZN
 - [x] Frontend: Trocar label 'Corredor' por 'Observação' no painel
 - [x] Checkpoint e publicação
+
+## Conciliação Horas RH vs Sistema (28/04/2026)
+
+- [x] Criar tabela monthly_adjustments (id, userId, month, year, rhHoursZN, rhHoursHC)
+- [x] Migração manual da tabela
+- [x] Backend: getAdjustment e upsertAdjustment rotas tRPC
+- [x] Frontend: inputs RH no painel financeiro (ZN e HC)
+- [x] Cálculo de diferença (vermelho/verde)
+- [x] Salvamento automático (onBlur)
+- [x] Total Recebimentos e Saldo usam valor RH quando preenchido
+- [x] Persistência testada: valor 150h salvo, recarregou com R$ 20.400
+- [x] Testes vitest: 12/12 passando (rhConciliation.test.ts)
+- [x] Checkpoint e publicação

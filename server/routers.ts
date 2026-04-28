@@ -393,6 +393,32 @@ export const appRouter = router({
           saldoEstimado: (totalZN + totalHC) - totalFixed,
         };
       }),
+
+    // RH Conciliation - get adjustment for a month
+    getAdjustment: adminProcedure
+      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const adj = await db.getMonthlyAdjustment(ctx.user.userId, input.month, input.year);
+        return adj ? {
+          rhHoursZN: adj.rhHoursZN ? parseFloat(adj.rhHoursZN) : null,
+          rhHoursHC: adj.rhHoursHC ? parseFloat(adj.rhHoursHC) : null,
+        } : { rhHoursZN: null, rhHoursHC: null };
+      }),
+
+    // RH Conciliation - save adjustment for a month
+    upsertAdjustment: adminProcedure
+      .input(z.object({
+        month: z.number().min(1).max(12),
+        year: z.number(),
+        rhHoursZN: z.number().nullable(),
+        rhHoursHC: z.number().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.upsertMonthlyAdjustment(
+          ctx.user.userId, input.month, input.year, input.rhHoursZN, input.rhHoursHC
+        );
+        return { success: !!result };
+      }),
   }),
 
   // Medications router

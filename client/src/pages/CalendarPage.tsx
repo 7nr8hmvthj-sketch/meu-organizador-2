@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -273,6 +273,47 @@ export default function CalendarPage() {
     { month: currentMonthNum, year: currentYearNum },
     { enabled: !!isAdmin }
   );
+
+  // RH Conciliation - query and state
+  const { data: rhAdjustment } = trpc.expenses.getAdjustment.useQuery(
+    { month: currentMonthNum, year: currentYearNum },
+    { enabled: !!isAdmin }
+  );
+  const [rhZN, setRhZN] = useState<string>("");
+  const [rhHC, setRhHC] = useState<string>("");
+  const upsertAdjustment = trpc.expenses.upsertAdjustment.useMutation();
+
+  // Sync RH values when data loads or month changes
+  useEffect(() => {
+    if (rhAdjustment) {
+      setRhZN(rhAdjustment.rhHoursZN !== null ? String(rhAdjustment.rhHoursZN) : "");
+      setRhHC(rhAdjustment.rhHoursHC !== null ? String(rhAdjustment.rhHoursHC) : "");
+    } else {
+      setRhZN("");
+      setRhHC("");
+    }
+  }, [rhAdjustment, currentMonthNum, currentYearNum]);
+
+  // Save RH adjustment on blur
+  const saveRhAdjustment = (znVal: string, hcVal: string) => {
+    const znNum = znVal.trim() !== "" ? parseFloat(znVal) : null;
+    const hcNum = hcVal.trim() !== "" ? parseFloat(hcVal) : null;
+    if (isNaN(znNum as number) && znVal.trim() !== "") return;
+    if (isNaN(hcNum as number) && hcVal.trim() !== "") return;
+    upsertAdjustment.mutate({ month: currentMonthNum, year: currentYearNum, rhHoursZN: znNum, rhHoursHC: hcNum });
+  };
+
+  // Computed: effective values (use RH if filled, otherwise system)
+  const effectiveZNHours = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) : (financialSummary?.znHours || 0);
+  const effectiveHCHours = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) : (financialSummary?.hcHours || 0);
+  const effectiveTotalZN = effectiveZNHours * (financialSummary?.valorHoraZN || 136);
+  const effectiveTotalHC = effectiveHCHours * (financialSummary?.valorHoraHC || 108);
+  const effectiveTotalRecebimentos = effectiveTotalZN + effectiveTotalHC;
+  const effectiveSaldo = effectiveTotalRecebimentos - (financialSummary?.totalFixed || 0);
+
+  // Difference calculations
+  const znDiff = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) - (financialSummary?.znHours || 0) : null;
+  const hcDiff = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) - (financialSummary?.hcHours || 0) : null;
 
   // Cálculo de horas ZN para exibição no calendário (Total ZN no dia 19)
   const monthlyShiftHours = useMemo(() => {
@@ -630,7 +671,7 @@ export default function CalendarPage() {
                 <DollarSign className="w-4 h-4 text-emerald-600" />
                 <span>Painel Financeiro</span>
                 <span className="text-xs text-muted-foreground ml-2">
-                  (R$ {((financialSummary?.totalRecebimentos) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })})
+                  (R$ {effectiveTotalRecebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 0 })})
                 </span>
               </div>
               {showFinancialPanel ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -667,6 +708,25 @@ export default function CalendarPage() {
                   <div className="mt-1 text-right text-sm font-bold text-amber-700 dark:text-amber-300">
                     {financialSummary?.znHours || 0}h × R$ {financialSummary?.valorHoraZN || 136} = R$ {(financialSummary?.totalZN || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
+                  {/* RH Conciliation ZN */}
+                  <div className="mt-2 flex items-center gap-2 bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-2 border border-dashed border-amber-300">
+                    <span className="text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap">Horas RH:</span>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Informar horas"
+                      className="w-24 text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 text-right"
+                      value={rhZN}
+                      onChange={(e) => setRhZN(e.target.value)}
+                      onBlur={() => saveRhAdjustment(rhZN, rhHC)}
+                    />
+                    <span className="text-xs text-muted-foreground">h</span>
+                    {znDiff !== null && (
+                      <span className={`text-xs font-semibold ${znDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        Dif: {znDiff >= 0 ? '+' : ''}{znDiff}h (R$ {(znDiff * (financialSummary?.valorHoraZN || 136)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* === RECEBIMENTOS HC === */}
@@ -685,6 +745,25 @@ export default function CalendarPage() {
                   <div className="mt-1 text-right text-sm font-bold text-red-700 dark:text-red-300">
                     {financialSummary?.hcHours || 0}h × R$ {financialSummary?.valorHoraHC || 108} = R$ {(financialSummary?.totalHC || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
+                  {/* RH Conciliation HC */}
+                  <div className="mt-2 flex items-center gap-2 bg-red-50/50 dark:bg-red-900/10 rounded-md p-2 border border-dashed border-red-300">
+                    <span className="text-xs text-red-600 dark:text-red-400 whitespace-nowrap">Horas RH:</span>
+                    <input
+                      type="number"
+                      step="0.5"
+                      placeholder="Informar horas"
+                      className="w-24 text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 text-right"
+                      value={rhHC}
+                      onChange={(e) => setRhHC(e.target.value)}
+                      onBlur={() => saveRhAdjustment(rhZN, rhHC)}
+                    />
+                    <span className="text-xs text-muted-foreground">h</span>
+                    {hcDiff !== null && (
+                      <span className={`text-xs font-semibold ${hcDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        Dif: {hcDiff >= 0 ? '+' : ''}{hcDiff}h (R$ {(hcDiff * (financialSummary?.valorHoraHC || 108)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* === RESUMO FINAL === */}
@@ -694,7 +773,7 @@ export default function CalendarPage() {
                       <TrendingUp className="w-4 h-4 text-emerald-600" />
                       <div>
                         <div className="text-[10px] text-emerald-600 dark:text-emerald-400">Total Recebimentos</div>
-                        <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">R$ {(financialSummary?.totalRecebimentos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                        <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">R$ {effectiveTotalRecebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-md p-2">
@@ -704,12 +783,12 @@ export default function CalendarPage() {
                         <div className="text-sm font-bold text-red-600 dark:text-red-300">R$ {(financialSummary?.totalFixed || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       </div>
                     </div>
-                    <div className={`flex items-center gap-2 rounded-md p-2 border ${(financialSummary?.saldoEstimado || 0) >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200' : 'bg-red-50 dark:bg-red-900/20 border-red-200'}`}>
-                      <DollarSign className={`w-4 h-4 ${(financialSummary?.saldoEstimado || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`} />
+                    <div className={`flex items-center gap-2 rounded-md p-2 border ${effectiveSaldo >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200' : 'bg-red-50 dark:bg-red-900/20 border-red-200'}`}>
+                      <DollarSign className={`w-4 h-4 ${effectiveSaldo >= 0 ? 'text-emerald-600' : 'text-red-500'}`} />
                       <div>
                         <div className="text-[10px] text-muted-foreground">Saldo Estimado</div>
-                        <div className={`text-sm font-bold ${(financialSummary?.saldoEstimado || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
-                          R$ {(financialSummary?.saldoEstimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <div className={`text-sm font-bold ${effectiveSaldo >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
+                          R$ {effectiveSaldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                     </div>

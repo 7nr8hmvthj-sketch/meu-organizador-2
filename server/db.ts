@@ -9,7 +9,8 @@ import {
   medicationLogs, InsertMedicationLog, MedicationLog,
   userPreferences, InsertUserPreference, UserPreference,
   diaryEntries, InsertDiaryEntry, DiaryEntry,
-  categories, InsertCategory, Category
+  categories, InsertCategory, Category,
+  monthlyAdjustments, InsertMonthlyAdjustment, MonthlyAdjustment
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sql } from "drizzle-orm";
@@ -745,5 +746,62 @@ export async function deleteMedication(id: number, userId: number): Promise<bool
   } catch (error) {
     console.error("[Database] Delete medication failed:", error);
     return false;
+  }
+}
+
+// ===== Monthly Adjustments (RH Conciliation) =====
+
+export async function getMonthlyAdjustment(userId: number, month: number, year: number) {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.select()
+      .from(monthlyAdjustments)
+      .where(sql`${monthlyAdjustments.userId} = ${userId} AND ${monthlyAdjustments.month} = ${month} AND ${monthlyAdjustments.year} = ${year}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Error fetching monthly adjustment:", error);
+    return null;
+  }
+}
+
+export async function upsertMonthlyAdjustment(userId: number, month: number, year: number, rhHoursZN: number | null, rhHoursHC: number | null) {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    // Try to find existing record
+    const existing = await db.select()
+      .from(monthlyAdjustments)
+      .where(sql`${monthlyAdjustments.userId} = ${userId} AND ${monthlyAdjustments.month} = ${month} AND ${monthlyAdjustments.year} = ${year}`)
+      .limit(1);
+    
+    if (existing.length > 0) {
+      // Update
+      const updated = await db.update(monthlyAdjustments)
+        .set({
+          rhHoursZN: rhHoursZN !== null ? String(rhHoursZN) : null,
+          rhHoursHC: rhHoursHC !== null ? String(rhHoursHC) : null,
+          updatedAt: new Date(),
+        })
+        .where(sql`${monthlyAdjustments.id} = ${existing[0].id}`)
+        .returning();
+      return updated[0];
+    } else {
+      // Insert
+      const inserted = await db.insert(monthlyAdjustments)
+        .values({
+          userId,
+          month,
+          year,
+          rhHoursZN: rhHoursZN !== null ? String(rhHoursZN) : null,
+          rhHoursHC: rhHoursHC !== null ? String(rhHoursHC) : null,
+        })
+        .returning();
+      return inserted[0];
+    }
+  } catch (error) {
+    console.error("[Database] Error upserting monthly adjustment:", error);
+    return null;
   }
 }
