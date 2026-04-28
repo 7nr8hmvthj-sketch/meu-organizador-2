@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 
 const VALOR_HORA_ZN = 136;
 const VALOR_HORA_HC = 108;
-const HC_DELAY_MONTHS = 4;
+const HC_DELAY_MONTHS = 3;
 
 // Helper: calculates hours from event type
 function calcHours(event: { type: string; description?: string; isPassed?: boolean }): number {
@@ -56,7 +56,7 @@ function getZNCycleDates(month: number, year: number) {
   return { znStartDate, znEndDate };
 }
 
-// Helper: calculates HC reference month (120 days delay)
+// Helper: calculates HC reference month (90 days delay)
 function getHCRefMonth(month: number, year: number) {
   let hcMonth = month - HC_DELAY_MONTHS;
   let hcYear = year;
@@ -167,34 +167,34 @@ describe("Financial Business Rules", () => {
     });
   });
 
-  describe("HC 120-day delay", () => {
-    it("should calculate April HC reference as December (4 months back)", () => {
+  describe("HC 90-day delay", () => {
+    it("should calculate April HC reference as January (3 months back)", () => {
       const { hcMonth, hcYear } = getHCRefMonth(4, 2026);
-      expect(hcMonth).toBe(12);
-      expect(hcYear).toBe(2025);
-    });
-
-    it("should calculate May HC reference as January", () => {
-      const { hcMonth, hcYear } = getHCRefMonth(5, 2026);
       expect(hcMonth).toBe(1);
       expect(hcYear).toBe(2026);
     });
 
-    it("should calculate January HC reference as September (previous year)", () => {
+    it("should calculate May HC reference as February", () => {
+      const { hcMonth, hcYear } = getHCRefMonth(5, 2026);
+      expect(hcMonth).toBe(2);
+      expect(hcYear).toBe(2026);
+    });
+
+    it("should calculate January HC reference as October (previous year)", () => {
       const { hcMonth, hcYear } = getHCRefMonth(1, 2026);
-      expect(hcMonth).toBe(9);
+      expect(hcMonth).toBe(10);
       expect(hcYear).toBe(2025);
     });
 
-    it("should calculate March HC reference as November (previous year)", () => {
+    it("should calculate March HC reference as December (previous year)", () => {
       const { hcMonth, hcYear } = getHCRefMonth(3, 2026);
-      expect(hcMonth).toBe(11);
+      expect(hcMonth).toBe(12);
       expect(hcYear).toBe(2025);
     });
 
-    it("should calculate August HC reference as April (same year)", () => {
+    it("should calculate August HC reference as May (same year)", () => {
       const { hcMonth, hcYear } = getHCRefMonth(8, 2026);
-      expect(hcMonth).toBe(4);
+      expect(hcMonth).toBe(5);
       expect(hcYear).toBe(2026);
     });
   });

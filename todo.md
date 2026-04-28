@@ -405,3 +405,18 @@
 - [x] UI: Exibir detalhamento ZN (ref 20/mês_ant a 19/mês_atual) e HC (ref 120 dias)
 - [x] Testes vitest: 34/34 passando (financialRules.test.ts)
 - [x] Checkpoint e publicação
+
+## Ajuste HC 90 dias (28/04/2026)
+
+- [x] Backend: Alterar month-4 para month-3 no cálculo HC
+- [x] Frontend: Alterar label para "90 dias de atraso"
+- [x] Testes vitest atualizados (34/34)
+- [x] Checkpoint e publicação
+
+## Inclusão 'Observação' no Grupo ZN (28/04/2026)
+
+- [x] Backend: 'observação' já incluído na identificação ZN (confirmado)
+- [x] Frontend: 'observação' já incluído no cálculo ZN (confirmado)
+- [x] R$136/h e ciclo 20-19 mantidos para observação
+- [x] Todos os 82 testes passando (6 arquivos)
+- [x] Checkpoint e publicação

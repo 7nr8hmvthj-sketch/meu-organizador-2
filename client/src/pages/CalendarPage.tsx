@@ -673,7 +673,7 @@ export default function CalendarPage() {
                 <div className="pt-2 border-t">
                   <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1 flex items-center gap-1">
                     <Heart className="w-3 h-3" />
-                    Recebimentos HC (120 dias de atraso)
+                    Recebimentos HC (90 dias de atraso)
                     <span className="text-[10px] text-muted-foreground font-normal ml-1">
                       (Ref: {financialSummary?.hcRefMonth ? `${String(financialSummary.hcRefMonth).padStart(2,'0')}/${financialSummary.hcRefYear}` : '...'} | R$ {financialSummary?.valorHoraHC || 108}/h)
                     </span>

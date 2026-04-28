@@ -277,7 +277,7 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const VALOR_HORA_ZN = 136; // R$/h para ZN, Noturno, Apoio, Corredor
         const VALOR_HORA_HC = 108; // R$/h para HC
-        const HC_DELAY_MONTHS = 4;  // HC paga com 120 dias de atraso
+        const HC_DELAY_MONTHS = 3;  // HC paga com 90 dias de atraso
 
         // === DESPESAS ===
         const allExpenses = await db.getExpensesByUserId(ctx.user.userId);
@@ -351,7 +351,7 @@ export const appRouter = router({
         });
         const totalZN = znHours * VALOR_HORA_ZN;
 
-        // === HC: Mês X-4 (atraso 120 dias) ===
+        // === HC: Mês X-3 (atraso 90 dias) ===
         let hcMonth = input.month - HC_DELAY_MONTHS;
         let hcYear = input.year;
         while (hcMonth < 1) { hcMonth += 12; hcYear--; }
