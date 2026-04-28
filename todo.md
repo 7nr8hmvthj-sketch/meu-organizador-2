@@ -453,3 +453,20 @@
 - [x] Remover VALID_CREDENTIALS após confirmação total
 - [x] Testes vitest: 16/16 passando (authDb.test.ts)
 - [x] Checkpoint e publicação
+
+## HOTFIX CRÍTICO: Vazamento de Dados entre Usuários (28/04/2026)
+
+- [x] Investigar cookie/sessão: userId correto no login (dbUser.user_id OK)
+- [x] Auditar events.list: userId hardcoded como 1 → CORRIGIDO para ctx.user.userId
+- [x] events.listByDateRange: hardcoded 1 → ctx.user.userId
+- [x] events.create: hardcoded 1 → ctx.user.userId
+- [x] events.createMany: hardcoded 1 → ctx.user.userId
+- [x] events.update: hardcoded 1 → ctx.user.userId
+- [x] events.passShift: hardcoded 1 → ctx.user.userId + ctx adicionado
+- [x] events.undoPass: hardcoded 1 → ctx.user.userId
+- [x] events.cancel: hardcoded 1 → ctx.user.userId
+- [x] events.undoCancel: hardcoded 1 → ctx.user.userId
+- [x] events.list e listByDateRange: publicProcedure → protectedProcedure
+- [x] Auditar expenses, monthly_adjustments, diaryEntries, medications (já usavam ctx.user.userId)
+- [x] Testar isolamento: VEGANO=0 eventos, USER=810 eventos
+- [x] Publicar correção em produção

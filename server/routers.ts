@@ -161,16 +161,16 @@ export const appRouter = router({
 
   // Events/Shifts router
   events: router({
-    // Trainers veem agenda do Admin (ID 1)
-    list: publicProcedure.query(async () => {
-      const events = await db.getEventsByDateRange(1, '2026-01-01', '2026-12-31');
+    // Cada usuário vê apenas seus próprios eventos
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const events = await db.getEventsByDateRange(ctx.user.userId, '2026-01-01', '2026-12-31');
       return normalizeEvents(events);
     }),
     
-    listByDateRange: publicProcedure
+    listByDateRange: protectedProcedure
       .input(z.object({ startDate: z.string(), endDate: z.string() }))
-      .query(async ({ input }) => {
-        const events = await db.getEventsByDateRange(1, input.startDate, input.endDate);
+      .query(async ({ input, ctx }) => {
+        const events = await db.getEventsByDateRange(ctx.user.userId, input.startDate, input.endDate);
         return normalizeEvents(events);
       }),
     
@@ -178,7 +178,7 @@ export const appRouter = router({
       .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true) }))
       .mutation(async ({ input, ctx }) => {
         const event = await db.createEvent({
-          userId: 1, // Trainers agendam para o Admin
+          userId: ctx.user.userId,
           date: input.date.substring(0, 10),
           type: input.type,
           description: input.description || null,
@@ -203,7 +203,7 @@ export const appRouter = router({
       })))
       .mutation(async ({ input, ctx }) => {
         const eventsToCreate = input.map(ev => ({
-          userId: 1,
+          userId: ctx.user.userId,
           date: ev.date.substring(0, 10),
           type: ev.type,
           description: ev.description || null,
@@ -241,34 +241,34 @@ export const appRouter = router({
         if (data.color !== undefined) updateData.color = data.color || null;
         if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
         if (data.passedReason !== undefined) updateData.passedReason = data.passedReason;
-        return await db.updateEvent(id, 1, updateData);
+        return await db.updateEvent(id, ctx.user.userId, updateData);
       }),
     
     passShift: adminProcedure
       .input(z.object({ id: z.number(), reason: z.string() }))
-      .mutation(async ({ input }) => {
-        const event = await db.updateEvent(input.id, 1, { isPassed: true, passedReason: input.reason });
+      .mutation(async ({ input, ctx }) => {
+        const event = await db.updateEvent(input.id, ctx.user.userId, { isPassed: true, passedReason: input.reason });
         return event ? normalizeEvent(event) : null;
       }),
     
     undoPass: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const event = await db.updateEvent(input.id, 1, { isPassed: false, passedReason: null });
+      .mutation(async ({ input, ctx }) => {
+        const event = await db.updateEvent(input.id, ctx.user.userId, { isPassed: false, passedReason: null });
         return event ? normalizeEvent(event) : null;
       }),
     
     cancel: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const event = await db.updateEvent(input.id, 1, { isCancelled: true });
+      .mutation(async ({ input, ctx }) => {
+        const event = await db.updateEvent(input.id, ctx.user.userId, { isCancelled: true });
         return event ? normalizeEvent(event) : null;
       }),
     
     undoCancel: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
-        const event = await db.updateEvent(input.id, 1, { isCancelled: false });
+      .mutation(async ({ input, ctx }) => {
+        const event = await db.updateEvent(input.id, ctx.user.userId, { isCancelled: false });
         return event ? normalizeEvent(event) : null;
       }),
     
