@@ -805,3 +805,69 @@ export async function upsertMonthlyAdjustment(userId: number, month: number, yea
     return null;
   }
 }
+
+// ==================== APP USERS (Auth via DB) ====================
+
+export async function getAppUserByUsername(username: string) {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.execute(
+      sql`SELECT id, username, password_hash, role, user_id FROM app_users WHERE username = ${username} LIMIT 1`
+    );
+    const rows = (result as any).rows || (result as any);
+    return rows.length > 0 ? rows[0] : null;
+  } catch (error) {
+    console.error("[Database] Error fetching app user:", error);
+    return null;
+  }
+}
+
+export async function getNextAppUserId(): Promise<number> {
+  const db = await getDb();
+  if (!db) return Date.now();
+  try {
+    const result = await db.execute(
+      sql`SELECT COALESCE(MAX(user_id), 0) + 1 as next_id FROM app_users`
+    );
+    const rows = (result as any).rows || (result as any);
+    return rows[0]?.next_id || Date.now();
+  } catch (error) {
+    console.error("[Database] Error getting next user ID:", error);
+    return Date.now();
+  }
+}
+
+export async function createAppUser(data: {
+  username: string;
+  passwordHash: string;
+  role: string;
+  userId: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  try {
+    await db.execute(
+      sql`INSERT INTO app_users (username, password_hash, role, user_id) 
+          VALUES (${data.username}, ${data.passwordHash}, ${data.role}, ${data.userId})`
+    );
+    return true;
+  } catch (error) {
+    console.error("[Database] Error creating app user:", error);
+    throw error;
+  }
+}
+
+export async function updateAppUserPassword(username: string, newPasswordHash: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  try {
+    await db.execute(
+      sql`UPDATE app_users SET password_hash = ${newPasswordHash}, updated_at = NOW() WHERE username = ${username}`
+    );
+    return true;
+  } catch (error) {
+    console.error("[Database] Error updating password:", error);
+    throw error;
+  }
+}

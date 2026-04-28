@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
 import { comparisonRouter } from "./routers/comparison";
+import bcrypt from "bcryptjs";
 
 // --- MIDDLEWARES ---
 
@@ -35,13 +36,8 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   return next();
 });
 
-// Simple auth credentials
-const VALID_CREDENTIALS = {
-  "USER": { password: "Wert123.", role: "admin", userId: 1 },
-  "JESSICA": { password: "123", role: "trainer", userId: 150023 },
-  "ISA": { password: "123", role: "trainer", userId: 150024 },
-  "VEGANO": { password: "123", role: "admin", userId: 2 },
-};
+// Auth is now fully handled via database (app_users table with bcrypt hashes)
+// VALID_CREDENTIALS removed - all auth goes through DB
 
 // Normaliza eventos do PostgreSQL (lowercase) para camelCase
 const normalizeEvent = (event: any) => ({
@@ -90,14 +86,59 @@ export const appRouter = router({
     simpleLogin: publicProcedure
       .input(z.object({ username: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
-        const user = VALID_CREDENTIALS[input.username.toUpperCase() as keyof typeof VALID_CREDENTIALS];
-        if (user && input.password === user.password) {
-          const cookieOptions = getSessionCookieOptions(ctx.req);
-          const userInfo = JSON.stringify({ username: input.username.toUpperCase(), role: user.role, userId: user.userId });
-          ctx.res.cookie("simple_auth", userInfo, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
-          return { success: true, role: user.role, username: input.username.toUpperCase() };
+        const upperUsername = input.username.toUpperCase();
+        
+        // Tentar autenticação via banco de dados primeiro
+        try {
+          const dbUser = await db.getAppUserByUsername(upperUsername);
+          if (dbUser) {
+            const isValid = await bcrypt.compare(input.password, dbUser.password_hash);
+            if (isValid) {
+              const cookieOptions = getSessionCookieOptions(ctx.req);
+              const userInfo = JSON.stringify({ username: dbUser.username, role: dbUser.role, userId: dbUser.user_id });
+              ctx.res.cookie("simple_auth", userInfo, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
+              return { success: true, role: dbUser.role, username: dbUser.username };
+            }
+            return { success: false, error: "Credenciais inválidas" };
+          }
+        } catch (error) {
+          console.error("[Auth] DB auth error:", error);
         }
+        
         return { success: false, error: "Credenciais inválidas" };
+      }),
+    
+    // Criar novo usuário (apenas admin)
+    createUser: adminProcedure
+      .input(z.object({
+        username: z.string().min(2).max(64),
+        password: z.string().min(3).max(128),
+        role: z.enum(["admin", "trainer", "user"]),
+      }))
+      .mutation(async ({ input }) => {
+        const upperUsername = input.username.toUpperCase();
+        
+        // Verificar se já existe
+        const existing = await db.getAppUserByUsername(upperUsername);
+        if (existing) {
+          throw new TRPCError({ code: "CONFLICT", message: "Usuário já existe" });
+        }
+        
+        // Hash da senha
+        const passwordHash = await bcrypt.hash(input.password, 10);
+        
+        // Gerar userId único
+        const newUserId = await db.getNextAppUserId();
+        
+        // Inserir no banco
+        await db.createAppUser({
+          username: upperUsername,
+          passwordHash,
+          role: input.role,
+          userId: newUserId,
+        });
+        
+        return { success: true, username: upperUsername, userId: newUserId, role: input.role };
       }),
     
     checkSimpleAuth: publicProcedure.query(({ ctx }) => {

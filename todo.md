@@ -439,3 +439,17 @@
 - [x] Persistência testada: valor 150h salvo, recarregou com R$ 20.400
 - [x] Testes vitest: 12/12 passando (rhConciliation.test.ts)
 - [x] Checkpoint e publicação
+
+## Fase 4: Refatoração de Login via Banco de Dados (28/04/2026)
+
+- [x] Instalar bcryptjs para hash de senhas
+- [x] Criar tabela app_users separada (username, password_hash, role, user_id)
+- [x] Criar script seed_auth.ts para migrar 4 usuários com hash
+- [x] Refatorar auth.simpleLogin para validar via banco (bcrypt.compare)
+- [x] Fallback testado e removido - auth 100% via DB
+- [x] Criar rota auth.createUser (admin only) com senha criptografada
+- [x] Verificar isolamento de dados por userId em todas as queries (47 referências OK)
+- [x] Testar login exaustivo com USER, JESSICA, ISA, VEGANO (todos OK via curl)
+- [x] Remover VALID_CREDENTIALS após confirmação total
+- [x] Testes vitest: 16/16 passando (authDb.test.ts)
+- [x] Checkpoint e publicação
