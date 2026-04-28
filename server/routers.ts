@@ -245,7 +245,7 @@ export const appRouter = router({
           }
         }
         
-        return await db.deleteEvent(input.id, 1);
+        return await db.deleteEvent(input.id);
       }),
   }),
 
@@ -271,23 +271,126 @@ export const appRouter = router({
     
     resetPaidStatus: adminProcedure.mutation(async ({ ctx }) => { await db.resetExpensesPaidStatus(ctx.user.userId); return { success: true }; }),
 
-    // Resumo financeiro mensal: total de despesas fixas
+    // Resumo financeiro mensal com regras reais de faturamento
     monthlySummary: adminProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
+        const VALOR_HORA_ZN = 136; // R$/h para ZN, Noturno, Apoio, Corredor
+        const VALOR_HORA_HC = 108; // R$/h para HC
+        const HC_DELAY_MONTHS = 4;  // HC paga com 120 dias de atraso
+
+        // === DESPESAS ===
         const allExpenses = await db.getExpensesByUserId(ctx.user.userId);
         const fixedExpenses = allExpenses.filter(e => e.category === "fixed");
         const variableExpenses = allExpenses.filter(e => e.category === "variable");
         const totalFixed = fixedExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
         const totalVariable = variableExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
+
+        // === EVENTOS (todos do usuário) ===
+        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2025-01-01', '2027-12-31');
+
+        // Helper: calcula horas de um evento baseado no tipo
+        const calcHours = (event: any): number => {
+          if (event.isPassed) return 0;
+          const type = (event.type || "").toLowerCase();
+          const desc = (event.description || "").toLowerCase();
+          const fullText = `${type} ${desc}`;
+          const SHIFT_HOURS: Record<string, string> = {
+            "hc manhã": "7-13", "hc tarde": "13-19",
+            "corredor tarde": "13-19", "corredor manhã": "7-13",
+            "zona norte manhã": "7-13", "zona norte tarde": "13-19",
+            "noturno": "19-7", "apoio": "19-01",
+          };
+          let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
+          if (!timeMatch && SHIFT_HOURS[type]) {
+            timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
+          }
+          if (!timeMatch) return 0;
+          const startH = parseInt(timeMatch[1], 10);
+          const endH = parseInt(timeMatch[2], 10);
+          let diff = endH - startH;
+          if (diff < 0) diff += 24;
+          return diff;
+        };
+
+        // Helper: classifica evento como ZN-group ou HC
+        const isZNGroup = (event: any): boolean => {
+          const t = (event.type || "").toLowerCase();
+          const d = (event.description || "").toLowerCase();
+          const full = `${t} ${d}`;
+          return full.includes("zn") || full.includes("zona norte") || full.includes("noturno") 
+            || full.includes("apoio") || full.includes("corredor") || full.includes("observação") || full.includes("observacao");
+        };
+        const isHC = (event: any): boolean => {
+          const t = (event.type || "").toLowerCase();
+          return t.includes("hc") || t.includes("home care");
+        };
+
+        // === ZN: Ciclo 20/(mês-1) até 19/mês ===
+        let znStartMonth = input.month - 1;
+        let znStartYear = input.year;
+        if (znStartMonth < 1) { znStartMonth = 12; znStartYear--; }
+        const znStartDate = `${znStartYear}-${String(znStartMonth).padStart(2, '0')}-20`;
+        const znEndDate = `${input.year}-${String(input.month).padStart(2, '0')}-19`;
+
+        let znHours = 0;
+        let znBreakdown = { zn: 0, noturno: 0, apoio: 0, corredor: 0 };
+        allEvents.forEach(event => {
+          const eventDate = event.date;
+          if (eventDate < znStartDate || eventDate > znEndDate) return;
+          if (!isZNGroup(event)) return;
+          const hours = calcHours(event);
+          znHours += hours;
+          const t = (event.type || "").toLowerCase();
+          const d = (event.description || "").toLowerCase();
+          const full = `${t} ${d}`;
+          if (full.includes("noturno")) znBreakdown.noturno += hours;
+          else if (full.includes("apoio")) znBreakdown.apoio += hours;
+          else if (full.includes("corredor")) znBreakdown.corredor += hours;
+          else znBreakdown.zn += hours;
+        });
+        const totalZN = znHours * VALOR_HORA_ZN;
+
+        // === HC: Mês X-4 (atraso 120 dias) ===
+        let hcMonth = input.month - HC_DELAY_MONTHS;
+        let hcYear = input.year;
+        while (hcMonth < 1) { hcMonth += 12; hcYear--; }
+        const hcStartDate = `${hcYear}-${String(hcMonth).padStart(2, '0')}-01`;
+        const hcLastDay = new Date(hcYear, hcMonth, 0).getDate();
+        const hcEndDate = `${hcYear}-${String(hcMonth).padStart(2, '0')}-${String(hcLastDay).padStart(2, '0')}`;
+
+        let hcHours = 0;
+        allEvents.forEach(event => {
+          const eventDate = event.date;
+          if (eventDate < hcStartDate || eventDate > hcEndDate) return;
+          if (!isHC(event)) return;
+          hcHours += calcHours(event);
+        });
+        const totalHC = hcHours * VALOR_HORA_HC;
+
         return {
           month: input.month,
           year: input.year,
+          // ZN Group
+          znHours,
+          znBreakdown,
+          znRefStart: znStartDate,
+          znRefEnd: znEndDate,
+          valorHoraZN: VALOR_HORA_ZN,
+          totalZN,
+          // HC
+          hcHours,
+          hcRefMonth: hcMonth,
+          hcRefYear: hcYear,
+          valorHoraHC: VALOR_HORA_HC,
+          totalHC,
+          // Despesas
           totalFixed,
           totalVariable,
-          totalAll: totalFixed + totalVariable,
-          fixedCount: fixedExpenses.length,
-          variableCount: variableExpenses.length,
+          totalDespesas: totalFixed + totalVariable,
+          // Saldo
+          totalRecebimentos: totalZN + totalHC,
+          saldoEstimado: (totalZN + totalHC) - totalFixed,
         };
       }),
   }),
@@ -302,7 +405,7 @@ export const appRouter = router({
     
     update: adminProcedure
       .input(z.object({ id: z.number(), name: z.string().optional(), time: z.string().optional(), order: z.number().optional() }))
-      .mutation(async ({ input, ctx }) => { const { id, ...data } = input; return await db.updateMedication(id, ctx.user.userId, data); }),
+      .mutation(async ({ input, ctx }) => { const { id, ...rest } = input; const data: Record<string, unknown> = {}; if (rest.name !== undefined) data.name = rest.name; if (rest.time !== undefined) data.time = rest.time; if (rest.order !== undefined) data.order = rest.order; return await db.updateMedication(id, ctx.user.userId, data as any); }),
     
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
@@ -320,7 +423,7 @@ export const appRouter = router({
           userId: ctx.user.userId,
           medicationId: input.medicationId,
           takenAt: now,
-          takenDate: input.date as unknown as Date
+          takenDate: input.date
         });
       }),
     
@@ -352,13 +455,13 @@ export const appRouter = router({
         tags: z.string().nullable().optional()
       }))
       .mutation(async ({ input, ctx }) => {
-        return await db.upsertDiaryEntry(
-          ctx.user.userId, 
-          input.date, 
-          input.title || null, 
-          input.content || null,
-          input.tags || null
-        );
+        return await db.upsertDiaryEntry({
+          userId: ctx.user.userId, 
+          date: input.date, 
+          title: input.title || null, 
+          content: input.content || null,
+          tags: input.tags || null
+        });
       }),
     
     // List all diary entries

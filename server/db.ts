@@ -609,3 +609,141 @@ export async function createManyEvents(eventsData: InsertEvent[]): Promise<Event
     throw error;
   }
 }
+
+
+// ============ DIARY FUNCTIONS (ADDITIONAL) ============
+
+export async function getDiaryEntriesByUserId(userId: number): Promise<DiaryEntry[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get diary entries: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(diaryEntries)
+      .where(sql`${diaryEntries.userId} = ${userId}`)
+      .orderBy(sql`${diaryEntries.date} DESC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get diary entries by userId failed:", error);
+    return [];
+  }
+}
+
+export async function searchDiaryEntries(userId: number, query: string): Promise<DiaryEntry[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot search diary entries: database not available");
+    return [];
+  }
+
+  try {
+    const searchPattern = `%${query}%`;
+    const result = await db
+      .select()
+      .from(diaryEntries)
+      .where(sql`${diaryEntries.userId} = ${userId} AND (${diaryEntries.title} ILIKE ${searchPattern} OR ${diaryEntries.content} ILIKE ${searchPattern} OR ${diaryEntries.tags} ILIKE ${searchPattern})`)
+      .orderBy(sql`${diaryEntries.date} DESC`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Search diary entries failed:", error);
+    return [];
+  }
+}
+
+// ============ USER PREFERENCES FUNCTIONS ============
+
+export async function getUserPreferences(userId: number): Promise<UserPreference | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user preferences: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(userPreferences)
+      .where(sql`${userPreferences.userId} = ${userId}`)
+      .limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Get user preferences failed:", error);
+    return null;
+  }
+}
+
+export async function upsertUserPreferences(prefs: InsertUserPreference): Promise<UserPreference | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot upsert user preferences: database not available");
+    return null;
+  }
+
+  try {
+    const existing = await getUserPreferences(prefs.userId);
+    if (existing) {
+      const result = await db
+        .update(userPreferences)
+        .set({ theme: prefs.theme, updatedAt: new Date() })
+        .where(sql`${userPreferences.userId} = ${prefs.userId}`)
+        .returning();
+      return result[0] || null;
+    } else {
+      const result = await db
+        .insert(userPreferences)
+        .values(prefs)
+        .returning();
+      return result[0] || null;
+    }
+  } catch (error) {
+    console.error("[Database] Upsert user preferences failed:", error);
+    return null;
+  }
+}
+
+
+// ============ MEDICATION FUNCTIONS (ADDITIONAL) ============
+
+export async function createMedication(data: InsertMedication): Promise<Medication | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.insert(medications).values(data).returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Create medication failed:", error);
+    throw error;
+  }
+}
+
+export async function updateMedication(id: number, userId: number, data: Partial<InsertMedication>): Promise<Medication | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db
+      .update(medications)
+      .set(data)
+      .where(sql`${medications.id} = ${id} AND ${medications.userId} = ${userId}`)
+      .returning();
+    return result[0] || null;
+  } catch (error) {
+    console.error("[Database] Update medication failed:", error);
+    throw error;
+  }
+}
+
+export async function deleteMedication(id: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.delete(medications).where(sql`${medications.id} = ${id} AND ${medications.userId} = ${userId}`);
+    return true;
+  } catch (error) {
+    console.error("[Database] Delete medication failed:", error);
+    return false;
+  }
+}

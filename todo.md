@@ -386,3 +386,22 @@
 - [ ] Alterar auth.simpleLogin para validar via banco
 - [ ] Testar exaustivamente login com credenciais antigas
 - [ ] Checkpoint Fase 4
+
+## Hotfix Crítico - Função Faltante db.ts (28/04/2026)
+
+- [x] Adicionar getDiaryEntriesByUserId no server/db.ts
+- [x] Adicionar searchDiaryEntries no server/db.ts
+- [x] Adicionar getUserPreferences no server/db.ts
+- [x] Adicionar upsertUserPreferences no server/db.ts
+- [x] Verificar routers.ts para garantir chamadas corretas
+- [x] Adicionar createMedication, updateMedication, deleteMedication no db.ts
+- [x] Corrigir deleteEvent (1 arg), upsertDiaryEntry (objeto), takenDate (string)
+
+## Recalibração Regras Financeiras (28/04/2026)
+
+- [x] ZN/Noturno/Apoio/Corredor: R$136/h, ciclo 20-19
+- [x] HC: R$108/h, atraso 120 dias (mês X-4)
+- [x] Backend: retornar totalZN e totalHC separados (monthlySummary reescrito)
+- [x] UI: Exibir detalhamento ZN (ref 20/mês_ant a 19/mês_atual) e HC (ref 120 dias)
+- [x] Testes vitest: 34/34 passando (financialRules.test.ts)
+- [x] Checkpoint e publicação

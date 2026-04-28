@@ -210,7 +210,6 @@ export default function CalendarPage() {
 
   // Painel financeiro
   const [showFinancialPanel, setShowFinancialPanel] = useState(false);
-  const [hourlyRate, setHourlyRate] = useState<string>(localStorage.getItem('hourlyRate') || "35");
 
   // Categorias dinâmicas do banco
   const { data: dbCategories = [] } = trpc.categories.list.useQuery();
@@ -275,7 +274,7 @@ export default function CalendarPage() {
     { enabled: !!isAdmin }
   );
 
-  // Cálculo de horas totais do mês (usa allEvents, não filteredEvents)
+  // Cálculo de horas ZN para exibição no calendário (Total ZN no dia 19)
   const monthlyShiftHours = useMemo(() => {
     if (!allEvents.length) return { zn: 0, hc: 0, noturno: 0, apoio: 0, total: 0 };
     const startDate = new Date(currentYearNum, currentMonthNum - 2, 20);
@@ -309,13 +308,6 @@ export default function CalendarPage() {
     });
     return { zn: znHours, hc: hcHours, noturno: noturnoHours, apoio: apoioHours, total: znHours + hcHours + noturnoHours + apoioHours };
   }, [allEvents, currentMonthNum, currentYearNum]);
-
-  const estimatedEarnings = monthlyShiftHours.total * parseFloat(hourlyRate || "0");
-
-  const handleHourlyRateChange = (value: string) => {
-    setHourlyRate(value);
-    localStorage.setItem('hourlyRate', value);
-  };
 
   // GARANTIA DE DATA: Usa o mesmo helper do Diário para buscar
   const selectedDateKey = selectedDate ? normalizeDateKey(selectedDate) : null;
@@ -637,68 +629,90 @@ export default function CalendarPage() {
               <div className="flex items-center gap-2 text-sm font-medium">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
                 <span>Painel Financeiro</span>
-                <span className="text-xs text-muted-foreground ml-2">({monthlyShiftHours.total}h | R$ {estimatedEarnings.toFixed(0)})</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  (R$ {((financialSummary?.totalRecebimentos) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0 })})
+                </span>
               </div>
               {showFinancialPanel ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </CollapsibleTrigger>
             <CollapsibleContent>
               <div className="px-4 py-3 bg-muted/10 border-b space-y-3">
-                {/* Resumo de Horas */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-md p-2 text-center">
-                    <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">ZN</div>
-                    <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{monthlyShiftHours.zn}h</div>
-                  </div>
-                  <div className="bg-red-50 dark:bg-red-900/20 rounded-md p-2 text-center">
-                    <div className="text-xs text-red-600 dark:text-red-400 font-medium">HC</div>
-                    <div className="text-lg font-bold text-red-700 dark:text-red-300">{monthlyShiftHours.hc}h</div>
-                  </div>
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-md p-2 text-center">
-                    <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Noturno</div>
-                    <div className="text-lg font-bold text-indigo-700 dark:text-indigo-300">{monthlyShiftHours.noturno}h</div>
-                  </div>
-                  <div className="bg-pink-50 dark:bg-pink-900/20 rounded-md p-2 text-center">
-                    <div className="text-xs text-pink-600 dark:text-pink-400 font-medium">Apoio</div>
-                    <div className="text-lg font-bold text-pink-700 dark:text-pink-300">{monthlyShiftHours.apoio}h</div>
-                  </div>
-                </div>
-
-                {/* Totais e Estimativa */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <div className="flex items-center gap-2 bg-card border rounded-md p-2">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <div>
-                      <div className="text-[10px] text-muted-foreground">Total Horas</div>
-                      <div className="text-sm font-bold">{monthlyShiftHours.total}h</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-card border rounded-md p-2">
-                    <TrendingUp className="w-4 h-4 text-emerald-600" />
-                    <div>
-                      <div className="text-[10px] text-muted-foreground">Estimativa Ganhos</div>
-                      <div className="text-sm font-bold text-emerald-600">R$ {estimatedEarnings.toFixed(2)}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-card border rounded-md p-2">
-                    <DollarSign className="w-4 h-4 text-red-500" />
-                    <div>
-                      <div className="text-[10px] text-muted-foreground">Despesas Fixas</div>
-                      <div className="text-sm font-bold text-red-500">R$ {financialSummary?.totalFixed?.toFixed(2) || "0.00"}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Valor/Hora e Saldo */}
-                <div className="flex items-center gap-3 pt-1 border-t">
-                  <div className="flex items-center gap-1">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap">R$/hora:</label>
-                    <Input type="number" value={hourlyRate} onChange={e => handleHourlyRateChange(e.target.value)} className="w-20 h-7 text-xs" />
-                  </div>
-                  <div className="flex-1 text-right">
-                    <span className="text-xs text-muted-foreground">Saldo Estimado: </span>
-                    <span className={`text-sm font-bold ${(estimatedEarnings - (financialSummary?.totalFixed || 0)) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                      R$ {(estimatedEarnings - (financialSummary?.totalFixed || 0)).toFixed(2)}
+                {/* === RECEBIMENTOS ZN === */}
+                <div>
+                  <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
+                    <Briefcase className="w-3 h-3" />
+                    Recebimentos ZN/Noturno/Apoio/Corredor
+                    <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                      (Ref: {financialSummary?.znRefStart || '...'} a {financialSummary?.znRefEnd || '...'} | R$ {financialSummary?.valorHoraZN || 136}/h)
                     </span>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-md p-2 text-center">
+                      <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">ZN</div>
+                      <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{financialSummary?.znBreakdown?.zn || 0}h</div>
+                    </div>
+                    <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-md p-2 text-center">
+                      <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Noturno</div>
+                      <div className="text-lg font-bold text-indigo-700 dark:text-indigo-300">{financialSummary?.znBreakdown?.noturno || 0}h</div>
+                    </div>
+                    <div className="bg-pink-50 dark:bg-pink-900/20 rounded-md p-2 text-center">
+                      <div className="text-xs text-pink-600 dark:text-pink-400 font-medium">Apoio</div>
+                      <div className="text-lg font-bold text-pink-700 dark:text-pink-300">{financialSummary?.znBreakdown?.apoio || 0}h</div>
+                    </div>
+                    <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-md p-2 text-center">
+                      <div className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">Corredor</div>
+                      <div className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{financialSummary?.znBreakdown?.corredor || 0}h</div>
+                    </div>
+                  </div>
+                  <div className="mt-1 text-right text-sm font-bold text-amber-700 dark:text-amber-300">
+                    {financialSummary?.znHours || 0}h × R$ {financialSummary?.valorHoraZN || 136} = R$ {(financialSummary?.totalZN || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+
+                {/* === RECEBIMENTOS HC === */}
+                <div className="pt-2 border-t">
+                  <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1 flex items-center gap-1">
+                    <Heart className="w-3 h-3" />
+                    Recebimentos HC (120 dias de atraso)
+                    <span className="text-[10px] text-muted-foreground font-normal ml-1">
+                      (Ref: {financialSummary?.hcRefMonth ? `${String(financialSummary.hcRefMonth).padStart(2,'0')}/${financialSummary.hcRefYear}` : '...'} | R$ {financialSummary?.valorHoraHC || 108}/h)
+                    </span>
+                  </div>
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-md p-2 text-center inline-block min-w-[100px]">
+                    <div className="text-xs text-red-600 dark:text-red-400 font-medium">HC</div>
+                    <div className="text-lg font-bold text-red-700 dark:text-red-300">{financialSummary?.hcHours || 0}h</div>
+                  </div>
+                  <div className="mt-1 text-right text-sm font-bold text-red-700 dark:text-red-300">
+                    {financialSummary?.hcHours || 0}h × R$ {financialSummary?.valorHoraHC || 108} = R$ {(financialSummary?.totalHC || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                </div>
+
+                {/* === RESUMO FINAL === */}
+                <div className="pt-2 border-t">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-md p-2">
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
+                      <div>
+                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400">Total Recebimentos</div>
+                        <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">R$ {(financialSummary?.totalRecebimentos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-md p-2">
+                      <DollarSign className="w-4 h-4 text-red-500" />
+                      <div>
+                        <div className="text-[10px] text-red-500 dark:text-red-400">Despesas Fixas</div>
+                        <div className="text-sm font-bold text-red-600 dark:text-red-300">R$ {(financialSummary?.totalFixed || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                      </div>
+                    </div>
+                    <div className={`flex items-center gap-2 rounded-md p-2 border ${(financialSummary?.saldoEstimado || 0) >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200' : 'bg-red-50 dark:bg-red-900/20 border-red-200'}`}>
+                      <DollarSign className={`w-4 h-4 ${(financialSummary?.saldoEstimado || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`} />
+                      <div>
+                        <div className="text-[10px] text-muted-foreground">Saldo Estimado</div>
+                        <div className={`text-sm font-bold ${(financialSummary?.saldoEstimado || 0) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
+                          R$ {(financialSummary?.saldoEstimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
