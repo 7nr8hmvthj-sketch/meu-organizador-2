@@ -641,7 +641,7 @@ export default function CalendarPage() {
                 <div>
                   <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
                     <Briefcase className="w-3 h-3" />
-                    Recebimentos ZN/Noturno/Apoio/Corredor
+                    Recebimentos ZN/Noturno/Apoio/Observação
                     <span className="text-[10px] text-muted-foreground font-normal ml-1">
                       (Ref: {financialSummary?.znRefStart || '...'} a {financialSummary?.znRefEnd || '...'} | R$ {financialSummary?.valorHoraZN || 136}/h)
                     </span>
@@ -660,8 +660,8 @@ export default function CalendarPage() {
                       <div className="text-lg font-bold text-pink-700 dark:text-pink-300">{financialSummary?.znBreakdown?.apoio || 0}h</div>
                     </div>
                     <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-md p-2 text-center">
-                      <div className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">Corredor</div>
-                      <div className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{financialSummary?.znBreakdown?.corredor || 0}h</div>
+                      <div className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">Observação</div>
+                      <div className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{financialSummary?.znBreakdown?.observacao || 0}h</div>
                     </div>
                   </div>
                   <div className="mt-1 text-right text-sm font-bold text-amber-700 dark:text-amber-300">

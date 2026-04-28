@@ -420,3 +420,9 @@
 - [x] R$136/h e ciclo 20-19 mantidos para observação
 - [x] Todos os 82 testes passando (6 arquivos)
 - [x] Checkpoint e publicação
+
+## Substituir Corredor por Observação no Painel Financeiro (28/04/2026)
+
+- [x] Backend: Trocar 'corredor' por 'observação' no breakdown ZN
+- [x] Frontend: Trocar label 'Corredor' por 'Observação' no painel
+- [x] Checkpoint e publicação

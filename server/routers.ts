@@ -334,7 +334,7 @@ export const appRouter = router({
         const znEndDate = `${input.year}-${String(input.month).padStart(2, '0')}-19`;
 
         let znHours = 0;
-        let znBreakdown = { zn: 0, noturno: 0, apoio: 0, corredor: 0 };
+        let znBreakdown = { zn: 0, noturno: 0, apoio: 0, observacao: 0 };
         allEvents.forEach(event => {
           const eventDate = event.date;
           if (eventDate < znStartDate || eventDate > znEndDate) return;
@@ -346,7 +346,7 @@ export const appRouter = router({
           const full = `${t} ${d}`;
           if (full.includes("noturno")) znBreakdown.noturno += hours;
           else if (full.includes("apoio")) znBreakdown.apoio += hours;
-          else if (full.includes("corredor")) znBreakdown.corredor += hours;
+          else if (full.includes("observação") || full.includes("observacao")) znBreakdown.observacao += hours;
           else znBreakdown.zn += hours;
         });
         const totalZN = znHours * VALOR_HORA_ZN;
