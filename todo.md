@@ -470,3 +470,10 @@
 - [x] Auditar expenses, monthly_adjustments, diaryEntries, medications (já usavam ctx.user.userId)
 - [x] Testar isolamento: VEGANO=0 eventos, USER=810 eventos
 - [x] Publicar correção em produção
+
+## Delegação de Acesso para Trainers (28/04/2026)
+
+- [x] Helper getEffectiveUserId: trainer→1, outros→ctx.user.userId
+- [x] Aplicar nas 10 rotas de events (list, listByDateRange, create, createMany, update, passShift, undoPass, cancel, undoCancel, delete)
+- [x] Testar: JESSICA=810 eventos, VEGANO=0 eventos, USER=810 eventos
+- [x] Checkpoint e publicação

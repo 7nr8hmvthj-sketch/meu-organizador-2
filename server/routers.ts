@@ -39,6 +39,12 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 // Auth is now fully handled via database (app_users table with bcrypt hashes)
 // VALID_CREDENTIALS removed - all auth goes through DB
 
+// Delegação de acesso: trainers acessam agenda do admin (userId 1)
+// Admins e users normais acessam sua própria agenda
+const getEffectiveUserId = (user: { role: string; userId: number }): number => {
+  return user.role === 'trainer' ? 1 : user.userId;
+};
+
 // Normaliza eventos do PostgreSQL (lowercase) para camelCase
 const normalizeEvent = (event: any) => ({
   ...event,
@@ -161,24 +167,27 @@ export const appRouter = router({
 
   // Events/Shifts router
   events: router({
-    // Cada usuário vê apenas seus próprios eventos
+    // Cada usuário vê seus eventos; trainers vêem agenda do admin (userId 1)
     list: protectedProcedure.query(async ({ ctx }) => {
-      const events = await db.getEventsByDateRange(ctx.user.userId, '2026-01-01', '2026-12-31');
+      const effectiveUserId = getEffectiveUserId(ctx.user);
+      const events = await db.getEventsByDateRange(effectiveUserId, '2026-01-01', '2026-12-31');
       return normalizeEvents(events);
     }),
     
     listByDateRange: protectedProcedure
       .input(z.object({ startDate: z.string(), endDate: z.string() }))
       .query(async ({ input, ctx }) => {
-        const events = await db.getEventsByDateRange(ctx.user.userId, input.startDate, input.endDate);
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+        const events = await db.getEventsByDateRange(effectiveUserId, input.startDate, input.endDate);
         return normalizeEvents(events);
       }),
     
     create: protectedProcedure
       .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true) }))
       .mutation(async ({ input, ctx }) => {
+        const effectiveUserId = getEffectiveUserId(ctx.user);
         const event = await db.createEvent({
-          userId: ctx.user.userId,
+          userId: effectiveUserId,
           date: input.date.substring(0, 10),
           type: input.type,
           description: input.description || null,
@@ -202,8 +211,9 @@ export const appRouter = router({
         isShift: z.boolean().default(true) 
       })))
       .mutation(async ({ input, ctx }) => {
+        const effectiveUserId = getEffectiveUserId(ctx.user);
         const eventsToCreate = input.map(ev => ({
-          userId: ctx.user.userId,
+          userId: effectiveUserId,
           date: ev.date.substring(0, 10),
           type: ev.type,
           description: ev.description || null,
@@ -241,34 +251,39 @@ export const appRouter = router({
         if (data.color !== undefined) updateData.color = data.color || null;
         if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
         if (data.passedReason !== undefined) updateData.passedReason = data.passedReason;
-        return await db.updateEvent(id, ctx.user.userId, updateData);
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+        return await db.updateEvent(id, effectiveUserId, updateData);
       }),
     
     passShift: adminProcedure
       .input(z.object({ id: z.number(), reason: z.string() }))
       .mutation(async ({ input, ctx }) => {
-        const event = await db.updateEvent(input.id, ctx.user.userId, { isPassed: true, passedReason: input.reason });
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+        const event = await db.updateEvent(input.id, effectiveUserId, { isPassed: true, passedReason: input.reason });
         return event ? normalizeEvent(event) : null;
       }),
     
     undoPass: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        const event = await db.updateEvent(input.id, ctx.user.userId, { isPassed: false, passedReason: null });
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+        const event = await db.updateEvent(input.id, effectiveUserId, { isPassed: false, passedReason: null });
         return event ? normalizeEvent(event) : null;
       }),
     
     cancel: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        const event = await db.updateEvent(input.id, ctx.user.userId, { isCancelled: true });
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+        const event = await db.updateEvent(input.id, effectiveUserId, { isCancelled: true });
         return event ? normalizeEvent(event) : null;
       }),
     
     undoCancel: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        const event = await db.updateEvent(input.id, ctx.user.userId, { isCancelled: false });
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+        const event = await db.updateEvent(input.id, effectiveUserId, { isCancelled: false });
         return event ? normalizeEvent(event) : null;
       }),
     
