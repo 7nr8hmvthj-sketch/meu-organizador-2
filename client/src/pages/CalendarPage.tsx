@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import CategoryManager from "./CategoryManager";
+import { MobileCalendar } from "@/components/MobileCalendar";
 import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -657,7 +658,8 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <Card className="shadow-md">
+      {/* DESKTOP VIEW */}
+      <Card className="shadow-md hidden md:block">
         <CardHeader className="pb-4 border-b">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-5 h-5" /></Button>
@@ -840,6 +842,24 @@ export default function CalendarPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* MOBILE VIEW */}
+      <MobileCalendar
+        currentMonth={currentMonth}
+        days={days}
+        startDayOfWeek={startDayOfWeek}
+        selectedDate={selectedDate}
+        eventsByDate={eventsByDate}
+        selectedDateEvents={selectedDateEvents}
+        isAdmin={isAdmin}
+        onDayClick={handleDayClick}
+        onAddEvent={() => setShowAddEventModal(true)}
+        onEditEvent={handleEditEventClick}
+        onDeleteEvent={handleDeleteClick}
+        onTodayClick={() => setCurrentMonth(new Date())}
+        getEventColor={getEventColor}
+        normalizeDateKey={normalizeDateKey}
+      />
 
       <Dialog open={showDayModal} onOpenChange={setShowDayModal}>
         <DialogContent className="max-w-lg">
