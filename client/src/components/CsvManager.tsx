@@ -43,8 +43,17 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
 
     Papa.parse(file, {
       header: true,
-      skipEmptyLines: true,
+      skipEmptyLines: 'greedy',
+      dynamicTyping: false,
+      transformHeader: (header) => header.trim().replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, ""), // Remove BOM character invisível do Excel
       complete: (results) => {
+        if (results.errors && results.errors.length > 0) {
+          console.error("CSV Parse Errors:", results.errors);
+          toast.error("Erro ao ler formato do CSV. Salve como 'CSV (UTF-8)' e tente novamente.");
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
         const parsed = results.data as any[];
         // COMPARADOR INTELIGENTE (Prevenção de Duplicatas)
         const existingKeys = new Set(allEvents.map(ev => `${ev.date.split('T')[0]}_${ev.type}_${ev.startTime || ''}`));
@@ -53,36 +62,43 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
         let duplicates = 0;
 
         parsed.forEach(row => {
-           let rawDate = row.Data || row.data || "";
+           // Limpa as chaves para evitar espaços em branco invisíveis
+           const cleanRow: any = {};
+           Object.keys(row).forEach(k => { cleanRow[k.trim()] = row[k]; });
+
+           let rawDate = cleanRow.Data || cleanRow.data || "";
            if(!rawDate) return;
 
-           // Converte DD/MM/YYYY para YYYY-MM-DD
-           let dateStr = rawDate;
-           if (rawDate.includes('/')) {
-             const parts = rawDate.split('/');
-             if (parts.length === 3) dateStr = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+           let dateStr = rawDate.trim();
+           if (dateStr.includes('/')) {
+             const parts = dateStr.split('/');
+             if (parts.length === 3) {
+               // Trata ano com 2 digitos (ex: 26 -> 2026)
+               const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+               dateStr = `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+             }
            }
 
-           const tipo = row.Tipo || row.tipo || "";
-           const startTime = row['Horario Inicio'] || row.horario_inicio || row.startTime || "";
-           const endTime = row['Horario Fim'] || row.horario_fim || row.endTime || "";
-           const desc = row.Descricao || row.descricao || "";
-
+           const tipo = cleanRow.Tipo || cleanRow.tipo || "";
            if(!tipo) return;
 
-           const key = `${dateStr}_${tipo}_${startTime}`;
+           const startTime = cleanRow['Horario Inicio'] || cleanRow['Horário Início'] || cleanRow.horario_inicio || cleanRow.startTime || "";
+           const endTime = cleanRow['Horario Fim'] || cleanRow['Horário Fim'] || cleanRow.horario_fim || cleanRow.endTime || "";
+           const desc = cleanRow.Descricao || cleanRow.Descrição || cleanRow.descricao || "";
+
+           const key = `${dateStr}_${tipo.trim()}_${startTime.trim()}`;
            if (existingKeys.has(key)) {
              duplicates++;
            } else {
              eventsToCreate.push({
                date: dateStr,
-               type: tipo,
-               startTime: startTime || undefined,
-               endTime: endTime || undefined,
-               description: desc || undefined,
+               type: tipo.trim(),
+               startTime: startTime.trim() || undefined,
+               endTime: endTime.trim() || undefined,
+               description: desc.trim() || undefined,
                isShift: ["hc", "zn", "noturno", "apoio", "corredor", "porta", "sala", "enfermaria", "home care", "observação", "observacao"].some(k => tipo.toLowerCase().includes(k))
              });
-             existingKeys.add(key); // Evita duplicar se houver itens iguais dentro do próprio CSV
+             existingKeys.add(key); 
            }
         });
 
@@ -92,8 +108,12 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
            return;
         }
 
-        toast.loading(`Encontrados ${eventsToCreate.length} eventos novos. Ignorando ${duplicates} duplicados...`);
+        toast.loading(`Encontrados ${eventsToCreate.length} eventos novos. Sincronizando...`);
         createManyMutation.mutate(eventsToCreate);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      },
+      error: (error) => {
+        toast.error(`Falha no leitor CSV: ${error.message}`);
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     });
