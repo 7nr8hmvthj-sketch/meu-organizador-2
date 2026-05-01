@@ -45,10 +45,13 @@ describe("auth.simpleLogin", () => {
     expect(result.success).toBe(true);
     expect(setCookies).toHaveLength(1);
     expect(setCookies[0]?.name).toBe("simple_auth");
-    // Cookie now contains JSON with user info
+    // Cookie now contains HMAC-signed payload
     const cookieValue = setCookies[0]?.value;
     expect(cookieValue).toBeDefined();
-    const parsed = JSON.parse(decodeURIComponent(cookieValue!));
+    // Cookie format: base64payload.signature
+    expect(cookieValue).toContain(".");
+    const [payload] = cookieValue!.split(".");
+    const parsed = JSON.parse(Buffer.from(payload, "base64").toString("utf8"));
     expect(parsed.username).toBe("USER");
     expect(parsed.role).toBe("admin");
   });
@@ -82,14 +85,36 @@ describe("auth.simpleLogin", () => {
 describe("auth.checkSimpleAuth", () => {
   it("returns isAuthenticated true when cookie is present", async () => {
     const { ctx } = createMockContext();
-    // Cookie now contains JSON with user info
+    // Cookie now contains HMAC-signed payload
     const userInfo = { username: "USER", role: "admin", userId: 1 };
-    ctx.req.headers.cookie = `simple_auth=${encodeURIComponent(JSON.stringify(userInfo))}`;
+    const payload = Buffer.from(JSON.stringify(userInfo)).toString("base64");
+    const SECRET = process.env.JWT_SECRET || "chave_super_secreta_padrao_123";
+    const crypto = await import("crypto");
+    const signature = crypto.default
+      .createHmac("sha256", SECRET)
+      .update(payload)
+      .digest("hex");
+    const signedCookie = `${payload}.${signature}`;
+    ctx.req.headers.cookie = `simple_auth=${encodeURIComponent(signedCookie)}`;
     const caller = appRouter.createCaller(ctx);
 
     const result = await caller.auth.checkSimpleAuth();
 
     expect(result.isAuthenticated).toBe(true);
+  });
+
+  it("returns isAuthenticated false when cookie is tampered", async () => {
+    const { ctx } = createMockContext();
+    // Tampered cookie with wrong signature
+    const userInfo = { username: "USER", role: "admin", userId: 1 };
+    const payload = Buffer.from(JSON.stringify(userInfo)).toString("base64");
+    const tamperedCookie = `${payload}.fakesignature123456789`;
+    ctx.req.headers.cookie = `simple_auth=${encodeURIComponent(tamperedCookie)}`;
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.auth.checkSimpleAuth();
+
+    expect(result.isAuthenticated).toBe(false);
   });
 
   it("returns isAuthenticated false when cookie is not present", async () => {

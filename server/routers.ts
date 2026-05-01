@@ -7,6 +7,31 @@ import { z } from "zod";
 import * as db from "./db";
 import { comparisonRouter } from "./routers/comparison";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
+
+// --- MOTOR DE SEGURANÇA (HMAC) ---
+const SECRET = process.env.JWT_SECRET || "chave_super_secreta_padrao_123";
+
+function signCookie(data: any) {
+  const payload = Buffer.from(JSON.stringify(data)).toString('base64');
+  const signature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
+  return `${payload}.${signature}`; 
+}
+
+function verifyCookie(cookieValue: string) {
+  try {
+    const decoded = decodeURIComponent(cookieValue);
+    const [payload, signature] = decoded.split('.');
+    if (!payload || !signature) return null;
+    
+    const expectedSignature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
+    if (signature !== expectedSignature) return null;
+    
+    return JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
+  } catch {
+    return null; 
+  }
+}
 
 // --- MIDDLEWARES ---
 
@@ -18,12 +43,11 @@ const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Login necessário." });
   }
 
-  let user;
-  try {
-    const cookieValue = decodeURIComponent(authCookie.split('=')[1]);
-    user = JSON.parse(cookieValue);
-  } catch {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida." });
+  const cookieValue = authCookie.split('=')[1];
+  const user = verifyCookie(cookieValue);
+
+  if (!user) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida ou forjada." });
   }
 
   return next({ ctx: { ...ctx, user: user as { username: string; role: string; userId: number } } });
@@ -87,23 +111,23 @@ export const appRouter = router({
       const cookies = ctx.req.headers.cookie || "";
       const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
       if (!authCookie) return null;
-      try { return JSON.parse(decodeURIComponent(authCookie.split('=')[1])); } catch { return null; }
+      return verifyCookie(authCookie.split('=')[1]);
     }),
     
     simpleLogin: publicProcedure
       .input(z.object({ username: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
         const upperUsername = input.username.toUpperCase();
-        
-        // Tentar autenticação via banco de dados primeiro
         try {
           const dbUser = await db.getAppUserByUsername(upperUsername);
           if (dbUser) {
             const isValid = await bcrypt.compare(input.password, dbUser.password_hash);
             if (isValid) {
               const cookieOptions = getSessionCookieOptions(ctx.req);
-              const userInfo = JSON.stringify({ username: dbUser.username, role: dbUser.role, userId: dbUser.user_id });
-              ctx.res.cookie("simple_auth", userInfo, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
+              
+              const userInfoSigned = signCookie({ username: dbUser.username, role: dbUser.role, userId: dbUser.user_id });
+              
+              ctx.res.cookie("simple_auth", userInfoSigned, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
               return { success: true, role: dbUser.role, username: dbUser.username };
             }
             return { success: false, error: "Credenciais inválidas" };
@@ -111,7 +135,6 @@ export const appRouter = router({
         } catch (error) {
           console.error("[Auth] DB auth error:", error);
         }
-        
         return { success: false, error: "Credenciais inválidas" };
       }),
     
@@ -212,8 +235,8 @@ export const appRouter = router({
         
         // Auto-login após registro
         const cookieOptions = getSessionCookieOptions(ctx.req);
-        const userInfo = JSON.stringify({ username: upperUsername, role: assignedRole, userId: newUserId });
-        ctx.res.cookie("simple_auth", userInfo, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
+        const userInfoSigned = signCookie({ username: upperUsername, role: assignedRole, userId: newUserId });
+        ctx.res.cookie("simple_auth", userInfoSigned, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
         
         return { success: true, username: upperUsername, userId: newUserId, role: assignedRole };
       }),
@@ -222,10 +245,12 @@ export const appRouter = router({
       const cookies = ctx.req.headers.cookie || "";
       const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
       if (!authCookie) return { isAuthenticated: false, user: null };
-      try {
-        const userInfo = JSON.parse(decodeURIComponent(authCookie.split('=')[1]));
-        return { isAuthenticated: true, user: userInfo };
-      } catch { return { isAuthenticated: false, user: null }; }
+      
+      const user = verifyCookie(authCookie.split('=')[1]);
+      if (user) {
+        return { isAuthenticated: true, user: user };
+      }
+      return { isAuthenticated: false, user: null };
     }),
     
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -361,15 +386,18 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
-        // Verifica se o usuário pode excluir (admin ou criador do evento)
         const event = await db.getEventById(input.id);
         if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado." });
         
-        // Treinadoras só podem excluir eventos que elas criaram (Musculação/Pilates)
+        const effectiveUserId = getEffectiveUserId(ctx.user);
+
         if (ctx.user.role === "trainer") {
           if (event.createdBy !== ctx.user.username) {
             throw new TRPCError({ code: "FORBIDDEN", message: "Você só pode excluir treinos que você criou." });
           }
+        } 
+        else if (ctx.user.role !== "admin" && event.userId !== effectiveUserId) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "Sem permissão para deletar este evento." });
         }
         
         return await db.deleteEvent(input.id);
