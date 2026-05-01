@@ -82,26 +82,45 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
            const cleanRow: any = {};
            Object.keys(row).forEach(k => { cleanRow[k.trim()] = row[k]; });
 
-           let rawDate = cleanRow.Data || cleanRow.data || "";
-           if(!rawDate) return;
+           // 1. Data e Hora de Início (Suporta 'Data' ou 'start_date')
+           let rawDate = cleanRow.Data || cleanRow.data || cleanRow.start_date || "";
+           if (!rawDate) return;
 
            let dateStr = rawDate.trim();
-           if (dateStr.includes('/')) {
+           let startTime = "";
+
+           // Trata formato ISO do Plantãozinho (ex: 2026-12-23T14:00:00-03:00)
+           if (dateStr.includes('T')) {
+             const parts = dateStr.split('T');
+             dateStr = parts[0];
+             startTime = parts[1].substring(0, 5); // Isola o HH:mm
+           } else if (dateStr.includes('/')) {
              const parts = dateStr.split('/');
              if (parts.length === 3) {
-               // Trata ano com 2 digitos (ex: 26 -> 2026)
                const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
                dateStr = `${year}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
              }
            }
 
-           const tipo = cleanRow.Tipo || cleanRow.tipo || "";
-           if(!tipo) return;
+           // 2. Tipo (Suporta 'Tipo' ou 'title')
+           const tipo = cleanRow.Tipo || cleanRow.tipo || cleanRow.title || "";
+           if (!tipo) return;
 
-           const startTime = cleanRow['Horario Inicio'] || cleanRow['Horário Início'] || cleanRow.horario_inicio || cleanRow.startTime || "";
-           const endTime = cleanRow['Horario Fim'] || cleanRow['Horário Fim'] || cleanRow.horario_fim || cleanRow.endTime || "";
-           const desc = cleanRow.Descricao || cleanRow.Descrição || cleanRow.descricao || "";
+           // 3. Horários Finais
+           if (!startTime) {
+             startTime = cleanRow['Horario Inicio'] || cleanRow['Horário Início'] || cleanRow.horario_inicio || cleanRow.startTime || "";
+           }
+           let endTime = cleanRow['Horario Fim'] || cleanRow['Horário Fim'] || cleanRow.horario_fim || cleanRow.endTime || "";
+           
+           // Isola o HH:mm do end_date do Plantãozinho, se existir
+           if (cleanRow.end_date && cleanRow.end_date.includes('T')) {
+             endTime = cleanRow.end_date.split('T')[1].substring(0, 5);
+           }
 
+           // 4. Descrição (Suporta 'Descricao' ou 'notes')
+           const desc = cleanRow.Descricao || cleanRow.Descrição || cleanRow.descricao || cleanRow.notes || "";
+
+           // 5. Construção e Comparação
            const key = `${dateStr}_${tipo.trim()}_${startTime.trim()}`;
            if (existingKeys.has(key)) {
              duplicates++;
