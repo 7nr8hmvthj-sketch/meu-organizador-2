@@ -477,3 +477,12 @@
 - [x] Aplicar nas 10 rotas de events (list, listByDateRange, create, createMany, update, passShift, undoPass, cancel, undoCancel, delete)
 - [x] Testar: JESSICA=810 eventos, VEGANO=0 eventos, USER=810 eventos
 - [x] Checkpoint e publicação
+
+## HOTFIX: Conflito FK e Categorias para Novos Usuários (01/05/2026)
+
+- [x] Inserir GIOVANA (userId=3) na tabela `users` para satisfazer FK
+- [x] Atualizar auth.createUser para inserir em `users` E `app_users` (dual-insert)
+- [x] Categorias são globais (sem filtro userId) - todos os usuários já veem todas
+- [x] Testar criação de evento com conta GIOVANA (ZN 7-13, id=31540, deletado após teste)
+- [x] Isolamento confirmado: GIOVANA vê apenas seus eventos (1), USER vê 810
+- [x] Checkpoint e publicação

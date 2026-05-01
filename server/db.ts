@@ -871,3 +871,30 @@ export async function updateAppUserPassword(username: string, newPasswordHash: s
     throw error;
   }
 }
+
+export async function createUserRecord(params: {
+  id: number;
+  openId: string;
+  name: string;
+  email: string;
+  loginMethod: string;
+  role: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  try {
+    await db.execute(
+      sql`INSERT INTO users (id, openid, name, email, loginmethod, role, createdat, updatedat, lastsignedin)
+          VALUES (${params.id}, ${params.openId}, ${params.name}, ${params.email}, ${params.loginMethod}, ${params.role}, NOW(), NOW(), NOW())`
+    );
+    return true;
+  } catch (error: any) {
+    // Ignore duplicate key errors (user already exists)
+    if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+      console.log(`[Database] User ${params.name} already exists in users table, skipping`);
+      return true;
+    }
+    console.error("[Database] Error creating user record:", error);
+    throw error;
+  }
+}

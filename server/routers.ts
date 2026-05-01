@@ -136,12 +136,22 @@ export const appRouter = router({
         // Gerar userId único
         const newUserId = await db.getNextAppUserId();
         
-        // Inserir no banco
+        // Inserir no banco (app_users para credenciais)
         await db.createAppUser({
           username: upperUsername,
           passwordHash,
           role: input.role,
           userId: newUserId,
+        });
+        
+        // Inserir na tabela users para satisfazer FK constraints
+        await db.createUserRecord({
+          id: newUserId,
+          openId: `${upperUsername.toLowerCase()}-local`,
+          name: upperUsername,
+          email: `${upperUsername.toLowerCase()}@local.com`,
+          loginMethod: 'local',
+          role: input.role === 'admin' ? 'admin' : 'user',
         });
         
         return { success: true, username: upperUsername, userId: newUserId, role: input.role };
