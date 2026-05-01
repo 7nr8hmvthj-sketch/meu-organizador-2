@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock, FileSpreadsheet } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import CategoryManager from "./CategoryManager";
+import CsvManager from "@/components/CsvManager";
 import { MobileCalendar } from "@/components/MobileCalendar";
 import { useLocation } from "wouter";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
@@ -188,6 +189,7 @@ export default function CalendarPage() {
   
   // CategoryManager state
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showCsvManager, setShowCsvManager] = useState(false);
 
   // Filtro de visualização
   type CalendarFilter = "todos" | "plantoes" | "pessoal";
@@ -653,7 +655,8 @@ export default function CalendarPage() {
           <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /> Categorias</Button>}
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCsvManager(true)}><FileSpreadsheet className="w-4 h-4 mr-1" /><span className="hidden md:inline"> CSV</span></Button>}
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Categorias</span></Button>}
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
         </div>
       </div>
@@ -1020,8 +1023,9 @@ export default function CalendarPage() {
       </Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={(open) => { setShowDeleteConfirm(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Excluir?</DialogTitle></DialogHeader><DialogFooter><Button variant="destructive" onClick={confirmDelete}>Excluir</Button></DialogFooter></DialogContent></Dialog>
       
-      {/* Gerenciador de Categorias */}
+      {/* Gerenciador de Categorias e CSV */}
       <CategoryManager open={showCategoryManager} onOpenChange={setShowCategoryManager} />
+      <CsvManager open={showCsvManager} onOpenChange={setShowCsvManager} allEvents={allEvents} />
     </div>
   );
 }
