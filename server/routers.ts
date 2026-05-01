@@ -5,7 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
-import { comparisonRouter } from "./routers/comparison";
+
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -103,7 +103,7 @@ const parseDateSafe = (dateString: string) => {
 
 export const appRouter = router({
   system: systemRouter,
-  comparison: comparisonRouter,
+
   
   
   auth: router({

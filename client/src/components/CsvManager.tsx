@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Download, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { trpc } from "@/lib/trpc";
@@ -12,11 +12,17 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
   
   const createManyMutation = trpc.events.createMany.useMutation({
     onSuccess: () => {
+      console.log("[CSV DEBUG] Mutation success");
       toast.success("Sincronização concluída com sucesso!");
       utils.events.list.invalidate();
       onOpenChange(false);
     },
-    onError: (err) => toast.error("Erro: " + err.message)
+    onError: (err) => {
+      console.error("[CSV DEBUG] Mutation error:", err);
+      console.error("[CSV DEBUG] Error message:", err.message);
+      console.error("[CSV DEBUG] Error data:", err.data);
+      toast.error(`Erro Backend: ${err.message}`);
+    }
   });
 
   const handleExport = () => {
@@ -41,15 +47,25 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // DEBUG: Log file info
+    console.log("[CSV DEBUG] File:", { name: file.name, size: file.size, type: file.type });
+
     Papa.parse(file, {
       header: true,
       skipEmptyLines: 'greedy',
       dynamicTyping: false,
       transformHeader: (header) => header.trim().replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, ""), // Remove BOM character invisível do Excel
       complete: (results) => {
+        // DEBUG: Log parse results
+        console.log("[CSV DEBUG] Parse complete. Errors:", results.errors?.length || 0, "Rows:", results.data?.length || 0);
+        if (results.data && results.data.length > 0) {
+          console.log("[CSV DEBUG] First row:", results.data[0]);
+        }
+
         if (results.errors && results.errors.length > 0) {
-          console.error("CSV Parse Errors:", results.errors);
-          toast.error("Erro ao ler formato do CSV. Salve como 'CSV (UTF-8)' e tente novamente.");
+          const errorDetails = results.errors.map(e => `Row ${e.row}: ${e.message} (${e.code})`).join(" | ");
+          console.error("[CSV DEBUG] Parse Errors:", errorDetails);
+          toast.error(`Erro CSV: ${errorDetails}`);
           if (fileInputRef.current) fileInputRef.current.value = '';
           return;
         }
@@ -108,12 +124,14 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
            return;
         }
 
+        console.log("[CSV DEBUG] Events to create:", eventsToCreate);
         toast.loading(`Encontrados ${eventsToCreate.length} eventos novos. Sincronizando...`);
         createManyMutation.mutate(eventsToCreate);
         if (fileInputRef.current) fileInputRef.current.value = '';
       },
-      error: (error) => {
-        toast.error(`Falha no leitor CSV: ${error.message}`);
+      error: (error: any) => {
+        console.error("[CSV DEBUG] Papa.parse error:", error);
+        toast.error(`Falha no leitor CSV: ${error.message || 'Erro desconhecido'}`);
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     });
@@ -121,9 +139,10 @@ export default function CsvManager({ open, onOpenChange, allEvents }: { open: bo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Importar e Exportar CSV</DialogTitle>
+          <DialogTitle>Gerenciador de CSV</DialogTitle>
+          <DialogDescription className="hidden">Gerenciador de importação e exportação de CSV</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
            <p className="text-sm text-muted-foreground">O sistema possui um comparador inteligente: se você importar um mês que já foi importado, ele pulará os plantões repetidos automaticamente.</p>
