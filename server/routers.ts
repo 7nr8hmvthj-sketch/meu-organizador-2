@@ -65,6 +65,7 @@ const normalizeCategory = (cat: any) => ({
   ...cat,
   isDefault: cat.isdefault ?? cat.isDefault,
   sortOrder: cat.sortorder ?? cat.sortOrder,
+  userId: cat.userid ?? cat.userId ?? null,
   createdAt: cat.createdat ?? cat.createdAt,
 });
 
@@ -155,6 +156,66 @@ export const appRouter = router({
         });
         
         return { success: true, username: upperUsername, userId: newUserId, role: input.role };
+      }),
+    
+    // Auto-registro com código de convite (público)
+    registerWithCode: publicProcedure
+      .input(z.object({
+        username: z.string().min(2).max(64),
+        password: z.string().min(3).max(128),
+        inviteCode: z.string().min(1),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Código de convite válido (pode ser configurado via env no futuro)
+        const VALID_INVITE_CODES: Record<string, string> = {
+          "AGENDA2026": "user",
+          "TRAINER2026": "trainer",
+        };
+        
+        const codeUpper = input.inviteCode.toUpperCase();
+        const assignedRole = VALID_INVITE_CODES[codeUpper];
+        if (!assignedRole) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Código de convite inválido" });
+        }
+        
+        const upperUsername = input.username.toUpperCase();
+        
+        // Verificar se já existe
+        const existing = await db.getAppUserByUsername(upperUsername);
+        if (existing) {
+          throw new TRPCError({ code: "CONFLICT", message: "Usuário já existe" });
+        }
+        
+        // Hash da senha
+        const passwordHash = await bcrypt.hash(input.password, 10);
+        
+        // Gerar userId único
+        const newUserId = await db.getNextAppUserId();
+        
+        // Inserir no banco (app_users para credenciais)
+        await db.createAppUser({
+          username: upperUsername,
+          passwordHash,
+          role: assignedRole,
+          userId: newUserId,
+        });
+        
+        // Inserir na tabela users para satisfazer FK constraints
+        await db.createUserRecord({
+          id: newUserId,
+          openId: `${upperUsername.toLowerCase()}-local`,
+          name: upperUsername,
+          email: `${upperUsername.toLowerCase()}@local.com`,
+          loginMethod: 'local',
+          role: assignedRole === 'admin' ? 'admin' : 'user',
+        });
+        
+        // Auto-login após registro
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        const userInfo = JSON.stringify({ username: upperUsername, role: assignedRole, userId: newUserId });
+        ctx.res.cookie("simple_auth", userInfo, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
+        
+        return { success: true, username: upperUsername, userId: newUserId, role: assignedRole };
       }),
     
     checkSimpleAuth: publicProcedure.query(({ ctx }) => {
@@ -385,11 +446,12 @@ export const appRouter = router({
           const d = (event.description || "").toLowerCase();
           const full = `${t} ${d}`;
           return full.includes("zn") || full.includes("zona norte") || full.includes("noturno") 
-            || full.includes("apoio") || full.includes("corredor") || full.includes("observação") || full.includes("observacao");
+            || full.includes("apoio") || full.includes("corredor") || full.includes("observação") || full.includes("observacao")
+            || full.includes("porta") || full.includes("sala");
         };
         const isHC = (event: any): boolean => {
           const t = (event.type || "").toLowerCase();
-          return t.includes("hc") || t.includes("home care");
+          return t.includes("hc") || t.includes("home care") || t.includes("enfermaria");
         };
 
         // === ZN: Ciclo 20/(mês-1) até 19/mês ===
@@ -400,7 +462,7 @@ export const appRouter = router({
         const znEndDate = `${input.year}-${String(input.month).padStart(2, '0')}-19`;
 
         let znHours = 0;
-        let znBreakdown = { zn: 0, noturno: 0, apoio: 0, observacao: 0 };
+        let znBreakdown = { zn: 0, noturno: 0, apoio: 0, observacao: 0, porta: 0, sala: 0 };
         allEvents.forEach(event => {
           const eventDate = event.date;
           if (eventDate < znStartDate || eventDate > znEndDate) return;
@@ -413,6 +475,8 @@ export const appRouter = router({
           if (full.includes("noturno")) znBreakdown.noturno += hours;
           else if (full.includes("apoio")) znBreakdown.apoio += hours;
           else if (full.includes("observação") || full.includes("observacao")) znBreakdown.observacao += hours;
+          else if (full.includes("porta")) znBreakdown.porta += hours;
+          else if (full.includes("sala")) znBreakdown.sala += hours;
           else znBreakdown.zn += hours;
         });
         const totalZN = znHours * VALOR_HORA_ZN;
@@ -605,10 +669,31 @@ export const appRouter = router({
 
   // Categories router
   categories: router({
-    list: publicProcedure.query(async () => {
-      const cats = await db.getCategories();
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const cats = await db.getCategories(ctx.user.userId);
       return normalizeCategories(cats);
     }),
+    
+    // Add a custom category for the current user
+    addCustom: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if this user already has this custom category
+        const existingCats = await db.getCategories(ctx.user.userId);
+        const exists = existingCats.find((c: any) => c.name.toLowerCase() === input.name.toLowerCase() && (c.userId === ctx.user.userId || c.userid === ctx.user.userId));
+        if (exists) return normalizeCategory(exists);
+        const cat = await db.createCategory({
+          name: input.name,
+          color: 'text-slate-700 bg-slate-50 dark:bg-slate-900/30 border-slate-200',
+          type: 'outro',
+          icon: null,
+          sortOrder: 100,
+          userId: ctx.user.userId,
+        });
+        return cat ? normalizeCategory(cat) : null;
+      }),
     
     create: adminProcedure
       .input(z.object({

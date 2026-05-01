@@ -25,10 +25,14 @@ function getEventColor(type: string, isPassed: boolean): string {
   if (typeLower.includes("natação") || typeLower.includes("natacao")) return "text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200";
   if (typeLower.includes("musculação") || typeLower.includes("musculacao")) return "text-green-700 bg-green-50 dark:bg-green-900/30 dark:text-green-300 border-green-200";
   if (typeLower.includes("pilates")) return "text-purple-700 bg-purple-50 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200";
+  if (typeLower.includes("enfermaria")) return "text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200";
   if (typeLower.includes("hc")) return "text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200";
+  if (typeLower.includes("porta")) return "text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200";
+  if (typeLower.includes("sala")) return "text-orange-700 bg-orange-50 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200";
   if (typeLower.includes("zn")) return "text-amber-700 bg-amber-50 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200";
   if (typeLower.includes("apoio")) return "text-pink-700 bg-pink-50 dark:bg-pink-900/30 dark:text-pink-300 border-pink-200";
   if (typeLower.includes("noturno")) return "text-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-300 border-indigo-200";
+  if (typeLower.includes("observação") || typeLower.includes("observacao")) return "text-cyan-700 bg-cyan-50 dark:bg-cyan-900/30 dark:text-cyan-300 border-cyan-200";
   if (typeLower.includes("home care")) return "text-teal-700 bg-teal-50 dark:bg-teal-900/30 dark:text-teal-300 border-teal-200";
   if (typeLower.includes("lembrete")) return "text-gray-700 bg-gray-100 dark:bg-gray-800/30 dark:text-gray-300 border-gray-300";
   
@@ -50,22 +54,14 @@ const SHIFT_HOURS: Record<string, string> = {
   "apoio (19-01)": "19-01",
 };
 
-// EVENT_TYPES agora é dinâmico - vem do banco via trpc.categories.list
-const FALLBACK_EVENT_TYPES = [
-  { value: "HC 7-13", label: "HC 7-13 (Manhã)" },
-  { value: "HC 13-19", label: "HC 13-19 (Tarde)" },
-  { value: "ZN 7-13", label: "Zona Norte 7-13 (Manhã)" },
-  { value: "ZN 13-19", label: "Zona Norte 13-19 (Tarde)" },
-  { value: "Noturno 19-7", label: "Noturno 19-7" },
-  { value: "Apoio 19-01", label: "Apoio 19-01" },
-  { value: "Corredor Manhã", label: "Corredor Manhã" },
-  { value: "Corredor Tarde", label: "Corredor Tarde" },
-  { value: "Natação", label: "Natação" },
-  { value: "Musculação", label: "Musculação" },
-  { value: "Pilates", label: "Pilates" },
+// Tipos globais fixos (sempre visíveis para todos)
+const GLOBAL_EVENT_TYPES = [
+  { value: "Porta", label: "Porta" },
+  { value: "Observação", label: "Observação" },
+  { value: "Enfermaria", label: "Enfermaria" },
+  { value: "Sala", label: "Sala" },
   { value: "Home Care", label: "Home Care" },
-  { value: "Lembrete", label: "Lembrete" },
-  { value: "Outro", label: "Outro (personalizado)" },
+  { value: "Personalizado", label: "Personalizado" },
 ];
 
 function getEventLabel(event: { type?: string; description?: string | null }): string {
@@ -98,19 +94,7 @@ function getEventLabel(event: { type?: string; description?: string | null }): s
   return label;
 }
 
-  const resetForm = () => {
-    setEventType("");
-    setCustomEventType("");
-    setEventTime("");
-    setStartTime("");
-    setEndTime("");
-    setEventColor("default");
-    setEventDescription("");
-    setIsRecurring(false);
-    setEditingEvent(null);
-  };
-
-  function extractTimeFromDescription(desc: string): string {
+function extractTimeFromDescription(desc: string): string {
   if (!desc) return "";
   const match = desc.match(/(\d{1,2}):(\d{2})/);
   return match ? match[0] : "";
@@ -211,46 +195,67 @@ export default function CalendarPage() {
   // Painel financeiro
   const [showFinancialPanel, setShowFinancialPanel] = useState(false);
 
-  // Categorias dinâmicas do banco
+  const resetForm = () => {
+    setEventType("");
+    setCustomEventType("");
+    setEventTime("");
+    setStartTime("");
+    setEndTime("");
+    setEventColor("default");
+    setEventDescription("");
+    setIsRecurring(false);
+    setEditingEvent(null);
+    setTrainingType("");
+    setTrainingTime("");
+    setTrainingDescription("");
+  };
+
+  // Categorias dinâmicas do banco (globais + personalizadas do usuário)
   const { data: dbCategories = [] } = trpc.categories.list.useQuery();
+  const addCustomCategoryMutation = trpc.categories.addCustom.useMutation({
+    onSuccess: () => {
+      utils?.categories?.list?.invalidate?.();
+    },
+  });
 
-  // EVENT_TYPES dinâmico: usa banco se disponível, senão fallback
+  // EVENT_TYPES: globais fixos + personalizados do usuário do banco
   const EVENT_TYPES = useMemo(() => {
-    if (dbCategories.length > 0) {
-      const fromDb = dbCategories.map((cat: any) => ({ value: cat.name, label: cat.name }));
-      // Sempre adiciona "Outro" no final
-      if (!fromDb.find((t: any) => t.value === "Outro")) {
-        fromDb.push({ value: "Outro", label: "Outro (personalizado)" });
+    const types = [...GLOBAL_EVENT_TYPES];
+    // Adiciona categorias personalizadas do usuário (que não sejam globais)
+    const globalNames = GLOBAL_EVENT_TYPES.map(g => g.value.toLowerCase());
+    dbCategories.forEach((cat: any) => {
+      const catUserId = cat.userId ?? cat.userid;
+      // Só adiciona categorias que têm userId (personalizadas) e não são globais
+      if (catUserId && !globalNames.includes(cat.name.toLowerCase())) {
+        // Insere antes de "Personalizado"
+        const persoIdx = types.findIndex(t => t.value === "Personalizado");
+        if (persoIdx >= 0) {
+          types.splice(persoIdx, 0, { value: cat.name, label: cat.name });
+        } else {
+          types.push({ value: cat.name, label: cat.name });
+        }
       }
-      return fromDb;
-    }
-    return FALLBACK_EVENT_TYPES;
+    });
+    return types;
   }, [dbCategories]);
 
-  // PREDEFINED_COLORS dinâmico: usa banco se disponível
+  // PREDEFINED_COLORS fixo
   const PREDEFINED_COLORS = useMemo(() => {
-    const colors = [{ name: "Padrão Automático", value: "default" }];
-    if (dbCategories.length > 0) {
-      dbCategories.forEach((cat: any) => {
-        if (cat.color && !colors.find(c => c.value === cat.color)) {
-          colors.push({ name: cat.name, value: cat.color });
-        }
-      });
-    } else {
-      colors.push(
-        { name: "Vermelho (HC)", value: "text-red-700 bg-red-50 dark:bg-red-900/30 border-red-200" },
-        { name: "Laranja (ZN)", value: "text-amber-700 bg-amber-50 dark:bg-amber-900/30 border-amber-200" },
-        { name: "Amarelo", value: "text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200" },
-        { name: "Azul", value: "text-blue-700 bg-blue-50 dark:bg-blue-900/30 border-blue-200" },
-        { name: "Verde", value: "text-green-700 bg-green-50 dark:bg-green-900/30 border-green-200" },
-        { name: "Roxo", value: "text-purple-700 bg-purple-50 dark:bg-purple-900/30 border-purple-200" },
-        { name: "Rosa", value: "text-pink-700 bg-pink-50 dark:bg-pink-900/30 border-pink-200" },
-        { name: "Turquesa", value: "text-teal-700 bg-teal-50 dark:bg-teal-900/30 border-teal-200" },
-        { name: "Cinza", value: "text-gray-700 bg-gray-100 dark:bg-gray-800/30 border-gray-300" }
-      );
-    }
-    return colors;
-  }, [dbCategories]);
+    return [
+      { name: "Padrão Automático", value: "default" },
+      { name: "Vermelho (HC/Enfermaria)", value: "text-red-700 bg-red-50 dark:bg-red-900/30 border-red-200" },
+      { name: "Laranja (ZN/Porta)", value: "text-amber-700 bg-amber-50 dark:bg-amber-900/30 border-amber-200" },
+      { name: "Amarelo", value: "text-yellow-700 bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200" },
+      { name: "Azul", value: "text-blue-700 bg-blue-50 dark:bg-blue-900/30 border-blue-200" },
+      { name: "Verde", value: "text-green-700 bg-green-50 dark:bg-green-900/30 border-green-200" },
+      { name: "Roxo", value: "text-purple-700 bg-purple-50 dark:bg-purple-900/30 border-purple-200" },
+      { name: "Rosa", value: "text-pink-700 bg-pink-50 dark:bg-pink-900/30 border-pink-200" },
+      { name: "Turquesa", value: "text-teal-700 bg-teal-50 dark:bg-teal-900/30 border-teal-200" },
+      { name: "Cinza", value: "text-gray-700 bg-gray-100 dark:bg-gray-800/30 border-gray-300" },
+      { name: "Laranja (Sala)", value: "text-orange-700 bg-orange-50 dark:bg-orange-900/30 border-orange-200" },
+      { name: "Ciano (Observação)", value: "text-cyan-700 bg-cyan-50 dark:bg-cyan-900/30 border-cyan-200" },
+    ];
+  }, []);
 
   // Função para buscar cor da categoria pelo nome
   const getCategoryColor = (typeName: string): string | null => {
@@ -427,10 +432,7 @@ export default function CalendarPage() {
     onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
-  const resetForm = () => {
-    setTrainingType(""); setTrainingTime(""); setTrainingDescription("");
-    setEventType(""); setCustomEventType(""); setEventTime(""); setEventDescription("");
-  };
+
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -533,16 +535,20 @@ export default function CalendarPage() {
       toast?.error?.("Selecione o tipo.");
       return;
     }
-    const typeToSave = eventType === "Outro" ? customEventType : eventType;
+    const typeToSave = eventType === "Personalizado" ? customEventType : eventType;
     if (!typeToSave) {
       toast?.error?.("Digite o tipo.");
       return;
+    }
+    // Se for personalizado, salvar a categoria no banco para o usuário
+    if (eventType === "Personalizado" && customEventType.trim()) {
+      addCustomCategoryMutation.mutate({ name: customEventType.trim() });
     }
     try {
       const finalColor = eventColor === "default" ? undefined : eventColor;
       const descToSave = eventDescription ? eventDescription.trim() : undefined;
       const dateStr = normalizeDateKey(selectedDate);
-      const isShift = ["hc", "zn", "noturno", "apoio", "corredor"].some(k => typeToSave.toLowerCase().includes(k));
+      const isShift = ["hc", "zn", "noturno", "apoio", "corredor", "porta", "sala", "enfermaria", "home care", "observação", "observacao"].some(k => typeToSave.toLowerCase().includes(k));
       if (!isRecurring) {
         createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift });
       } else {
@@ -586,14 +592,14 @@ export default function CalendarPage() {
   const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {
     setEditingEvent({ ...event, date: normalizeDateKey(event.date) });
     setIsPassed(event.isPassed || false);
-    // Correcao: Busca o tipo exato. Se nao achar, joga para 'Outro'
+    // Correcao: Busca o tipo exato. Se nao achar, joga para 'Personalizado'
     const exactMatch = EVENT_TYPES.find(t => t.value === event.type);
     
     if (exactMatch) {
       setEventType(exactMatch.value);
       setCustomEventType("");
     } else {
-      setEventType("Outro");
+      setEventType("Personalizado");
       setCustomEventType(event.type);
     }
     const time = extractTimeFromDescription(event.description || "");
@@ -612,10 +618,14 @@ export default function CalendarPage() {
       toast?.error?.("Selecione o tipo.");
       return;
     }
-    const finalType = eventType === "Outro" ? customEventType : eventType;
+    const finalType = eventType === "Personalizado" ? customEventType : eventType;
     if (!finalType) {
       toast?.error?.("Digite o tipo.");
       return;
+    }
+    // Se for personalizado, salvar a categoria no banco para o usuário
+    if (eventType === "Personalizado" && customEventType.trim()) {
+      addCustomCategoryMutation.mutate({ name: customEventType.trim() });
     }
     const finalColor = eventColor === "default" ? undefined : eventColor;
     let description = eventDescription || finalType;
@@ -872,9 +882,121 @@ export default function CalendarPage() {
       </Dialog>
       
       {/* Outros modais mantidos iguais (AddEvent, AddTraining, Edit, Delete) */}
-      <Dialog open={showAddEventModal} onOpenChange={(open) => { setShowAddEventModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select>{eventType === "Outro" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Personalizado" />}<div className="flex space-x-2"><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div></div><div className="space-y-1 mt-2"><label className="text-xs text-gray-500 block">Cor Personalizada</label><Select value={eventColor} onValueChange={setEventColor}><SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger><SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent></Select></div><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" /><div className="border-t pt-4 mt-4"><label className="flex items-center space-x-2 font-medium cursor-pointer"><input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-4 h-4" /><span>Repetir este evento</span></label>{isRecurring && (<div className="mt-3 pl-4 border-l-2 space-y-3"><Select value={recurrenceType} onValueChange={(v: any) => setRecurrenceType(v)}><SelectTrigger><SelectValue placeholder="Frequencia" /></SelectTrigger><SelectContent><SelectItem value="weekly">Semanal</SelectItem><SelectItem value="monthly">Mensal (Semanas Especificas)</SelectItem></SelectContent></Select>{recurrenceType === 'weekly' ? (<div className="flex items-center space-x-2 text-sm"><span>A cada</span><Input type="number" min="1" value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(Number(e.target.value))} className="w-20 h-8" /><span>semana(s)</span></div>) : (<div className="text-sm space-y-1"><span>Ocorrera nas seguintes semanas do mes:</span><div className="flex gap-3 mt-1">{[1, 2, 3, 4, 5].map(num => (<label key={num} className="flex items-center space-x-1 cursor-pointer"><input type="checkbox" checked={monthlyOccurrences.includes(num)} onChange={(e) => {if (e.target.checked) setMonthlyOccurrences([...monthlyOccurrences, num]); else setMonthlyOccurrences(monthlyOccurrences.filter(n => n !== num));}} className="w-4 h-4" /><span>{num}o</span></label>))}</div></div>)}<div className="text-sm"><span className="block mb-1">Repetir ate a data:</span><Input type="date" value={recurrenceEndDate} onChange={(e) => setRecurrenceEndDate(e.target.value)} /></div></div>)}</div></div><DialogFooter><Button onClick={handleAddEvent} disabled={createEventMutation.isPending || createEventMutation.isLoading || createManyMutation.isPending || createManyMutation.isLoading}>{createEventMutation.isPending || createManyMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
-      <Dialog open={showAddTrainingModal} onOpenChange={(open) => { setShowAddTrainingModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining} disabled={createEventMutation.isPending || createEventMutation.isLoading}>{createEventMutation.isPending || createEventMutation.isLoading ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
-      <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader><div className="space-y-4 py-4">{isAdmin ? <><Select value={eventType} onValueChange={setEventType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent></Select><div className="flex space-x-2"><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div><div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div></div><div className="space-y-1 mt-2"><label className="text-xs text-gray-500 block">Cor Personalizada</label><Select value={eventColor} onValueChange={setEventColor}><SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger><SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value !== "default" && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent></Select></div><Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} /><div className="flex items-center space-x-2 mt-4"><input type="checkbox" id="is-passed" checked={isPassed} onChange={e => setIsPassed(e.target.checked)} className="w-4 h-4" /><Label htmlFor="is-passed">Marcar como Passado/Repassado</Label></div></> : <><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} /></>}</div><DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={showAddEventModal} onOpenChange={(open) => { setShowAddEventModal(open); if(!open) resetForm(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Tipo de Evento */}
+            <Select value={eventType} onValueChange={setEventType}>
+              <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
+              <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+            {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
+            
+            {/* Quick Time Select */}
+            <div>
+              <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
+              <div className="flex flex-wrap gap-1">
+                {[{label:"7-13",s:"07:00",e:"13:00"},{label:"13-19",s:"13:00",e:"19:00"},{label:"7-19",s:"07:00",e:"19:00"},{label:"19-01",s:"19:00",e:"01:00"},{label:"19-07",s:"19:00",e:"07:00"}].map(q => (
+                  <Button key={q.label} type="button" variant={startTime===q.s && endTime===q.e ? "default" : "outline"} size="sm" className="h-7 text-xs px-2" onClick={() => { setStartTime(q.s); setEndTime(q.e); }}>{q.label}</Button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Horário Manual */}
+            <div className="flex space-x-2">
+              <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
+              <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+            </div>
+            
+            {/* Cor Personalizada */}
+            <div className="space-y-1 mt-2">
+              <label className="text-xs text-gray-500 block">Cor Personalizada</label>
+              <Select value={eventColor} onValueChange={setEventColor}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger>
+                <SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent>
+              </Select>
+            </div>
+            
+            <Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" />
+            
+            {/* Recorrência */}
+            <div className="border-t pt-4 mt-4">
+              <label className="flex items-center space-x-2 font-medium cursor-pointer">
+                <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-4 h-4" />
+                <span>Repetir este evento</span>
+              </label>
+              {isRecurring && (
+                <div className="mt-3 pl-4 border-l-2 space-y-3">
+                  <Select value={recurrenceType} onValueChange={(v: any) => setRecurrenceType(v)}>
+                    <SelectTrigger><SelectValue placeholder="Frequencia" /></SelectTrigger>
+                    <SelectContent><SelectItem value="weekly">Semanal</SelectItem><SelectItem value="monthly">Mensal (Semanas Especificas)</SelectItem></SelectContent>
+                  </Select>
+                  {recurrenceType === 'weekly' ? (
+                    <div className="flex items-center space-x-2 text-sm"><span>A cada</span><Input type="number" min="1" value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(Number(e.target.value))} className="w-20 h-8" /><span>semana(s)</span></div>
+                  ) : (
+                    <div className="text-sm space-y-1"><span>Ocorrera nas seguintes semanas do mes:</span><div className="flex gap-3 mt-1">{[1, 2, 3, 4, 5].map(num => (<label key={num} className="flex items-center space-x-1 cursor-pointer"><input type="checkbox" checked={monthlyOccurrences.includes(num)} onChange={(e) => {if (e.target.checked) setMonthlyOccurrences([...monthlyOccurrences, num]); else setMonthlyOccurrences(monthlyOccurrences.filter(n => n !== num));}} className="w-4 h-4" /><span>{num}o</span></label>))}</div></div>
+                  )}
+                  <div className="text-sm"><span className="block mb-1">Repetir ate a data:</span><Input type="date" value={recurrenceEndDate} onChange={(e) => setRecurrenceEndDate(e.target.value)} /></div>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter><Button onClick={handleAddEvent} disabled={createEventMutation.isPending || createManyMutation.isPending}>{createEventMutation.isPending || createManyMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showAddTrainingModal} onOpenChange={(open) => { setShowAddTrainingModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining} disabled={createEventMutation.isPending}>{createEventMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
+      <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if(!open) resetForm(); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            {isAdmin ? (
+              <>
+                <Select value={eventType} onValueChange={setEventType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+                </Select>
+                {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
+                {/* Quick Time Select */}
+                <div>
+                  <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
+                  <div className="flex flex-wrap gap-1">
+                    {[{label:"7-13",s:"07:00",e:"13:00"},{label:"13-19",s:"13:00",e:"19:00"},{label:"7-19",s:"07:00",e:"19:00"},{label:"19-01",s:"19:00",e:"01:00"},{label:"19-07",s:"19:00",e:"07:00"}].map(q => (
+                      <Button key={q.label} type="button" variant={startTime===q.s && endTime===q.e ? "default" : "outline"} size="sm" className="h-7 text-xs px-2" onClick={() => { setStartTime(q.s); setEndTime(q.e); }}>{q.label}</Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
+                  <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
+                </div>
+                <div className="space-y-1 mt-2">
+                  <label className="text-xs text-gray-500 block">Cor Personalizada</label>
+                  <Select value={eventColor} onValueChange={setEventColor}>
+                    <SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger>
+                    <SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value !== "default" && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent>
+                  </Select>
+                </div>
+                <Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} />
+                <div className="flex items-center space-x-2 mt-4">
+                  <input type="checkbox" id="is-passed" checked={isPassed} onChange={e => setIsPassed(e.target.checked)} className="w-4 h-4" />
+                  <Label htmlFor="is-passed">Marcar como Passado/Repassado</Label>
+                </div>
+              </>
+            ) : (
+              <>
+                <Select value={trainingType} onValueChange={setTrainingType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent>
+                </Select>
+                <Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} />
+                <Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} />
+              </>
+            )}
+          </div>
+          <DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog open={showDeleteConfirm} onOpenChange={(open) => { setShowDeleteConfirm(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Excluir?</DialogTitle></DialogHeader><DialogFooter><Button variant="destructive" onClick={confirmDelete}>Excluir</Button></DialogFooter></DialogContent></Dialog>
       
       {/* Gerenciador de Categorias */}

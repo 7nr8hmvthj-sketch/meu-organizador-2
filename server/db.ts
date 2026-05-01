@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../drizzle/schema";
 import { 
-  InsertUser, users, 
+  User, InsertUser, users, 
   events, InsertEvent, Event,
   expenses, InsertExpense, Expense,
   medications, InsertMedication, Medication,
@@ -116,7 +116,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
 }
 
-export async function getUserByOpenId(openId: string): Promise<InsertUser | null> {
+export async function getUserByOpenId(openId: string): Promise<User | null> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get user: database not available");
@@ -545,13 +545,23 @@ export async function getEventById(id: number): Promise<Event | null> {
 
 // ============ CATEGORY FUNCTIONS ============
 
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(userId?: number): Promise<Category[]> {
   const db = await getDb();
   if (!db) return [];
   try {
+    // Return global categories (userid IS NULL) + user-specific categories
+    if (userId) {
+      const result = await db
+        .select()
+        .from(categories)
+        .where(sql`${categories.userId} IS NULL OR ${categories.userId} = ${userId}`)
+        .orderBy(sql`${categories.sortOrder} ASC`);
+      return result;
+    }
     const result = await db
       .select()
       .from(categories)
+      .where(sql`${categories.userId} IS NULL`)
       .orderBy(sql`${categories.sortOrder} ASC`);
     return result;
   } catch (error) {

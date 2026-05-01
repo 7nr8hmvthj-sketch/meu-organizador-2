@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Calendar, Lock, User } from "lucide-react";
+import { Calendar, Lock, User, UserPlus, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
 interface LoginProps {
@@ -12,15 +12,16 @@ interface LoginProps {
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const loginMutation = trpc.auth.simpleLogin.useMutation({
     onSuccess: async (data) => {
       if (data.success) {
         toast.success("Login realizado com sucesso!");
-        // Aguardar um momento para o cookie ser processado pelo navegador
         await new Promise(resolve => setTimeout(resolve, 150));
         onLoginSuccess();
       } else {
@@ -34,10 +35,41 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const registerMutation = trpc.auth.registerWithCode.useMutation({
+    onSuccess: async (data) => {
+      if (data.success) {
+        toast.success(`Conta criada com sucesso! Bem-vindo, ${data.username}`);
+        await new Promise(resolve => setTimeout(resolve, 150));
+        onLoginSuccess();
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao registrar");
+      setIsLoading(false);
+    },
+  });
+
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     loginMutation.mutate({ username, password });
+  };
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteCode.trim()) {
+      toast.error("Código de convite é obrigatório");
+      return;
+    }
+    setIsLoading(true);
+    registerMutation.mutate({ username, password, inviteCode: inviteCode.trim() });
+  };
+
+  const resetFields = () => {
+    setUsername("");
+    setPassword("");
+    setInviteCode("");
+    setIsLoading(false);
   };
 
   return (
@@ -52,16 +84,46 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <p className="text-slate-500 dark:text-slate-400 mt-1">Organize sua vida pessoal e profissional</p>
         </div>
 
+        {/* Tab Switcher */}
+        <div className="flex mb-4 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => { setMode("login"); resetFields(); }}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              mode === "login"
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+            }`}
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("register"); resetFields(); }}
+            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              mode === "register"
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-700"
+            }`}
+          >
+            Registrar
+          </button>
+        </div>
+
         {/* Login Card */}
         <Card className="border-0 shadow-xl shadow-slate-200/50 dark:shadow-none dark:bg-slate-800/50 backdrop-blur">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-center">Entrar</CardTitle>
+            <CardTitle className="text-xl text-center">
+              {mode === "login" ? "Entrar" : "Criar Conta"}
+            </CardTitle>
             <CardDescription className="text-center">
-              Digite suas credenciais para acessar
+              {mode === "login"
+                ? "Digite suas credenciais para acessar"
+                : "Use um código de convite para se registrar"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={mode === "login" ? handleLogin : handleRegister} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium">
                   Usuário
@@ -89,14 +151,38 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Digite sua senha"
+                    placeholder={mode === "login" ? "Digite sua senha" : "Crie uma senha (mín. 3 caracteres)"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
                     required
+                    minLength={mode === "register" ? 3 : undefined}
                   />
                 </div>
               </div>
+
+              {mode === "register" && (
+                <div className="space-y-2">
+                  <Label htmlFor="inviteCode" className="text-sm font-medium">
+                    Código de Convite
+                  </Label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      id="inviteCode"
+                      type="text"
+                      placeholder="Digite o código de convite"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      className="pl-10 h-11 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                    Solicite um código ao administrador para criar sua conta
+                  </p>
+                </div>
+              )}
 
               <Button
                 type="submit"
@@ -106,10 +192,16 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 {isLoading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Entrando...
+                    {mode === "login" ? "Entrando..." : "Registrando..."}
                   </span>
                 ) : (
-                  "Entrar"
+                  <span className="flex items-center gap-2">
+                    {mode === "login" ? (
+                      <>Entrar</>
+                    ) : (
+                      <><UserPlus className="w-4 h-4" /> Criar Conta</>
+                    )}
+                  </span>
                 )}
               </Button>
             </form>

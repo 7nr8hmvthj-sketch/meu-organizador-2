@@ -486,3 +486,44 @@
 - [x] Testar criação de evento com conta GIOVANA (ZN 7-13, id=31540, deletado após teste)
 - [x] Isolamento confirmado: GIOVANA vê apenas seus eventos (1), USER vê 810
 - [x] Checkpoint e publicação
+
+## Fase 1: Refatoração UI/UX Modal de Eventos (01/05/2026)
+
+### 1A: Tipos de Evento
+- [x] Dropdown com tipos globais fixos: PORTA, OBSERVAÇÃO, ENFERMARIA, SALA, HOME CARE, Personalizado
+- [x] Remover tipos hardcoded antigos
+- [x] Adaptar financeiro: PORTA e SALA → grupo ZN, ENFERMARIA → grupo HC
+
+### 1B: Categorias Personalizadas Isoladas
+- [x] Alterar tabela categories para aceitar userId (null = global)
+- [x] Opção "Personalizado" abre input de texto
+- [x] Salvar tipo personalizado atrelado ao ctx.user.userId
+- [x] Tipos personalizados aparecem apenas para o dono
+
+### 1C: Quick Time Select
+- [x] Botões de atalho: 7-13, 13-19, 7-19, 19-01, 19-07
+- [x] Auto-fill dos campos startTime e endTime
+- [x] Horário continua opcional
+
+### 1D: Checkpoint Fase 1
+- [x] Testar criação de evento personalizado
+- [x] Testar salvamento de categoria isolada
+- [x] Testar auto-fill de horários
+- [x] Checkpoint
+
+## Fase 2: Tela de Registro VIP (Invite Code)
+
+### 2A: Backend
+- [x] Rota auth.registerWithCode (publicProcedure)
+- [x] Validação inviteCode (AGENDA2026 → user, TRAINER2026 → trainer)
+- [x] Hash bcrypt + dual-insert (users + app_users)
+
+### 2B: Frontend
+- [x] Alternador 'Criar nova conta' / 'Já tenho conta'
+- [x] 3 inputs: USUÁRIO, SENHA, CÓDIGO
+- [x] Toast erro/sucesso + auto-login
+
+### 2C: Checkpoint Fase 2
+- [x] Testar código errado (deve falhar)
+- [x] Testar código correto (deve passar)
+- [x] Checkpoint e publicação

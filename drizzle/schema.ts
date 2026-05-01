@@ -11,14 +11,14 @@ const categoryTypeEnum = pgEnum("category_type", ["plantao", "treino", "pessoal"
  */
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openid", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
+  loginMethod: varchar("loginmethod", { length: 64 }),
   role: roleEnum("role").notNull().default("user"),
-  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("createdat", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedat", { withTimezone: true }).defaultNow().notNull(),
+  lastSignedIn: timestamp("lastsignedin", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export type User = typeof users.$inferSelect;
@@ -139,6 +139,7 @@ export const categories = pgTable("categories", {
   icon: varchar("icon", { length: 50 }),
   isDefault: boolean("isdefault").default(false).notNull(),
   sortOrder: integer("sortorder").default(0).notNull(),
+  userId: integer("userid"),  // null = global, number = user-specific custom category
   createdAt: timestamp("createdat", { withTimezone: true }).defaultNow().notNull(),
 });
 
