@@ -139,57 +139,43 @@ export function MobileCalendar({
                 Sem eventos.
               </p>
             ) : (
-              selectedDateEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className={`p-2 rounded border-l-4 text-xs ${
-                    event.color
-                      ? event.isPassed
-                        ? "opacity-50 " + event.color
-                        : event.color
-                      : getEventColor(event.type, event.isPassed)
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-semibold">{event.type}</div>
-                      {event.startTime && (
-                        <div className="text-[10px] opacity-70">
-                          {event.startTime}
-                          {event.endTime ? " - " + event.endTime : ""}
+              selectedDateEvents.map((event) => {
+                const colorClass = event.color || getEventColor(event.type, event.isPassed);
+                const bgColor = extractColorBg(colorClass);
+
+                return (
+                  <div key={event.id} className="flex mb-2 shadow-sm rounded-md bg-card border overflow-hidden">
+                    <div className={`w-3 shrink-0 ${bgColor} ${event.isPassed ? "opacity-50" : ""}`}></div>
+                    <div className={`flex-1 p-3 flex justify-between items-center ${event.isPassed ? "opacity-60" : ""}`}>
+                      <div className="flex-1 pr-2">
+                        {event.startTime && (
+                          <div className="text-[11px] text-muted-foreground font-medium mb-0.5">
+                            {event.startTime} {event.endTime ? `- ${event.endTime}` : ""}
+                          </div>
+                        )}
+                        <div className="text-sm font-bold text-foreground leading-tight">
+                          {event.description && event.description.length > 2 && event.description !== event.type 
+                            ? event.description 
+                            : event.type}
                         </div>
-                      )}
-                      {event.description && (
-                        <div className="text-[10px] opacity-70 mt-0.5">
-                          {event.description.substring(0, 50)}
+                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                          {event.type} {event.isPassed && "(Repassado)"}
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <div className="flex flex-col gap-2 shrink-0">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 bg-muted/50" onClick={() => onEditEvent(event)}>
+                            <Pencil className="w-3 h-3"/>
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 bg-red-50 dark:bg-red-900/20 text-red-500 hover:text-red-700" onClick={() => onDeleteEvent({ id: event.id, type: event.type })}>
+                            <Trash2 className="w-3 h-3"/>
+                          </Button>
                         </div>
                       )}
                     </div>
-                    {isAdmin && (
-                      <div className="flex gap-1 ml-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => onEditEvent(event)}
-                        >
-                          <Pencil className="w-3 h-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-red-500"
-                          onClick={() =>
-                            onDeleteEvent({ id: event.id, type: event.type })
-                          }
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

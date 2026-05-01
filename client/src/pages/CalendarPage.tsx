@@ -657,27 +657,10 @@ export default function CalendarPage() {
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
         </div>
       </div>
-
-      {/* DESKTOP VIEW */}
-      <Card className="shadow-md hidden md:block">
-        <CardHeader className="pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-5 h-5" /></Button>
-            <CardTitle className="text-lg font-semibold capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</CardTitle>
-            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
-          </div>
-          {/* Filtros Avançados */}
-          <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t">
-            <Filter className="w-4 h-4 text-muted-foreground mr-1" />
-            <Button variant={calendarFilter === "todos" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("todos")}><LayoutGrid className="w-3 h-3 mr-1" /> Todos</Button>
-            <Button variant={calendarFilter === "plantoes" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("plantoes")}><Briefcase className="w-3 h-3 mr-1" /> Plantões</Button>
-            <Button variant={calendarFilter === "pessoal" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("pessoal")}><Heart className="w-3 h-3 mr-1" /> Pessoal/Saúde</Button>
-          </div>
-        </CardHeader>
-
-        {/* Painel Financeiro Recolhível - Apenas Admin */}
+{/* Painel Financeiro Recolhível - Apenas Admin */}
         {isAdmin && (
-          <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
+  <Card className="mb-2 shadow-sm border-emerald-100 dark:border-emerald-900/30 overflow-hidden">
+    <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors border-b cursor-pointer">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
@@ -809,8 +792,26 @@ export default function CalendarPage() {
               </div>
             </CollapsibleContent>
           </Collapsible>
-        )}
+  </Card>
+)}
 
+      {/* DESKTOP VIEW */}
+      <Card className="shadow-md hidden md:block">
+        <CardHeader className="pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-5 h-5" /></Button>
+            <CardTitle className="text-lg font-semibold capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</CardTitle>
+            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
+          </div>
+          {/* Filtros Avançados */}
+          <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t">
+            <Filter className="w-4 h-4 text-muted-foreground mr-1" />
+            <Button variant={calendarFilter === "todos" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("todos")}><LayoutGrid className="w-3 h-3 mr-1" /> Todos</Button>
+            <Button variant={calendarFilter === "plantoes" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("plantoes")}><Briefcase className="w-3 h-3 mr-1" /> Plantões</Button>
+            <Button variant={calendarFilter === "pessoal" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("pessoal")}><Heart className="w-3 h-3 mr-1" /> Pessoal/Saúde</Button>
+          </div>
+        </CardHeader>
+        
         <CardContent className="pt-2">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(day => <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-2">{day}</div>)}
@@ -852,7 +853,7 @@ export default function CalendarPage() {
         eventsByDate={eventsByDate}
         selectedDateEvents={selectedDateEvents}
         isAdmin={isAdmin}
-        onDayClick={handleDayClick}
+        onDayClick={(day) => setSelectedDate(day)}
         onAddEvent={() => setShowAddEventModal(true)}
         onEditEvent={handleEditEventClick}
         onDeleteEvent={handleDeleteClick}
