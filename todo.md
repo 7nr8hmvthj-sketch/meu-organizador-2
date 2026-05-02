@@ -527,3 +527,14 @@
 - [x] Testar código errado (deve falhar)
 - [x] Testar código correto (deve passar)
 - [x] Checkpoint e publicação
+
+## Restrições de Acesso por Usuário (02/05/2026)
+
+- [x] Adicionar campo excludeUsernames nos navItems do App.tsx
+- [x] Paula (username=PAULA, role=admin) vê apenas /agenda (Calendário Semanal)
+- [x] Trainers continuam com acesso apenas a /agenda
+- [x] Proteção de rotas: redirecionamento para /agenda ao acessar rotas sensíveis
+- [x] Rotas admin-only bloqueadas para Paula: /, /eventos, /dashboard, /financeiro, /medicamentos, /diario
+- [x] Função isRestrictedUser() centraliza a lógica de verificação
+- [x] Sincronização GitHub commit 125a7f4
+- [x] 195 testes passando

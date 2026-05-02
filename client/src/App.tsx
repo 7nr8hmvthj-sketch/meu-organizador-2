@@ -36,6 +36,11 @@ interface NavigationProps {
   username?: string;
 }
 
+// Verifica se o usuário tem acesso restrito (trainer ou Paula)
+function isRestrictedUser(userRole?: string, username?: string): boolean {
+  return userRole === "trainer" || username === "PAULA";
+}
+
 function Navigation({ userRole, username }: NavigationProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -49,19 +54,24 @@ function Navigation({ userRole, username }: NavigationProps) {
   });
 
   // Define navigation items based on user role
+  // excludeUsernames: lista de usernames que NÃO devem ver este item
   const allNavItems = [
-    { path: "/", label: "Calendário", icon: CalendarDays, roles: ["admin"] },
-    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
-    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
-    { path: "/agenda", label: "Calendário", icon: CalendarDays, roles: ["trainer"] },
-    { path: "/diário", label: "Diário", icon: Book, roles: ["admin"] },
-    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
-    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"] },
+    { path: "/", label: "Calendário", icon: CalendarDays, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/agenda", label: "Calendário", icon: CalendarDays, roles: ["admin", "trainer"] },
+    { path: "/diario", label: "Diário", icon: Book, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"], excludeUsernames: ["PAULA"] },
   ];
 
-  const navItems = allNavItems.filter(item => 
-    !item.roles || item.roles.includes(userRole || "")
-  );
+  const navItems = allNavItems.filter(item => {
+    // Verificar se o role do usuário está na lista de roles permitidos
+    if (!item.roles.includes(userRole || "")) return false;
+    // Verificar se o username está na lista de exclusão
+    if (item.excludeUsernames?.includes(username || "")) return false;
+    return true;
+  });
 
   return (
     <>
@@ -201,14 +211,18 @@ interface AuthenticatedAppProps {
 }
 
 function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
 
-  // Redirect trainers to weekly calendar page
+  // Redirecionar trainers e Paula para /agenda como home
   useEffect(() => {
-    if (userRole === "trainer") {
-      setLocation("/agenda");
+    if (isRestrictedUser(userRole, username)) {
+      // Bloquear acesso a rotas sensíveis
+      const restrictedPaths = ["/", "/eventos", "/dashboard", "/financeiro", "/medicamentos", "/diario"];
+      if (restrictedPaths.includes(location)) {
+        setLocation("/agenda");
+      }
     }
-  }, [userRole, setLocation]);
+  }, [userRole, username, location, setLocation]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -216,8 +230,10 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
       <main className="lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0">
         <div className="w-full px-4 py-4 lg:px-8 max-w-[1920px] mx-auto">
           <Switch>
-            {userRole === "admin" && (
+            {/* Rotas exclusivas para admin completo (não Paula) */}
+            {userRole === "admin" && username !== "PAULA" && (
               <>
+                <Route path="/" component={CalendarPage} />
                 <Route path="/eventos" component={Events} />
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/financeiro" component={Finance} />
@@ -225,13 +241,14 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
                 <Route path="/diario" component={DiaryPage} />
               </>
             )}
-            <Route path="/" component={CalendarPage} />
+            {/* Rota do calendário semanal - acessível a todos */}
             <Route path="/agenda" component={WeeklyCalendarPage} />
+            {/* Fallback */}
             <Route>
               <div className="text-center py-20">
                 <h1 className="text-2xl font-bold">Página não encontrada</h1>
                 <Link
-                  href={userRole === "trainer" ? "/agenda" : "/"}
+                  href={isRestrictedUser(userRole, username) ? "/agenda" : "/"}
                   className="text-primary hover:underline mt-4 inline-block"
                 >
                   Voltar ao início
