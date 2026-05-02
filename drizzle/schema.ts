@@ -161,3 +161,38 @@ export const monthlyAdjustments = pgTable("monthly_adjustments", {
 
 export type MonthlyAdjustment = typeof monthlyAdjustments.$inferSelect;
 export type InsertMonthlyAdjustment = typeof monthlyAdjustments.$inferInsert;
+
+
+/**
+ * Agenda Managers - allows users to manage other users' agendas
+ * Example: Paula (user_id) manages CPDEFENDI's agenda (owner_id)
+ */
+export const agendaManagers = pgTable("agenda_managers", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  ownerId: integer("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdat", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type AgendaManager = typeof agendaManagers.$inferSelect;
+export type InsertAgendaManager = typeof agendaManagers.$inferInsert;
+
+/**
+ * Workplaces - dynamic billing engine
+ * Replaces hardcoded ZN/HC constants with configurable work locations
+ * Each workplace has its own hourly rate, billing cycle, and keyword matchers
+ */
+export const workplaces = pgTable("workplaces", {
+  id: serial("id").primaryKey(),
+  userId: integer("userid").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  hourlyRate: numeric("hourlyrate", { precision: 10, scale: 2 }).notNull(),
+  cycleStartDay: integer("cyclestartday").notNull().default(1),
+  cycleEndDay: integer("cycleendday").notNull().default(31),
+  paymentDelayMonths: integer("paymentdelaymonths").notNull().default(0),
+  paymentDay: integer("paymentday").notNull().default(5),
+  keywords: text("keywords").notNull(),
+  createdAt: timestamp("createdat", { withTimezone: true }).defaultNow().notNull(),
+});
+export type Workplace = typeof workplaces.$inferSelect;
+export type InsertWorkplace = typeof workplaces.$inferInsert;

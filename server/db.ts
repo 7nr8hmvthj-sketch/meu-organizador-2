@@ -10,7 +10,9 @@ import {
   userPreferences, InsertUserPreference, UserPreference,
   diaryEntries, InsertDiaryEntry, DiaryEntry,
   categories, InsertCategory, Category,
-  monthlyAdjustments, InsertMonthlyAdjustment, MonthlyAdjustment
+  monthlyAdjustments, InsertMonthlyAdjustment, MonthlyAdjustment,
+  agendaManagers, InsertAgendaManager, AgendaManager,
+  workplaces, InsertWorkplace, Workplace
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sql } from "drizzle-orm";
@@ -906,5 +908,88 @@ export async function createUserRecord(params: {
     }
     console.error("[Database] Error creating user record:", error);
     throw error;
+  }
+}
+
+
+// ============ AGENDA MANAGER FUNCTIONS ============
+
+export async function getManagedUserIds(userId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    const result = await db
+      .select({ ownerId: agendaManagers.ownerId })
+      .from(agendaManagers)
+      .where(sql`${agendaManagers.userId} = ${userId}`);
+    return result.map(r => r.ownerId);
+  } catch (error) {
+    console.error("[Database] Get managed user IDs failed:", error);
+    return [];
+  }
+}
+
+// ─── Workplaces CRUD ─────────────────────────────────────────────────────────
+
+export async function getWorkplaces(userId: number): Promise<Workplace[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    const result = await db
+      .select()
+      .from(workplaces)
+      .where(sql`${workplaces.userId} = ${userId}`)
+      .orderBy(workplaces.createdAt);
+    return result;
+  } catch (error) {
+    console.error("[Database] Get workplaces failed:", error);
+    return [];
+  }
+}
+
+export async function createWorkplace(data: InsertWorkplace): Promise<Workplace | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.insert(workplaces).values(data).returning();
+    return result[0] ?? null;
+  } catch (error) {
+    console.error("[Database] Create workplace failed:", error);
+    return null;
+  }
+}
+
+export async function updateWorkplace(
+  id: number,
+  userId: number,
+  data: Partial<Omit<InsertWorkplace, "id" | "userId" | "createdAt">>
+): Promise<Workplace | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db
+      .update(workplaces)
+      .set(data)
+      .where(sql`${workplaces.id} = ${id} AND ${workplaces.userId} = ${userId}`)
+      .returning();
+    return result[0] ?? null;
+  } catch (error) {
+    console.error("[Database] Update workplace failed:", error);
+    return null;
+  }
+}
+
+export async function deleteWorkplace(id: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    const result = await db
+      .delete(workplaces)
+      .where(sql`${workplaces.id} = ${id} AND ${workplaces.userId} = ${userId}`)
+      .returning();
+    return result.length > 0;
+  } catch (error) {
+    console.error("[Database] Delete workplace failed:", error);
+    return false;
   }
 }
