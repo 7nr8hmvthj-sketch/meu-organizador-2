@@ -474,12 +474,12 @@ export default function CalendarPage() {
             label: 'Desfazer',
             onClick: () => {
               const payload = (deletedEvents || []).map((ev: any) => ({
-                date: typeof ev.date === 'string' ? ev.date.split('T')[0] : ev.date,
+                date: typeof ev.date === 'string' ? ev.date.split('T')[0] : new Date(ev.date).toISOString().split('T')[0],
                 type: ev.type,
-                description: ev.description,
-                startTime: ev.startTime,
-                endTime: ev.endTime,
-                color: ev.color,
+                description: ev.description || undefined,
+                startTime: ev.startTime || undefined,
+                endTime: ev.endTime || undefined,
+                color: ev.color || undefined,
                 isShift: ev.isShift,
               }));
               if (payload.length > 0) {

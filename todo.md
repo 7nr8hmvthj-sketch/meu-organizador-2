@@ -555,3 +555,10 @@
 - [x] AÇÃO 2 (UNDO): Implementar Toast com ação "Desfazer" (6 segundos) que recria eventos
 - [x] Sincronização GitHub commit 04e65c4
 - [x] 195 testes passando
+
+## Correção de Tipagem no Undo (02/05/2026)
+
+- [x] Converter null em undefined no payload do desfazer para validação Zod
+- [x] Melhorar tratamento de data para suportar string e Date object
+- [x] Sincronização GitHub commit 859fac5
+- [x] 195 testes passando
