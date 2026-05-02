@@ -232,19 +232,57 @@ export async function upsertEvent(event: InsertEvent): Promise<Event | null> {
   }
 }
 
-export async function deleteEvent(id: number): Promise<boolean> {
+export async function deleteEvent(id: number): Promise<Event[]> {
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot delete event: database not available");
-    return false;
+    return [];
   }
 
   try {
-    await db.delete(events).where(sql`${events.id} = ${id}`);
-    return true;
+    const deletedEvents = await db.delete(events).where(sql`${events.id} = ${id}`).returning();
+    return deletedEvents as Event[];
   } catch (error) {
     console.error("[Database] Delete event failed:", error);
-    return false;
+    return [];
+  }
+}
+
+// Delete events in series based on type, startTime, and mode
+export async function deleteEventSeries(
+  userId: number,
+  type: string,
+  startTime: string | null,
+  mode: 'future' | 'all',
+  referenceDate: string
+): Promise<Event[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete event series: database not available");
+    return [];
+  }
+
+  try {
+    let whereCondition = sql`${events.userId} = ${userId} AND ${events.type} = ${type}`;
+    
+    // Match startTime (null or specific time)
+    if (startTime) {
+      whereCondition = sql`${whereCondition} AND ${events.startTime} = ${startTime}`;
+    } else {
+      whereCondition = sql`${whereCondition} AND ${events.startTime} IS NULL`;
+    }
+    
+    // Apply date filter based on mode
+    if (mode === 'future') {
+      whereCondition = sql`${whereCondition} AND DATE(${events.date}) >= DATE(${referenceDate})`;
+    }
+    // If mode === 'all', no date filter is applied
+    
+    const deletedEvents = await db.delete(events).where(whereCondition).returning();
+    return deletedEvents as Event[];
+  } catch (error) {
+    console.error("[Database] Delete event series failed:", error);
+    return [];
   }
 }
 

@@ -462,13 +462,33 @@ export default function CalendarPage() {
   });
 
   const deleteEventMutation = trpc.events.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: (deletedEvents: any) => {
       try {
-        toast?.success?.("Evento excluído com sucesso!");
         utils?.events?.list?.invalidate?.();
         setShowDeleteConfirm?.(false);
         setEventToDelete?.(null);
         setShowDayModal?.(false);
+        
+        toast?.success?.("Plantão(ões) excluído(s).", {
+          action: {
+            label: 'Desfazer',
+            onClick: () => {
+              const payload = (deletedEvents || []).map((ev: any) => ({
+                date: typeof ev.date === 'string' ? ev.date.split('T')[0] : ev.date,
+                type: ev.type,
+                description: ev.description,
+                startTime: ev.startTime,
+                endTime: ev.endTime,
+                color: ev.color,
+                isShift: ev.isShift,
+              }));
+              if (payload.length > 0) {
+                createManyMutation.mutate(payload);
+              }
+            }
+          },
+          duration: 6000,
+        });
       } catch (error) {
         console.error('[CalendarPage] Error in deleteEventMutation.onSuccess:', error);
       }

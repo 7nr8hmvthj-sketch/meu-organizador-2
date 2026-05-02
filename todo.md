@@ -545,3 +545,13 @@
 - [x] AÇÃO 2: Ocultação condicional do Painel Financeiro - oculto para Paula e trainers
 - [x] Sincronização GitHub commit 511c44c
 - [x] 195 testes passando
+
+## Exclusão em Lote de Eventos Recorrentes (02/05/2026)
+
+- [x] AÇÃO 1: Criar função deleteEventSeries em server/db.ts com suporte a 3 modos
+- [x] AÇÃO 2: Atualizar endpoint events.delete com parâmetro mode (single, future, all)
+- [x] AÇÃO 3: Implementar UI com 3 opções de exclusão em Dialog
+- [x] AÇÃO 1 (UNDO): Modificar deleteEvent e deleteEventSeries para retornar Event[] com .returning()
+- [x] AÇÃO 2 (UNDO): Implementar Toast com ação "Desfazer" (6 segundos) que recria eventos
+- [x] Sincronização GitHub commit 04e65c4
+- [x] 195 testes passando
