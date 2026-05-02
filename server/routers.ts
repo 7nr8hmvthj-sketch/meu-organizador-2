@@ -191,7 +191,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         // Código de convite válido (pode ser configurado via env no futuro)
         const VALID_INVITE_CODES: Record<string, string> = {
-          "AGENDA2026": "user",
+          "AGENDA2026": "admin",
           "TRAINER2026": "trainer",
         };
         
@@ -230,7 +230,7 @@ export const appRouter = router({
           name: upperUsername,
           email: `${upperUsername.toLowerCase()}@local.com`,
           loginMethod: 'local',
-          role: assignedRole === 'admin' ? 'admin' : 'user',
+          role: assignedRole,
         });
         
         // Auto-login após registro
