@@ -216,8 +216,8 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
   // Redirecionar trainers e Paula para /agenda como home
   useEffect(() => {
     if (isRestrictedUser(userRole, username)) {
-      // Bloquear acesso a rotas sensíveis
-      const restrictedPaths = ["/", "/eventos", "/dashboard", "/financeiro", "/medicamentos", "/diario"];
+      // Bloquear acesso a rotas sensíveis (exceto /)
+      const restrictedPaths = ["/eventos", "/dashboard", "/financeiro", "/medicamentos", "/diario"];
       if (restrictedPaths.includes(location)) {
         setLocation("/agenda");
       }
@@ -230,10 +230,11 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
       <main className="lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0">
         <div className="w-full px-4 py-4 lg:px-8 max-w-[1920px] mx-auto">
           <Switch>
+            {/* Rota do calendário mensal - acessível a todos */}
+            <Route path="/" component={CalendarPage} />
             {/* Rotas exclusivas para admin completo (não Paula) */}
             {userRole === "admin" && username !== "PAULA" && (
               <>
-                <Route path="/" component={CalendarPage} />
                 <Route path="/eventos" component={Events} />
                 <Route path="/dashboard" component={Dashboard} />
                 <Route path="/financeiro" component={Finance} />

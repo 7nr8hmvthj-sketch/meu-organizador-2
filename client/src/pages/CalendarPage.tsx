@@ -701,8 +701,8 @@ export default function CalendarPage() {
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
         </div>
       </div>
-{/* Painel Financeiro Recolhível - Apenas Admin */}
-        {isAdmin && (
+{/* Painel Financeiro Recolhível - Apenas Admin Completo (não Paula) */}
+        {isAdmin && currentUsername !== 'PAULA' && (
   <Card className="mb-2 shadow-sm border-emerald-100 dark:border-emerald-900/30 overflow-hidden">
     <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors border-b cursor-pointer">

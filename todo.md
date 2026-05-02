@@ -538,3 +538,10 @@
 - [x] Função isRestrictedUser() centraliza a lógica de verificação
 - [x] Sincronização GitHub commit 125a7f4
 - [x] 195 testes passando
+
+## Ajustes Operacionais de Frontend (02/05/2026)
+
+- [x] AÇÃO 1: Desbloqueio da rota raiz (/) - Paula e trainers PODEM acessar calendário mensal
+- [x] AÇÃO 2: Ocultação condicional do Painel Financeiro - oculto para Paula e trainers
+- [x] Sincronização GitHub commit 511c44c
+- [x] 195 testes passando
