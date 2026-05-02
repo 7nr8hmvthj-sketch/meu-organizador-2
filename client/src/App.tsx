@@ -50,15 +50,13 @@ function Navigation({ userRole, username }: NavigationProps) {
 
   // Define navigation items based on user role
   const allNavItems = [
-    { path: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
-    { path: "/hoje", label: "Hoje", icon: SunIcon, roles: ["admin"] },
+    { path: "/", label: "Calendário", icon: CalendarDays, roles: ["admin"] },
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
-    { path: "/calendario", label: "Calendário", icon: CalendarDays, roles: ["admin"] },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
     { path: "/agenda", label: "Calendário", icon: CalendarDays, roles: ["trainer"] },
-    { path: "/diario", label: "Diário", icon: Book, roles: ["admin"] },
+    { path: "/diário", label: "Diário", icon: Book, roles: ["admin"] },
     { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
     { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"] },
-
   ];
 
   const navItems = allNavItems.filter(item => 
@@ -220,16 +218,14 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
           <Switch>
             {userRole === "admin" && (
               <>
-                <Route path="/" component={Dashboard} />
-                <Route path="/hoje" component={Today} />
                 <Route path="/eventos" component={Events} />
+                <Route path="/dashboard" component={Dashboard} />
                 <Route path="/financeiro" component={Finance} />
                 <Route path="/medicamentos" component={Medications} />
                 <Route path="/diario" component={DiaryPage} />
-
               </>
             )}
-            <Route path="/calendario" component={CalendarPage} />
+            <Route path="/" component={CalendarPage} />
             <Route path="/agenda" component={WeeklyCalendarPage} />
             <Route>
               <div className="text-center py-20">

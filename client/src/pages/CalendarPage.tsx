@@ -9,11 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock, FileSpreadsheet } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import CategoryManager from "./CategoryManager";
 import CsvManager from "@/components/CsvManager";
 import { MobileCalendar } from "@/components/MobileCalendar";
 import { useLocation } from "wouter";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { normalizeDateKey } from "@/lib/dateUtils";
@@ -197,6 +199,10 @@ export default function CalendarPage() {
 
   // Painel financeiro
   const [showFinancialPanel, setShowFinancialPanel] = useState(false);
+  const [taxMode, setTaxMode] = useState<'bruto' | 'pj' | 'pf'>('bruto');
+  
+  // Financial calculations
+  const FINANCIAL_TARGET = 20000; // Meta fixa
 
   const resetForm = () => {
     setEventType("");
@@ -318,6 +324,41 @@ export default function CalendarPage() {
   const effectiveTotalHC = effectiveHCHours * (financialSummary?.valorHoraHC || 108);
   const effectiveTotalRecebimentos = effectiveTotalZN + effectiveTotalHC;
   const effectiveSaldo = effectiveTotalRecebimentos - (financialSummary?.totalFixed || 0);
+  
+  // Calculate total hours and average hourly rate
+  const totalHoursMonth = useMemo(() => {
+    let hours = 0;
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    
+    allEvents.forEach(event => {
+      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
+      if (eventDate >= monthStart && eventDate <= monthEnd && event.startTime && event.endTime) {
+        const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
+        const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch && endMatch) {
+          const startHour = parseInt(timeMatch[1], 10);
+          const endHour = parseInt(endMatch[1], 10);
+          let diff = endHour - startHour;
+          if (diff < 0) diff += 24;
+          hours += diff;
+        }
+      }
+    });
+    return hours;
+  }, [allEvents, currentMonth]);
+  
+  const averageHourlyRate = totalHoursMonth > 0 ? effectiveTotalRecebimentos / totalHoursMonth : 0;
+  
+  // Calculate net value based on tax mode
+  const netValue = useMemo(() => {
+    if (taxMode === 'bruto') return effectiveTotalRecebimentos;
+    if (taxMode === 'pj') return effectiveTotalRecebimentos * 0.94; // 6% tax
+    if (taxMode === 'pf') return effectiveTotalRecebimentos * 0.725; // 27.5% tax
+    return effectiveTotalRecebimentos;
+  }, [effectiveTotalRecebimentos, taxMode]);
+  
+  const progressPercentage = Math.min((effectiveTotalRecebimentos / FINANCIAL_TARGET) * 100, 100);
 
   // Difference calculations
   const znDiff = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) - (financialSummary?.znHours || 0) : null;
@@ -764,6 +805,33 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
+                {/* === TAX MODE SELECTOR === */}
+                <div className="pt-2 border-t">
+                  <div className="mb-3">
+                    <div className="text-xs font-semibold text-muted-foreground mb-2">Modo de Cálculo:</div>
+                    <ToggleGroup type="single" value={taxMode} onValueChange={(val) => val && setTaxMode(val as 'bruto' | 'pj' | 'pf')} className="justify-start">
+                      <ToggleGroupItem value="bruto" aria-label="Bruto" className="text-xs">Bruto</ToggleGroupItem>
+                      <ToggleGroupItem value="pj" aria-label="PJ" className="text-xs">PJ (-6%)</ToggleGroupItem>
+                      <ToggleGroupItem value="pf" aria-label="PF" className="text-xs">PF (-27.5%)</ToggleGroupItem>
+                    </ToggleGroup>
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="mb-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground">Meta: R$ {FINANCIAL_TARGET.toLocaleString('pt-BR')}</span>
+                      <span className="text-xs font-bold text-emerald-600">{progressPercentage.toFixed(1)}%</span>
+                    </div>
+                    <Progress value={progressPercentage} className="h-2" />
+                  </div>
+                  
+                  {/* Average hourly rate */}
+                  <div className="mb-3 bg-slate-50 dark:bg-slate-900/20 rounded-md p-2">
+                    <div className="text-xs text-muted-foreground">Valor Hora Médio</div>
+                    <div className="text-sm font-bold text-slate-700 dark:text-slate-300">R$ {averageHourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({totalHoursMonth}h)</div>
+                  </div>
+                </div>
+                
                 {/* === RESUMO FINAL === */}
                 <div className="pt-2 border-t">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
