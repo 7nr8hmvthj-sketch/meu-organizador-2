@@ -405,8 +405,12 @@ export const appRouter = router({
         return event ? normalizeEvent(event) : null;
       }),
     
+    // ROTA DELETE ATUALIZADA AQUI:
     delete: protectedProcedure
-      .input(z.object({ id: z.number(), mode: z.enum(['single', 'future', 'all']).default('single') }))
+      .input(z.object({ 
+        id: z.number(), 
+        mode: z.enum(['single', 'future', 'all']).default('single') 
+      }))
       .mutation(async ({ input, ctx }) => {
         const event = await db.getEventById(input.id);
         if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado." });
@@ -422,11 +426,14 @@ export const appRouter = router({
             throw new TRPCError({ code: "FORBIDDEN", message: "Sem permissão para deletar este evento." });
         }
         
+        let deletedEvents = [];
         if (input.mode === 'single') {
-          return await db.deleteEvent(input.id);
+          deletedEvents = await db.deleteEvent(input.id);
         } else {
-          return await db.deleteEventSeries(effectiveUserId, event.type, event.startTime, input.mode, event.date as unknown as string);
+          deletedEvents = await db.deleteEventSeries(effectiveUserId, event.type, event.startTime, input.mode, event.date as unknown as string);
         }
+
+        return deletedEvents.map(normalizeEvent);
       }),
   }),
 

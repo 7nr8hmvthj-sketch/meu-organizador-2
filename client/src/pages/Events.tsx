@@ -39,9 +39,7 @@ export default function Events() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPassModal, setShowPassModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<typeof events[0] | null>(null);
-  // Default to current month
-  const currentMonth = format(new Date(), 'yyyy-MM');
-  const [filterMonth, setFilterMonth] = useState<string>(currentMonth);
+  const [filterMonth, setFilterMonth] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   
   // Form states

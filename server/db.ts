@@ -661,7 +661,6 @@ export async function createManyEvents(eventsData: InsertEvent[]): Promise<Event
   }
 }
 
-
 // ============ DIARY FUNCTIONS (ADDITIONAL) ============
 
 export async function getDiaryEntriesByUserId(userId: number): Promise<DiaryEntry[]> {
@@ -755,7 +754,6 @@ export async function upsertUserPreferences(prefs: InsertUserPreference): Promis
     return null;
   }
 }
-
 
 // ============ MEDICATION FUNCTIONS (ADDITIONAL) ============
 
@@ -948,7 +946,6 @@ export async function createUserRecord(params: {
     throw error;
   }
 }
-
 
 // ============ AGENDA MANAGER FUNCTIONS ============
 

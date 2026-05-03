@@ -528,37 +528,13 @@
 - [x] Testar código correto (deve passar)
 - [x] Checkpoint e publicação
 
-## Restrições de Acesso por Usuário (02/05/2026)
+## Sincronização GitHub - Faturamento Dinâmico (03/05/2026)
 
-- [x] Adicionar campo excludeUsernames nos navItems do App.tsx
-- [x] Paula (username=PAULA, role=admin) vê apenas /agenda (Calendário Semanal)
-- [x] Trainers continuam com acesso apenas a /agenda
-- [x] Proteção de rotas: redirecionamento para /agenda ao acessar rotas sensíveis
-- [x] Rotas admin-only bloqueadas para Paula: /, /eventos, /dashboard, /financeiro, /medicamentos, /diario
-- [x] Função isRestrictedUser() centraliza a lógica de verificação
-- [x] Sincronização GitHub commit 125a7f4
+- [x] Clonar repositório GitHub para pasta temporária
+- [x] Copiar 4 arquivos críticos do GitHub para ambiente local
+- [x] Copiar schema.ts com tabelas agendaManagers e workplaces
+- [x] Corrigir import de WorkplaceManager em CalendarPage.tsx
+- [x] Verificação TypeScript sem erros
+- [x] Reiniciar servidor de desenvolvimento
 - [x] 195 testes passando
-
-## Ajustes Operacionais de Frontend (02/05/2026)
-
-- [x] AÇÃO 1: Desbloqueio da rota raiz (/) - Paula e trainers PODEM acessar calendário mensal
-- [x] AÇÃO 2: Ocultação condicional do Painel Financeiro - oculto para Paula e trainers
-- [x] Sincronização GitHub commit 511c44c
-- [x] 195 testes passando
-
-## Exclusão em Lote de Eventos Recorrentes (02/05/2026)
-
-- [x] AÇÃO 1: Criar função deleteEventSeries em server/db.ts com suporte a 3 modos
-- [x] AÇÃO 2: Atualizar endpoint events.delete com parâmetro mode (single, future, all)
-- [x] AÇÃO 3: Implementar UI com 3 opções de exclusão em Dialog
-- [x] AÇÃO 1 (UNDO): Modificar deleteEvent e deleteEventSeries para retornar Event[] com .returning()
-- [x] AÇÃO 2 (UNDO): Implementar Toast com ação "Desfazer" (6 segundos) que recria eventos
-- [x] Sincronização GitHub commit 04e65c4
-- [x] 195 testes passando
-
-## Correção de Tipagem no Undo (02/05/2026)
-
-- [x] Converter null em undefined no payload do desfazer para validação Zod
-- [x] Melhorar tratamento de data para suportar string e Date object
-- [x] Sincronização GitHub commit 859fac5
-- [x] 195 testes passando
+- [x] Servidor rodando com novo Painel Financeiro (WorkplaceManager)

@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock, FileSpreadsheet } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock, FileSpreadsheet, Building } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import CategoryManager from "./CategoryManager";
+import WorkplaceManager from "@/components/WorkplaceManager";
 import CsvManager from "@/components/CsvManager";
 import { MobileCalendar } from "@/components/MobileCalendar";
 import { useLocation } from "wouter";
@@ -104,25 +106,20 @@ function extractTimeFromDescription(desc: string): string {
   return match ? match[0] : "";
 }
 
-// --- CALCULADOR DE HORAS ZN (Dia 20 ao 19) ---
+// --- CALCULADOR DE HORAS ZN (Dia 20 ao 19) - Apenas para exibição no dia 19 ---
 function calculateZNHours(events: any[], targetDate: Date): number {
-  // Define o período: dia 20 do mês anterior até o dia 19 do mês atual
   const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 20);
   const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 19, 23, 59, 59);
   let totalHours = 0;
   events.forEach(event => {
-    if (event.isPassed) return; // Ignora os repassados
-    // Normaliza data para evitar bug de fuso horário
+    if (event.isPassed) return; 
     const eventDate = new Date(event.date + 'T12:00:00Z');
     
-    // Verifica se o evento cai dentro do nosso ciclo (20 a 19)
     if (eventDate >= startDate && eventDate <= endDate) {
       const type = (event.type || "").toLowerCase();
       const desc = (event.description || "").toLowerCase();
       const fullText = `${type} ${desc}`;
-      // Regra de Exclusão
       if (fullText.includes("hc") || fullText.includes("home care") || fullText.includes("lembrete")) return;
-      // Regra de Inclusão
       if (
         fullText.includes("zn") || 
         fullText.includes("zona norte") || 
@@ -131,21 +128,15 @@ function calculateZNHours(events: any[], targetDate: Date): number {
         fullText.includes("observação") || 
         fullText.includes("observacao")
       ) {
-        // Extrai o horário (ex: "7-13" ou "19-07")
         let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
-        
-        // Se não achou no texto, tenta achar no dicionário de horas padrão
         if (!timeMatch && SHIFT_HOURS[type]) {
           timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
         }
         if (timeMatch) {
           const startHour = parseInt(timeMatch[1], 10);
           const endHour = parseInt(timeMatch[2], 10);
-          
           let diff = endHour - startHour;
-          // Matemática da Madrugada: se terminar menor que começar, soma 24 (ex: 19h as 07h = -12 + 24 = 12h)
           if (diff < 0) diff += 24; 
-          
           totalHours += diff;
         }
       }
@@ -164,6 +155,8 @@ export default function CalendarPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   
+  const [deleteMode, setDeleteMode] = useState<'single' | 'future' | 'all'>('single');
+
   const [trainingType, setTrainingType] = useState<string>("");
   const [trainingTime, setTrainingTime] = useState<string>("");
   const [trainingDescription, setTrainingDescription] = useState<string>("");
@@ -177,32 +170,27 @@ export default function CalendarPage() {
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
   const [isPassed, setIsPassed] = useState(false);
   
-  // Recurrence states
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState<"weekly" | "monthly">("weekly");
   const [recurrenceInterval, setRecurrenceInterval] = useState(1);
   const [monthlyOccurrences, setMonthlyOccurrences] = useState<number[]>([1, 2, 3, 4, 5]);
   const [recurrenceEndDate, setRecurrenceEndDate] = useState("2026-12-31");
   
-  // Time and color states
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [eventColor, setEventColor] = useState<string>("default");
   
-  // CategoryManager state
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [showWorkplaceManager, setShowWorkplaceManager] = useState(false);
   const [showCsvManager, setShowCsvManager] = useState(false);
 
-  // Filtro de visualização
   type CalendarFilter = "todos" | "plantoes" | "pessoal";
   const [calendarFilter, setCalendarFilter] = useState<CalendarFilter>("todos");
 
-  // Painel financeiro
   const [showFinancialPanel, setShowFinancialPanel] = useState(false);
   const [taxMode, setTaxMode] = useState<'bruto' | 'pj' | 'pf'>('bruto');
   
-  // Financial calculations
-  const FINANCIAL_TARGET = 20000; // Meta fixa
+  const FINANCIAL_TARGET = 20000; 
 
   const resetForm = () => {
     setEventType("");
@@ -219,7 +207,6 @@ export default function CalendarPage() {
     setTrainingDescription("");
   };
 
-  // Categorias dinâmicas do banco (globais + personalizadas do usuário)
   const { data: dbCategories = [] } = trpc.categories.list.useQuery();
   const addCustomCategoryMutation = trpc.categories.addCustom.useMutation({
     onSuccess: () => {
@@ -227,16 +214,12 @@ export default function CalendarPage() {
     },
   });
 
-  // EVENT_TYPES: globais fixos + personalizados do usuário do banco
   const EVENT_TYPES = useMemo(() => {
     const types = [...GLOBAL_EVENT_TYPES];
-    // Adiciona categorias personalizadas do usuário (que não sejam globais)
     const globalNames = GLOBAL_EVENT_TYPES.map(g => g.value.toLowerCase());
     dbCategories.forEach((cat: any) => {
       const catUserId = cat.userId ?? cat.userid;
-      // Só adiciona categorias que têm userId (personalizadas) e não são globais
       if (catUserId && !globalNames.includes(cat.name.toLowerCase())) {
-        // Insere antes de "Personalizado"
         const persoIdx = types.findIndex(t => t.value === "Personalizado");
         if (persoIdx >= 0) {
           types.splice(persoIdx, 0, { value: cat.name, label: cat.name });
@@ -248,7 +231,6 @@ export default function CalendarPage() {
     return types;
   }, [dbCategories]);
 
-  // PREDEFINED_COLORS fixo
   const PREDEFINED_COLORS = useMemo(() => {
     return [
       { name: "Padrão Automático", value: "default" },
@@ -266,12 +248,6 @@ export default function CalendarPage() {
     ];
   }, []);
 
-  // Função para buscar cor da categoria pelo nome
-  const getCategoryColor = (typeName: string): string | null => {
-    const cat = dbCategories.find((c: any) => c.name === typeName);
-    return cat?.color || null;
-  };
-
   const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
@@ -280,7 +256,6 @@ export default function CalendarPage() {
   const isAdmin = authData?.user?.role === "admin";
   const currentUsername = authData?.user?.username;
 
-  // Query de resumo financeiro mensal
   const currentMonthNum = currentMonth.getMonth() + 1;
   const currentYearNum = currentMonth.getFullYear();
   const { data: financialSummary } = trpc.expenses.monthlySummary.useQuery(
@@ -288,7 +263,6 @@ export default function CalendarPage() {
     { enabled: !!isAdmin }
   );
 
-  // RH Conciliation - query and state
   const { data: rhAdjustment } = trpc.expenses.getAdjustment.useQuery(
     { month: currentMonthNum, year: currentYearNum },
     { enabled: !!isAdmin }
@@ -297,7 +271,6 @@ export default function CalendarPage() {
   const [rhHC, setRhHC] = useState<string>("");
   const upsertAdjustment = trpc.expenses.upsertAdjustment.useMutation();
 
-  // Sync RH values when data loads or month changes
   useEffect(() => {
     if (rhAdjustment) {
       setRhZN(rhAdjustment.rhHoursZN !== null ? String(rhAdjustment.rhHoursZN) : "");
@@ -308,7 +281,6 @@ export default function CalendarPage() {
     }
   }, [rhAdjustment, currentMonthNum, currentYearNum]);
 
-  // Save RH adjustment on blur
   const saveRhAdjustment = (znVal: string, hcVal: string) => {
     const znNum = znVal.trim() !== "" ? parseFloat(znVal) : null;
     const hcNum = hcVal.trim() !== "" ? parseFloat(hcVal) : null;
@@ -317,15 +289,26 @@ export default function CalendarPage() {
     upsertAdjustment.mutate({ month: currentMonthNum, year: currentYearNum, rhHoursZN: znNum, rhHoursHC: hcNum });
   };
 
-  // Computed: effective values (use RH if filled, otherwise system)
   const effectiveZNHours = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) : (financialSummary?.znHours || 0);
   const effectiveHCHours = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) : (financialSummary?.hcHours || 0);
   const effectiveTotalZN = effectiveZNHours * (financialSummary?.valorHoraZN || 136);
   const effectiveTotalHC = effectiveHCHours * (financialSummary?.valorHoraHC || 108);
-  const effectiveTotalRecebimentos = effectiveTotalZN + effectiveTotalHC;
+  
+  // Cálculo inteligente que junta Workplaces Dinâmicos com Ajustes Legados de RH
+  const baseDynamicTotal = financialSummary?.totalRecebimentos || 0;
+  let effectiveTotalRecebimentos = baseDynamicTotal;
+  const hasLegacyZN = financialSummary?.workplacesSummary?.some(w => w.id === -1);
+  const hasLegacyHC = financialSummary?.workplacesSummary?.some(w => w.id === -2);
+
+  if (hasLegacyZN) {
+    effectiveTotalRecebimentos = effectiveTotalRecebimentos - (financialSummary?.totalZN || 0) + effectiveTotalZN;
+  }
+  if (hasLegacyHC) {
+    effectiveTotalRecebimentos = effectiveTotalRecebimentos - (financialSummary?.totalHC || 0) + effectiveTotalHC;
+  }
+
   const effectiveSaldo = effectiveTotalRecebimentos - (financialSummary?.totalFixed || 0);
   
-  // Calculate total hours and average hourly rate
   const totalHoursMonth = useMemo(() => {
     let hours = 0;
     const monthStart = startOfMonth(currentMonth);
@@ -350,56 +333,18 @@ export default function CalendarPage() {
   
   const averageHourlyRate = totalHoursMonth > 0 ? effectiveTotalRecebimentos / totalHoursMonth : 0;
   
-  // Calculate net value based on tax mode
   const netValue = useMemo(() => {
     if (taxMode === 'bruto') return effectiveTotalRecebimentos;
-    if (taxMode === 'pj') return effectiveTotalRecebimentos * 0.94; // 6% tax
-    if (taxMode === 'pf') return effectiveTotalRecebimentos * 0.725; // 27.5% tax
+    if (taxMode === 'pj') return effectiveTotalRecebimentos * 0.94;
+    if (taxMode === 'pf') return effectiveTotalRecebimentos * 0.725;
     return effectiveTotalRecebimentos;
   }, [effectiveTotalRecebimentos, taxMode]);
   
   const progressPercentage = Math.min((effectiveTotalRecebimentos / FINANCIAL_TARGET) * 100, 100);
 
-  // Difference calculations
   const znDiff = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) - (financialSummary?.znHours || 0) : null;
   const hcDiff = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) - (financialSummary?.hcHours || 0) : null;
 
-  // Cálculo de horas ZN para exibição no calendário (Total ZN no dia 19)
-  const monthlyShiftHours = useMemo(() => {
-    if (!allEvents.length) return { zn: 0, hc: 0, noturno: 0, apoio: 0, total: 0 };
-    const startDate = new Date(currentYearNum, currentMonthNum - 2, 20);
-    const endDate = new Date(currentYearNum, currentMonthNum - 1, 19, 23, 59, 59);
-    let znHours = 0, hcHours = 0, noturnoHours = 0, apoioHours = 0;
-    allEvents.forEach((event: any) => {
-      if (event.isPassed) return;
-      const eventDate = new Date(event.date + 'T12:00:00Z');
-      if (eventDate < startDate || eventDate > endDate) return;
-      const type = (event.type || "").toLowerCase();
-      const desc = (event.description || "").toLowerCase();
-      const fullText = `${type} ${desc}`;
-      let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
-      if (!timeMatch && SHIFT_HOURS[type]) {
-        timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
-      }
-      if (!timeMatch) return;
-      const startHour = parseInt(timeMatch[1], 10);
-      const endHour = parseInt(timeMatch[2], 10);
-      let diff = endHour - startHour;
-      if (diff < 0) diff += 24;
-      if (fullText.includes("hc") || fullText.includes("home care")) {
-        hcHours += diff;
-      } else if (fullText.includes("noturno")) {
-        noturnoHours += diff;
-      } else if (fullText.includes("apoio")) {
-        apoioHours += diff;
-      } else if (fullText.includes("zn") || fullText.includes("zona norte") || fullText.includes("observação") || fullText.includes("observacao")) {
-        znHours += diff;
-      }
-    });
-    return { zn: znHours, hc: hcHours, noturno: noturnoHours, apoio: apoioHours, total: znHours + hcHours + noturnoHours + apoioHours };
-  }, [allEvents, currentMonthNum, currentYearNum]);
-
-  // GARANTIA DE DATA: Usa o mesmo helper do Diário para buscar
   const selectedDateKey = selectedDate ? normalizeDateKey(selectedDate) : null;
   
   const { data: diaryEntry } = trpc.diary.get.useQuery(
@@ -407,10 +352,8 @@ export default function CalendarPage() {
     { enabled: !!selectedDateKey && authData?.user?.role === "admin" }
   );
 
-  // Filtro de privacidade: oculta Lembretes de trainers
   const events = useMemo(() => {
     return allEvents.filter(event => {
-      // Se for Lembrete e NAO for admin, esconde
       if (event.type === "Lembrete" && !isAdmin) return false;
       return true;
     });
@@ -425,7 +368,7 @@ export default function CalendarPage() {
         setShowAddEventModal?.(false);
         if (typeof resetForm === 'function') resetForm?.();
       } catch (error) {
-        console.error('[CalendarPage] Error in createEventMutation.onSuccess:', error);
+        console.error('[CalendarPage] Error:', error);
       }
     },
     onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
@@ -440,7 +383,7 @@ export default function CalendarPage() {
         setIsRecurring?.(false);
         if (typeof resetForm === 'function') resetForm?.();
       } catch (error) {
-        console.error('[CalendarPage] Error in createManyMutation.onSuccess:', error);
+        console.error('[CalendarPage] Error:', error);
       }
     },
     onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
@@ -455,7 +398,7 @@ export default function CalendarPage() {
         setEditingEvent?.(null);
         if (typeof resetForm === 'function') resetForm?.();
       } catch (error) {
-        console.error('[CalendarPage] Error in updateEventMutation.onSuccess:', error);
+        console.error('[CalendarPage] Error:', error);
       }
     },
     onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
@@ -468,8 +411,11 @@ export default function CalendarPage() {
         setShowDeleteConfirm?.(false);
         setEventToDelete?.(null);
         setShowDayModal?.(false);
+        setDeleteMode('single');
         
-        toast?.success?.("Plantão(ões) excluído(s).", {
+        const count = deletedEvents?.length || 1;
+        
+        toast?.success?.(`${count} Plantão(ões) excluído(s).`, {
           action: {
             label: 'Desfazer',
             onClick: () => {
@@ -490,27 +436,23 @@ export default function CalendarPage() {
           duration: 6000,
         });
       } catch (error) {
-        console.error('[CalendarPage] Error in deleteEventMutation.onSuccess:', error);
+        console.error('[CalendarPage] Error:', error);
       }
     },
     onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
-
-
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startDayOfWeek = getDay(monthStart);
 
-  // Helper: determina se um evento é plantão
   const isShiftEvent = (event: any): boolean => {
     if (event.isShift) return true;
     const typeLower = (event.type || "").toLowerCase();
     return ["hc", "zn", "zona norte", "noturno", "apoio", "corredor"].some(k => typeLower.includes(k));
   };
 
-  // Eventos filtrados pela seleção do toggle (NÃO afeta cálculo ZN)
   const filteredEvents = useMemo(() => {
     if (calendarFilter === "todos") return events;
     return events.filter(event => {
@@ -566,7 +508,7 @@ export default function CalendarPage() {
       createEventMutation.mutate({ date: dateStr, type: trainingType, description, isShift: false });
     } catch (error) {
       console.error('[CalendarPage] Error in handleAddTraining:', error);
-      toast.error("Erro ao salvar treino. Tente novamente.");
+      toast.error("Erro ao salvar treino.");
     }
   };
 
@@ -589,8 +531,8 @@ export default function CalendarPage() {
       const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
       updateEventMutation.mutate({ id: editingEvent.id, type: trainingType, description });
     } catch (error) {
-      console.error('[CalendarPage] Error in handleUpdateTraining:', error);
-      toast.error("Erro ao atualizar treino. Tente novamente.");
+      console.error('[CalendarPage] Error:', error);
+      toast.error("Erro ao atualizar.");
     }
   };
 
@@ -604,7 +546,6 @@ export default function CalendarPage() {
       toast?.error?.("Digite o tipo.");
       return;
     }
-    // Se for personalizado, salvar a categoria no banco para o usuário
     if (eventType === "Personalizado" && customEventType.trim()) {
       addCustomCategoryMutation.mutate({ name: customEventType.trim() });
     }
@@ -648,15 +589,14 @@ export default function CalendarPage() {
         createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift })));
       }
     } catch (error) {
-      console.error('[CalendarPage] Error in handleAddEvent:', error);
-      toast.error("Erro ao salvar evento. Tente novamente.");
+      console.error('[CalendarPage] Error:', error);
+      toast.error("Erro ao salvar evento.");
     }
   };
 
   const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {
     setEditingEvent({ ...event, date: normalizeDateKey(event.date) });
     setIsPassed(event.isPassed || false);
-    // Correcao: Busca o tipo exato. Se nao achar, joga para 'Personalizado'
     const exactMatch = EVENT_TYPES.find(t => t.value === event.type);
     
     if (exactMatch) {
@@ -669,7 +609,6 @@ export default function CalendarPage() {
     const time = extractTimeFromDescription(event.description || "");
     setEventTime(time);
     setEventDescription((event.description || "").replace(event.type, "").replace(time, "").trim());
-    // Load new time and color fields
     setStartTime(event.startTime || "");
     setEndTime(event.endTime || "");
     setEventColor(event.color || "default");
@@ -687,7 +626,6 @@ export default function CalendarPage() {
       toast?.error?.("Digite o tipo.");
       return;
     }
-    // Se for personalizado, salvar a categoria no banco para o usuário
     if (eventType === "Personalizado" && customEventType.trim()) {
       addCustomCategoryMutation.mutate({ name: customEventType.trim() });
     }
@@ -703,7 +641,9 @@ export default function CalendarPage() {
   };
 
   const confirmDelete = () => {
-    if (eventToDelete) deleteEventMutation.mutate({ id: eventToDelete.id });
+    if (eventToDelete) {
+      deleteEventMutation.mutate({ id: eventToDelete.id, mode: deleteMode });
+    }
   };
 
   const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -716,15 +656,17 @@ export default function CalendarPage() {
           <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
         </div>
         <div className="flex gap-2">
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Faturamento</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCsvManager(true)}><FileSpreadsheet className="w-4 h-4 mr-1" /><span className="hidden md:inline"> CSV</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Categorias</span></Button>}
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
         </div>
       </div>
-{/* Painel Financeiro Recolhível - Apenas Admin Completo (não Paula) */}
-        {isAdmin && currentUsername !== 'PAULA' && (
-  <Card className="mb-2 shadow-sm border-emerald-100 dark:border-emerald-900/30 overflow-hidden">
-    <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
+      
+      {/* Painel Financeiro Recolhível - Apenas Admin Completo (não Paula) */}
+      {isAdmin && currentUsername !== 'PAULA' && (
+        <Card className="mb-2 shadow-sm border-emerald-100 dark:border-emerald-900/30 overflow-hidden">
+          <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors border-b cursor-pointer">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <DollarSign className="w-4 h-4 text-emerald-600" />
@@ -736,99 +678,83 @@ export default function CalendarPage() {
               {showFinancialPanel ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <div className="px-4 py-3 bg-muted/10 border-b space-y-3">
-                {/* === RECEBIMENTOS ZN === */}
+              <div className="px-4 py-3 bg-muted/10 border-b space-y-4">
+                
+                {/* === LOCAIS DE TRABALHO (DINÂMICO) === */}
                 <div>
-                  <div className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1 flex items-center gap-1">
-                    <Briefcase className="w-3 h-3" />
-                    Recebimentos ZN/Noturno/Apoio/Observação
-                    <span className="text-[10px] text-muted-foreground font-normal ml-1">
-                      (Ref: {financialSummary?.znRefStart || '...'} a {financialSummary?.znRefEnd || '...'} | R$ {financialSummary?.valorHoraZN || 136}/h)
-                    </span>
+                  <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
+                    Resumo por Local de Trabalho
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <div className="bg-amber-50 dark:bg-amber-900/20 rounded-md p-2 text-center">
-                      <div className="text-xs text-amber-600 dark:text-amber-400 font-medium">ZN</div>
-                      <div className="text-lg font-bold text-amber-700 dark:text-amber-300">{financialSummary?.znBreakdown?.zn || 0}h</div>
-                    </div>
-                    <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-md p-2 text-center">
-                      <div className="text-xs text-indigo-600 dark:text-indigo-400 font-medium">Noturno</div>
-                      <div className="text-lg font-bold text-indigo-700 dark:text-indigo-300">{financialSummary?.znBreakdown?.noturno || 0}h</div>
-                    </div>
-                    <div className="bg-pink-50 dark:bg-pink-900/20 rounded-md p-2 text-center">
-                      <div className="text-xs text-pink-600 dark:text-pink-400 font-medium">Apoio</div>
-                      <div className="text-lg font-bold text-pink-700 dark:text-pink-300">{financialSummary?.znBreakdown?.apoio || 0}h</div>
-                    </div>
-                    <div className="bg-cyan-50 dark:bg-cyan-900/20 rounded-md p-2 text-center">
-                      <div className="text-xs text-cyan-600 dark:text-cyan-400 font-medium">Observação</div>
-                      <div className="text-lg font-bold text-cyan-700 dark:text-cyan-300">{financialSummary?.znBreakdown?.observacao || 0}h</div>
-                    </div>
-                  </div>
-                  <div className="mt-1 text-right text-sm font-bold text-amber-700 dark:text-amber-300">
-                    {financialSummary?.znHours || 0}h × R$ {financialSummary?.valorHoraZN || 136} = R$ {(financialSummary?.totalZN || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                  {/* RH Conciliation ZN */}
-                  <div className="mt-2 flex items-center gap-2 bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-2 border border-dashed border-amber-300">
-                    <span className="text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap">Horas RH:</span>
-                    <input
-                      type="number"
-                      step="0.5"
-                      placeholder="Informar horas"
-                      className="w-24 text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 text-right"
-                      value={rhZN}
-                      onChange={(e) => setRhZN(e.target.value)}
-                      onBlur={() => saveRhAdjustment(rhZN, rhHC)}
-                    />
-                    <span className="text-xs text-muted-foreground">h</span>
-                    {znDiff !== null && (
-                      <span className={`text-xs font-semibold ${znDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        Dif: {znDiff >= 0 ? '+' : ''}{znDiff}h (R$ {(znDiff * (financialSummary?.valorHoraZN || 136)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
-                      </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {financialSummary?.workplacesSummary?.map((wp: any) => (
+                      <div key={wp.id} className="bg-card border rounded-md p-3 shadow-sm">
+                        <div className="flex justify-between items-start mb-2 border-b pb-2">
+                          <div>
+                            <div className="font-semibold text-sm flex items-center gap-1 text-primary">
+                              <Building className="w-3 h-3" />
+                              {wp.name}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              Ciclo: {wp.refStart.split('-').reverse().join('/')} a {wp.refEnd.split('-').reverse().join('/')}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-xs font-medium text-muted-foreground">Valor/Hora</div>
+                            <div className="text-sm font-semibold text-foreground">R$ {wp.hourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-end mt-2">
+                          <div className="bg-muted/50 rounded-md px-3 py-1.5 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Horas</div>
+                            <div className="text-lg font-bold text-foreground">{wp.hours}h</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Subtotal</div>
+                            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-500">
+                              R$ {wp.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Legado RH ZN */}
+                        {wp.id === -1 && (
+                          <div className="mt-3 flex items-center justify-between gap-2 bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-2 border border-dashed border-amber-300">
+                            <span className="text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap font-medium">Conciliação RH:</span>
+                            <div className="flex items-center gap-1">
+                              <input type="number" step="0.5" className="w-16 text-xs border rounded px-1.5 py-1 bg-white dark:bg-gray-800 text-right" value={rhZN} onChange={(e) => setRhZN(e.target.value)} onBlur={() => saveRhAdjustment(rhZN, rhHC)} />
+                              <span className="text-xs text-muted-foreground">h</span>
+                            </div>
+                            {znDiff !== null && <span className={`text-[10px] font-semibold ${znDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>Dif: {znDiff >= 0 ? '+' : ''}{znDiff}h</span>}
+                          </div>
+                        )}
+                        
+                        {/* Legado RH HC */}
+                        {wp.id === -2 && (
+                          <div className="mt-3 flex items-center justify-between gap-2 bg-red-50/50 dark:bg-red-900/10 rounded-md p-2 border border-dashed border-red-300">
+                            <span className="text-xs text-red-600 dark:text-red-400 whitespace-nowrap font-medium">Conciliação RH:</span>
+                            <div className="flex items-center gap-1">
+                              <input type="number" step="0.5" className="w-16 text-xs border rounded px-1.5 py-1 bg-white dark:bg-gray-800 text-right" value={rhHC} onChange={(e) => setRhHC(e.target.value)} onBlur={() => saveRhAdjustment(rhZN, rhHC)} />
+                              <span className="text-xs text-muted-foreground">h</span>
+                            </div>
+                            {hcDiff !== null && <span className={`text-[10px] font-semibold ${hcDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>Dif: {hcDiff >= 0 ? '+' : ''}{hcDiff}h</span>}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {(!financialSummary?.workplacesSummary || financialSummary.workplacesSummary.length === 0) && (
+                      <div className="col-span-full text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-md border border-dashed">
+                        Nenhum faturamento encontrado neste período.
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* === RECEBIMENTOS HC === */}
-                <div className="pt-2 border-t">
-                  <div className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1 flex items-center gap-1">
-                    <Heart className="w-3 h-3" />
-                    Recebimentos HC (90 dias de atraso)
-                    <span className="text-[10px] text-muted-foreground font-normal ml-1">
-                      (Ref: {financialSummary?.hcRefMonth ? `${String(financialSummary.hcRefMonth).padStart(2,'0')}/${financialSummary.hcRefYear}` : '...'} | R$ {financialSummary?.valorHoraHC || 108}/h)
-                    </span>
-                  </div>
-                  <div className="bg-red-50 dark:bg-red-900/20 rounded-md p-2 text-center inline-block min-w-[100px]">
-                    <div className="text-xs text-red-600 dark:text-red-400 font-medium">HC</div>
-                    <div className="text-lg font-bold text-red-700 dark:text-red-300">{financialSummary?.hcHours || 0}h</div>
-                  </div>
-                  <div className="mt-1 text-right text-sm font-bold text-red-700 dark:text-red-300">
-                    {financialSummary?.hcHours || 0}h × R$ {financialSummary?.valorHoraHC || 108} = R$ {(financialSummary?.totalHC || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                  {/* RH Conciliation HC */}
-                  <div className="mt-2 flex items-center gap-2 bg-red-50/50 dark:bg-red-900/10 rounded-md p-2 border border-dashed border-red-300">
-                    <span className="text-xs text-red-600 dark:text-red-400 whitespace-nowrap">Horas RH:</span>
-                    <input
-                      type="number"
-                      step="0.5"
-                      placeholder="Informar horas"
-                      className="w-24 text-sm border rounded px-2 py-1 bg-white dark:bg-gray-800 text-right"
-                      value={rhHC}
-                      onChange={(e) => setRhHC(e.target.value)}
-                      onBlur={() => saveRhAdjustment(rhZN, rhHC)}
-                    />
-                    <span className="text-xs text-muted-foreground">h</span>
-                    {hcDiff !== null && (
-                      <span className={`text-xs font-semibold ${hcDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        Dif: {hcDiff >= 0 ? '+' : ''}{hcDiff}h (R$ {(hcDiff * (financialSummary?.valorHoraHC || 108)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* === TAX MODE SELECTOR === */}
+                {/* === TAX MODE SELECTOR E PROGRESSO === */}
                 <div className="pt-2 border-t">
                   <div className="mb-3">
-                    <div className="text-xs font-semibold text-muted-foreground mb-2">Modo de Cálculo:</div>
+                    <div className="text-xs font-semibold text-muted-foreground mb-2">Modo de Cálculo (Imposto):</div>
                     <ToggleGroup type="single" value={taxMode} onValueChange={(val) => val && setTaxMode(val as 'bruto' | 'pj' | 'pf')} className="justify-start">
                       <ToggleGroupItem value="bruto" aria-label="Bruto" className="text-xs">Bruto</ToggleGroupItem>
                       <ToggleGroupItem value="pj" aria-label="PJ" className="text-xs">PJ (-6%)</ToggleGroupItem>
@@ -836,7 +762,6 @@ export default function CalendarPage() {
                     </ToggleGroup>
                   </div>
                   
-                  {/* Progress bar */}
                   <div className="mb-3">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-xs font-semibold text-muted-foreground">Meta: R$ {FINANCIAL_TARGET.toLocaleString('pt-BR')}</span>
@@ -845,9 +770,8 @@ export default function CalendarPage() {
                     <Progress value={progressPercentage} className="h-2" />
                   </div>
                   
-                  {/* Average hourly rate */}
                   <div className="mb-3 bg-slate-50 dark:bg-slate-900/20 rounded-md p-2">
-                    <div className="text-xs text-muted-foreground">Valor Hora Médio</div>
+                    <div className="text-xs text-muted-foreground">Valor Hora Médio Global</div>
                     <div className="text-sm font-bold text-slate-700 dark:text-slate-300">R$ {averageHourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({totalHoursMonth}h)</div>
                   </div>
                 </div>
@@ -858,7 +782,7 @@ export default function CalendarPage() {
                     <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-md p-2">
                       <TrendingUp className="w-4 h-4 text-emerald-600" />
                       <div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400">Total Recebimentos</div>
+                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400">Recebimentos Brutos</div>
                         <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">R$ {effectiveTotalRecebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                       </div>
                     </div>
@@ -872,9 +796,9 @@ export default function CalendarPage() {
                     <div className={`flex items-center gap-2 rounded-md p-2 border ${effectiveSaldo >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200' : 'bg-red-50 dark:bg-red-900/20 border-red-200'}`}>
                       <DollarSign className={`w-4 h-4 ${effectiveSaldo >= 0 ? 'text-emerald-600' : 'text-red-500'}`} />
                       <div>
-                        <div className="text-[10px] text-muted-foreground">Saldo Estimado</div>
+                        <div className="text-[10px] text-muted-foreground">Saldo Líquido ({taxMode.toUpperCase()})</div>
                         <div className={`text-sm font-bold ${effectiveSaldo >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
-                          R$ {effectiveSaldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {((netValue || 0) - (financialSummary?.totalFixed || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                     </div>
@@ -883,8 +807,8 @@ export default function CalendarPage() {
               </div>
             </CollapsibleContent>
           </Collapsible>
-  </Card>
-)}
+        </Card>
+      )}
 
       {/* DESKTOP VIEW */}
       <Card className="shadow-md hidden md:block">
@@ -894,7 +818,6 @@ export default function CalendarPage() {
             <CardTitle className="text-lg font-semibold capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</CardTitle>
             <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
           </div>
-          {/* Filtros Avançados */}
           <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t">
             <Filter className="w-4 h-4 text-muted-foreground mr-1" />
             <Button variant={calendarFilter === "todos" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("todos")}><LayoutGrid className="w-3 h-3 mr-1" /> Todos</Button>
@@ -919,7 +842,6 @@ export default function CalendarPage() {
                     {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}><span className="font-semibold mr-1">{e.startTime}</span>{getEventLabel(e)}</div>)}
                     {dayEvents.length > 6 && <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 6} mais</div>}
                   </div>
-                  {/* Bloco Contabilizador de Horas ZN */}
                   {format(day, "d") === "19" && isAdmin && (
                     <div 
                       onClick={(e) => e.stopPropagation()} 
@@ -993,19 +915,16 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Outros modais mantidos iguais (AddEvent, AddTraining, Edit, Delete) */}
       <Dialog open={showAddEventModal} onOpenChange={(open) => { setShowAddEventModal(open); if(!open) resetForm(); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            {/* Tipo de Evento */}
             <Select value={eventType} onValueChange={setEventType}>
               <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
               <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
             </Select>
             {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
             
-            {/* Quick Time Select */}
             <div>
               <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
               <div className="flex flex-wrap gap-1">
@@ -1015,13 +934,11 @@ export default function CalendarPage() {
               </div>
             </div>
             
-            {/* Horário Manual */}
             <div className="flex space-x-2">
               <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
               <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
             </div>
             
-            {/* Cor Personalizada */}
             <div className="space-y-1 mt-2">
               <label className="text-xs text-gray-500 block">Cor Personalizada</label>
               <Select value={eventColor} onValueChange={setEventColor}>
@@ -1032,7 +949,6 @@ export default function CalendarPage() {
             
             <Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" />
             
-            {/* Recorrência */}
             <div className="border-t pt-4 mt-4">
               <label className="flex items-center space-x-2 font-medium cursor-pointer">
                 <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-4 h-4" />
@@ -1057,7 +973,9 @@ export default function CalendarPage() {
           <DialogFooter><Button onClick={handleAddEvent} disabled={createEventMutation.isPending || createManyMutation.isPending}>{createEventMutation.isPending || createManyMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
       <Dialog open={showAddTrainingModal} onOpenChange={(open) => { setShowAddTrainingModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining} disabled={createEventMutation.isPending}>{createEventMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
+      
       <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if(!open) resetForm(); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader>
@@ -1069,7 +987,6 @@ export default function CalendarPage() {
                   <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                 </Select>
                 {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
-                {/* Quick Time Select */}
                 <div>
                   <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
                   <div className="flex flex-wrap gap-1">
@@ -1109,9 +1026,40 @@ export default function CalendarPage() {
           <DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={showDeleteConfirm} onOpenChange={(open) => { setShowDeleteConfirm(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Excluir?</DialogTitle></DialogHeader><DialogFooter><Button variant="destructive" onClick={confirmDelete}>Excluir</Button></DialogFooter></DialogContent></Dialog>
+
+      <Dialog open={showDeleteConfirm} onOpenChange={(open) => { setShowDeleteConfirm(open); if(!open) resetForm(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-sm text-muted-foreground mb-4">
+              Como você deseja excluir o evento <strong>{eventToDelete?.type}</strong>?
+            </p>
+            <RadioGroup value={deleteMode} onValueChange={(val: any) => setDeleteMode(val)} className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="single" id="r-single" />
+                <Label htmlFor="r-single" className="cursor-pointer">Apenas este evento</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="future" id="r-future" />
+                <Label htmlFor="r-future" className="cursor-pointer">Este e os próximos (mesmo horário)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="all" id="r-all" />
+                <Label htmlFor="r-all" className="cursor-pointer">Todos desta série</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
-      {/* Gerenciador de Categorias e CSV */}
+      {/* Modais de Gerenciamento Adicionais */}
+      <WorkplaceManager open={showWorkplaceManager} onOpenChange={setShowWorkplaceManager} />
       <CategoryManager open={showCategoryManager} onOpenChange={setShowCategoryManager} />
       <CsvManager open={showCsvManager} onOpenChange={setShowCsvManager} allEvents={allEvents} />
     </div>
