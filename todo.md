@@ -538,3 +538,11 @@
 - [x] Reiniciar servidor de desenvolvimento
 - [x] 195 testes passando
 - [x] Servidor rodando com novo Painel Financeiro (WorkplaceManager)
+
+## Correção Crítica: Banco de Dados e UI (03/05/2026)
+
+- [x] Criar tabelas agenda_managers e workplaces no PostgreSQL (Supabase) via SQL direto
+- [x] Remover classe hidden md:inline do botão Faturamento para visibilidade em mobile
+- [x] Reiniciar servidor de desenvolvimento
+- [x] 195 testes passando
+- [x] Servidor rodando com sucesso

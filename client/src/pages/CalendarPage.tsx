@@ -656,7 +656,7 @@ export default function CalendarPage() {
           <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Faturamento</span></Button>}
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span> Faturamento</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCsvManager(true)}><FileSpreadsheet className="w-4 h-4 mr-1" /><span className="hidden md:inline"> CSV</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Categorias</span></Button>}
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
