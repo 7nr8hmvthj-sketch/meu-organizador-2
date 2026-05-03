@@ -65,7 +65,7 @@ const GLOBAL_EVENT_TYPES = [
   { value: "Porta", label: "Porta" },
   { value: "Observação", label: "Observação" },
   { value: "Enfermaria", label: "Enfermaria" },
-  { value: "Sala de Emergência", label: "Sala de Emergência" },
+  { value: "Sala", label: "Sala" },
   { value: "Home Care", label: "Home Care" },
   { value: "Personalizado", label: "Personalizado" },
 ];
@@ -166,12 +166,7 @@ export default function CalendarPage() {
   const [eventTime, setEventTime] = useState<string>("");
   const [eventDescription, setEventDescription] = useState<string>("");
   
-  // Adições de Estado para Workplace e Valores
-  const [workplaceId, setWorkplaceId] = useState<number | "">("");
-  const [localRhHours, setLocalRhHours] = useState<Record<number, string>>({});
-  const [avulsoRate, setAvulsoRate] = useState<string>("150");
-  
-  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string; isPassed?: boolean; workplaceId?: number | null } | null>(null);
+  const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string; isPassed?: boolean } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
   const [isPassed, setIsPassed] = useState(false);
   
@@ -205,7 +200,6 @@ export default function CalendarPage() {
     setEndTime("");
     setEventColor("default");
     setEventDescription("");
-    setWorkplaceId("");
     setIsRecurring(false);
     setEditingEvent(null);
     setTrainingType("");
@@ -214,7 +208,6 @@ export default function CalendarPage() {
   };
 
   const { data: dbCategories = [] } = trpc.categories.list.useQuery();
-  const { data: workplaces = [] } = trpc.workplaces.list.useQuery();
   const addCustomCategoryMutation = trpc.categories.addCustom.useMutation({
     onSuccess: () => {
       utils?.categories?.list?.invalidate?.();
@@ -296,33 +289,23 @@ export default function CalendarPage() {
     upsertAdjustment.mutate({ month: currentMonthNum, year: currentYearNum, rhHoursZN: znNum, rhHoursHC: hcNum });
   };
 
-  const effectiveTotalRecebimentos = useMemo(() => {
-    if (!financialSummary) return 0;
-    let total = 0;
-    
-    financialSummary.workplacesSummary?.forEach((wp: any) => {
-      if (wp.id === -1 || wp.id === -2) {
-        // Cálculo legado para manter compatibilidade temporária
-        if (wp.id === -1) {
-          const effZN = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) : wp.hours;
-          total += effZN * wp.hourlyRate;
-        } else if (wp.id === -2) {
-          const effHC = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) : wp.hours;
-          total += effHC * wp.hourlyRate;
-        }
-      } else {
-        // Motor novo (dinâmico com input local)
-        const rh = localRhHours[wp.id];
-        const h = (rh !== undefined && rh !== "") ? parseFloat(rh) : wp.hours;
-        total += h * wp.hourlyRate;
-      }
-    });
-    
-    // Soma de avulsos
-    // Avulso concept removed in new relational architecture
-    
-    return total;
-  }, [financialSummary, localRhHours, avulsoRate, rhZN, rhHC]);
+  const effectiveZNHours = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) : (financialSummary?.znHours || 0);
+  const effectiveHCHours = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) : (financialSummary?.hcHours || 0);
+  const effectiveTotalZN = effectiveZNHours * (financialSummary?.valorHoraZN || 136);
+  const effectiveTotalHC = effectiveHCHours * (financialSummary?.valorHoraHC || 108);
+  
+  // Cálculo inteligente que junta Workplaces Dinâmicos com Ajustes Legados de RH
+  const baseDynamicTotal = financialSummary?.totalRecebimentos || 0;
+  let effectiveTotalRecebimentos = baseDynamicTotal;
+  const hasLegacyZN = financialSummary?.workplacesSummary?.some(w => w.id === -1);
+  const hasLegacyHC = financialSummary?.workplacesSummary?.some(w => w.id === -2);
+
+  if (hasLegacyZN) {
+    effectiveTotalRecebimentos = effectiveTotalRecebimentos - (financialSummary?.totalZN || 0) + effectiveTotalZN;
+  }
+  if (hasLegacyHC) {
+    effectiveTotalRecebimentos = effectiveTotalRecebimentos - (financialSummary?.totalHC || 0) + effectiveTotalHC;
+  }
 
   const effectiveSaldo = effectiveTotalRecebimentos - (financialSummary?.totalFixed || 0);
   
@@ -359,6 +342,9 @@ export default function CalendarPage() {
   
   const progressPercentage = Math.min((effectiveTotalRecebimentos / FINANCIAL_TARGET) * 100, 100);
 
+  const znDiff = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) - (financialSummary?.znHours || 0) : null;
+  const hcDiff = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) - (financialSummary?.hcHours || 0) : null;
+
   const selectedDateKey = selectedDate ? normalizeDateKey(selectedDate) : null;
   
   const { data: diaryEntry } = trpc.diary.get.useQuery(
@@ -378,7 +364,6 @@ export default function CalendarPage() {
       try {
         toast?.success?.("Evento adicionado com sucesso!");
         utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
         setShowAddTrainingModal?.(false);
         setShowAddEventModal?.(false);
         if (typeof resetForm === 'function') resetForm?.();
@@ -394,7 +379,6 @@ export default function CalendarPage() {
       try {
         toast?.success?.("Serie de eventos adicionada com sucesso!");
         utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
         setShowAddEventModal?.(false);
         setIsRecurring?.(false);
         if (typeof resetForm === 'function') resetForm?.();
@@ -410,7 +394,6 @@ export default function CalendarPage() {
       try {
         toast?.success?.("Evento atualizado com sucesso!");
         utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
         setShowEditModal?.(false);
         setEditingEvent?.(null);
         if (typeof resetForm === 'function') resetForm?.();
@@ -425,7 +408,6 @@ export default function CalendarPage() {
     onSuccess: (deletedEvents: any) => {
       try {
         utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
         setShowDeleteConfirm?.(false);
         setEventToDelete?.(null);
         setShowDayModal?.(false);
@@ -445,7 +427,6 @@ export default function CalendarPage() {
                 endTime: ev.endTime || undefined,
                 color: ev.color || undefined,
                 isShift: ev.isShift,
-                workplaceId: ev.workplaceId || ev.workplaceid || undefined
               }));
               if (payload.length > 0) {
                 createManyMutation.mutate(payload);
@@ -572,11 +553,9 @@ export default function CalendarPage() {
       const finalColor = eventColor === "default" ? undefined : eventColor;
       const descToSave = eventDescription ? eventDescription.trim() : undefined;
       const dateStr = normalizeDateKey(selectedDate);
-      const isShift = ["hc", "zn", "noturno", "apoio", "corredor", "porta", "sala", "enfermaria", "home care", "observação", "observacao", "emergência"].some(k => typeToSave.toLowerCase().includes(k));
-      const finalWpId = workplaceId === "" ? null : workplaceId;
-
+      const isShift = ["hc", "zn", "noturno", "apoio", "corredor", "porta", "sala", "enfermaria", "home care", "observação", "observacao"].some(k => typeToSave.toLowerCase().includes(k));
       if (!isRecurring) {
-        createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift, workplaceId: finalWpId });
+        createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift });
       } else {
         const datesToCreate = [];
         let current = new Date(dateStr + 'T12:00:00Z');
@@ -607,7 +586,7 @@ export default function CalendarPage() {
             currMonth.setMonth(currMonth.getMonth() + recurrenceInterval);
           }
         }
-        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift, workplaceId: finalWpId })));
+        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift })));
       }
     } catch (error) {
       console.error('[CalendarPage] Error:', error);
@@ -633,10 +612,6 @@ export default function CalendarPage() {
     setStartTime(event.startTime || "");
     setEndTime(event.endTime || "");
     setEventColor(event.color || "default");
-    
-    // Injetando WorkplaceId na edição
-    setWorkplaceId((event as any).workplaceId || (event as any).workplaceid || "");
-
     setShowDayModal(false);
     setShowEditModal(true);
   };
@@ -657,9 +632,7 @@ export default function CalendarPage() {
     const finalColor = eventColor === "default" ? undefined : eventColor;
     let description = eventDescription || finalType;
     if (eventTime) description = `${description} ${eventTime}`;
-    const finalWpId = workplaceId === "" ? null : workplaceId;
-
-    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description: description || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isPassed, workplaceId: finalWpId });
+    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description: description || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isPassed });
   };
 
   const handleDeleteClick = (event: { id: number; type: string }) => {
@@ -683,7 +656,7 @@ export default function CalendarPage() {
           <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Faturamento</span></Button>}
+          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span> Faturamento</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCsvManager(true)}><FileSpreadsheet className="w-4 h-4 mr-1" /><span className="hidden md:inline"> CSV</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Categorias</span></Button>}
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
@@ -707,71 +680,68 @@ export default function CalendarPage() {
             <CollapsibleContent>
               <div className="px-4 py-3 bg-muted/10 border-b space-y-4">
                 
-                {/* === LOCAIS DE TRABALHO (DINÂMICO/EXPLICITO) === */}
+                {/* === LOCAIS DE TRABALHO (DINÂMICO) === */}
                 <div>
                   <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
                     Resumo por Local de Trabalho
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {financialSummary?.workplacesSummary?.map((wp: any) => {
-                      const isLegacy = wp.id === -1 || wp.id === -2;
-                      const rh = isLegacy ? (wp.id === -1 ? rhZN : rhHC) : localRhHours[wp.id];
-                      const currentH = (rh !== undefined && rh !== "" && !isNaN(parseFloat(rh))) ? parseFloat(rh) : wp.hours;
-                      const currentTotal = currentH * wp.hourlyRate;
-                      const diff = (rh !== undefined && rh !== "" && !isNaN(parseFloat(rh))) ? parseFloat(rh) - wp.hours : null;
-
-                      return (
-                        <div key={wp.id} className="bg-card border rounded-md p-3 shadow-sm">
-                          <div className="flex justify-between items-start mb-2 border-b pb-2">
-                            <div>
-                              <div className="font-semibold text-sm flex items-center gap-1 text-primary">
-                                <Building className="w-3 h-3" />
-                                {wp.name}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
-                                Ciclo: {wp.refStart.split('-').reverse().join('/')} a {wp.refEnd.split('-').reverse().join('/')}
-                              </div>
+                    {financialSummary?.workplacesSummary?.map((wp: any) => (
+                      <div key={wp.id} className="bg-card border rounded-md p-3 shadow-sm">
+                        <div className="flex justify-between items-start mb-2 border-b pb-2">
+                          <div>
+                            <div className="font-semibold text-sm flex items-center gap-1 text-primary">
+                              <Building className="w-3 h-3" />
+                              {wp.name}
                             </div>
-                            <div className="text-right">
-                              <div className="text-xs font-medium text-muted-foreground">Valor/Hora</div>
-                              <div className="text-sm font-semibold text-foreground">R$ {wp.hourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              Ciclo: {wp.refStart.split('-').reverse().join('/')} a {wp.refEnd.split('-').reverse().join('/')}
                             </div>
                           </div>
-                          
-                          {/* Raio-X Breakdown (Nova interface visual) */}
-                          {!isLegacy && (
-                            <div className="mb-3 space-y-1">
-                              {Object.keys(wp.breakdown || {}).length === 0 ? (
-                                 <div className="text-[10px] text-muted-foreground italic">Nenhum plantão neste ciclo.</div>
-                              ) : (
-                                 Object.entries(wp.breakdown).map(([tipo, hrs]: any) => (
-                                   <div key={tipo} className="flex justify-between text-[11px] text-muted-foreground">
-                                     <span>• {tipo}</span><span>{hrs}h</span>
-                                   </div>
-                                 ))
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* Input de RH e Total Renderizado Padrão */}
-                          <div className={`mt-3 flex items-center justify-between gap-2 rounded-md p-2 border ${isLegacy ? 'bg-amber-50/50 dark:bg-amber-900/10 border-dashed border-amber-300' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'}`}>
-                            <span className="text-xs font-medium whitespace-nowrap">Ajuste RH (h):</span>
-                            <div className="flex items-center gap-1">
-                              {isLegacy ? (
-                                <input type="number" step="0.5" className="w-16 text-xs border rounded px-1.5 py-1 bg-white dark:bg-gray-800 text-right" value={wp.id === -1 ? rhZN : rhHC} onChange={(e) => wp.id === -1 ? setRhZN(e.target.value) : setRhHC(e.target.value)} onBlur={() => saveRhAdjustment(rhZN, rhHC)} />
-                              ) : (
-                                <Input type="number" step="0.5" className="w-16 h-7 text-xs text-center" placeholder={String(wp.hours)} value={localRhHours[wp.id] ?? ""} onChange={e => setLocalRhHours(p => ({...p, [wp.id]: e.target.value}))} />
-                              )}
-                              <span className="text-xs text-muted-foreground">h</span>
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <div className="text-sm font-bold text-emerald-600 dark:text-emerald-500">R$ {currentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                              {diff !== null && <span className={`text-[10px] font-semibold ${diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>Dif: {diff >= 0 ? '+' : ''}{diff}h</span>}
+                          <div className="text-right">
+                            <div className="text-xs font-medium text-muted-foreground">Valor/Hora</div>
+                            <div className="text-sm font-semibold text-foreground">R$ {wp.hourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-end mt-2">
+                          <div className="bg-muted/50 rounded-md px-3 py-1.5 text-center">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Horas</div>
+                            <div className="text-lg font-bold text-foreground">{wp.hours}h</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Subtotal</div>
+                            <div className="text-lg font-bold text-emerald-600 dark:text-emerald-500">
+                              R$ {wp.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
+
+                        {/* Legado RH ZN */}
+                        {wp.id === -1 && (
+                          <div className="mt-3 flex items-center justify-between gap-2 bg-amber-50/50 dark:bg-amber-900/10 rounded-md p-2 border border-dashed border-amber-300">
+                            <span className="text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap font-medium">Conciliação RH:</span>
+                            <div className="flex items-center gap-1">
+                              <input type="number" step="0.5" className="w-16 text-xs border rounded px-1.5 py-1 bg-white dark:bg-gray-800 text-right" value={rhZN} onChange={(e) => setRhZN(e.target.value)} onBlur={() => saveRhAdjustment(rhZN, rhHC)} />
+                              <span className="text-xs text-muted-foreground">h</span>
+                            </div>
+                            {znDiff !== null && <span className={`text-[10px] font-semibold ${znDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>Dif: {znDiff >= 0 ? '+' : ''}{znDiff}h</span>}
+                          </div>
+                        )}
+                        
+                        {/* Legado RH HC */}
+                        {wp.id === -2 && (
+                          <div className="mt-3 flex items-center justify-between gap-2 bg-red-50/50 dark:bg-red-900/10 rounded-md p-2 border border-dashed border-red-300">
+                            <span className="text-xs text-red-600 dark:text-red-400 whitespace-nowrap font-medium">Conciliação RH:</span>
+                            <div className="flex items-center gap-1">
+                              <input type="number" step="0.5" className="w-16 text-xs border rounded px-1.5 py-1 bg-white dark:bg-gray-800 text-right" value={rhHC} onChange={(e) => setRhHC(e.target.value)} onBlur={() => saveRhAdjustment(rhZN, rhHC)} />
+                              <span className="text-xs text-muted-foreground">h</span>
+                            </div>
+                            {hcDiff !== null && <span className={`text-[10px] font-semibold ${hcDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>Dif: {hcDiff >= 0 ? '+' : ''}{hcDiff}h</span>}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                     
                     {(!financialSummary?.workplacesSummary || financialSummary.workplacesSummary.length === 0) && (
                       <div className="col-span-full text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-md border border-dashed">
@@ -781,16 +751,14 @@ export default function CalendarPage() {
                   </div>
                 </div>
 
-                {/* Avulso section removed - all events now linked to workplaces */}
-
                 {/* === TAX MODE SELECTOR E PROGRESSO === */}
                 <div className="pt-2 border-t">
                   <div className="mb-3">
                     <div className="text-xs font-semibold text-muted-foreground mb-2">Modo de Cálculo (Imposto):</div>
                     <ToggleGroup type="single" value={taxMode} onValueChange={(val) => val && setTaxMode(val as 'bruto' | 'pj' | 'pf')} className="justify-start">
-                      <ToggleGroupItem value="bruto" aria-label="Bruto" className="text-xs h-8">Bruto</ToggleGroupItem>
-                      <ToggleGroupItem value="pj" aria-label="PJ" className="text-xs h-8">PJ (-6%)</ToggleGroupItem>
-                      <ToggleGroupItem value="pf" aria-label="PF" className="text-xs h-8">PF (-27.5%)</ToggleGroupItem>
+                      <ToggleGroupItem value="bruto" aria-label="Bruto" className="text-xs">Bruto</ToggleGroupItem>
+                      <ToggleGroupItem value="pj" aria-label="PJ" className="text-xs">PJ (-6%)</ToggleGroupItem>
+                      <ToggleGroupItem value="pf" aria-label="PF" className="text-xs">PF (-27.5%)</ToggleGroupItem>
                     </ToggleGroup>
                   </div>
                   
@@ -922,7 +890,6 @@ export default function CalendarPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2"><span className="font-semibold">{event.type}</span>{event.startTime && <span className="text-xs font-mono">{event.startTime}{event.endTime ? ' - ' + event.endTime : ''}</span>}</div>
                     {event.description && <div className="text-xs mt-0.5 opacity-80 whitespace-pre-wrap">{event.description}</div>}
-                    {event.workplaceId && <div className="text-[10px] mt-1 bg-white/50 dark:bg-black/20 inline-block px-1 rounded text-slate-600 dark:text-slate-300"><Building className="w-3 h-3 inline mr-1"/>{workplaces.find((w: any) => w.id === event.workplaceId || w.id === (event as any).workplaceid)?.name || 'Local Vinculado'}</div>}
                   </div>
                   {isAdmin && <div className="flex gap-1 ml-2"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditEventClick(event)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => handleDeleteClick({ id: event.id, type: event.type })}><Trash2 className="w-4 h-4" /></Button></div>}
                 </div>
@@ -958,19 +925,6 @@ export default function CalendarPage() {
             </Select>
             {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
             
-            {isAdmin && (
-              <div className="space-y-1">
-                <Label className="flex items-center gap-1 text-primary"><Building className="w-3 h-3"/> Local de Trabalho</Label>
-                <Select value={workplaceId === "" ? "none" : String(workplaceId)} onValueChange={(v) => setWorkplaceId(v === "none" ? "" : Number(v))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o local..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum (Plantão Avulso)</SelectItem>
-                    {workplaces.map((wp: any) => (<SelectItem key={wp.id} value={String(wp.id)}>{wp.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
             <div>
               <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
               <div className="flex flex-wrap gap-1">
@@ -989,7 +943,7 @@ export default function CalendarPage() {
               <label className="text-xs text-gray-500 block">Cor Personalizada</label>
               <Select value={eventColor} onValueChange={setEventColor}>
                 <SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger>
-                <SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value !== "default" && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent>
+                <SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent>
               </Select>
             </div>
             
@@ -1033,19 +987,6 @@ export default function CalendarPage() {
                   <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                 </Select>
                 {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
-                
-                {/* VINCULAÇÃO DE LOCAL NA EDIÇÃO */}
-                <div className="space-y-1">
-                  <Label className="flex items-center gap-1 text-primary"><Building className="w-3 h-3"/> Local de Trabalho</Label>
-                  <Select value={workplaceId === "" ? "none" : String(workplaceId)} onValueChange={(v) => setWorkplaceId(v === "none" ? "" : Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o local..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum (Plantão Avulso)</SelectItem>
-                      {workplaces.map((wp: any) => (<SelectItem key={wp.id} value={String(wp.id)}>{wp.name}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div>
                   <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
                   <div className="flex flex-wrap gap-1">

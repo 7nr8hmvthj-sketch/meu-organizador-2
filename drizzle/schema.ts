@@ -31,7 +31,6 @@ export type InsertUser = typeof users.$inferInsert;
 export const events = pgTable("events", {
   id: serial("id").primaryKey(),
   userId: integer("userid").notNull(),
-  workplaceId: integer("workplaceid"), // <--- NOVO CAMPO: Vínculo explícito com o Local de Trabalho
   date: date("date").notNull(),
   type: varchar("type", { length: 100 }).notNull(),
   description: text("description"),
@@ -162,6 +161,7 @@ export const monthlyAdjustments = pgTable("monthly_adjustments", {
 
 export type MonthlyAdjustment = typeof monthlyAdjustments.$inferSelect;
 export type InsertMonthlyAdjustment = typeof monthlyAdjustments.$inferInsert;
+
 
 /**
  * Agenda Managers - allows users to manage other users' agendas
