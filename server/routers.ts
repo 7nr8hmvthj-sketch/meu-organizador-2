@@ -525,10 +525,11 @@ export const appRouter = router({
             const delay = wp.paymentDelayMonths;
             const keywords = wp.keywords.split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
 
-            // Calcular mês de referência com atraso
-            let refMonth = input.month - delay;
+            // CORREÇÃO: Sempre mostrar ciclo anterior (já fechado), independente de delay
+            // Em maio, mostra ciclo de abril; em junho, mostra ciclo de maio
+            let refMonth = input.month - 1;
             let refYear = input.year;
-            while (refMonth < 1) { refMonth += 12; refYear--; }
+            if (refMonth < 1) { refMonth = 12; refYear--; }
 
             // Calcular datas do ciclo
             let cycleStartMonth = refMonth;
