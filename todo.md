@@ -546,3 +546,11 @@
 - [x] Reiniciar servidor de desenvolvimento
 - [x] 195 testes passando
 - [x] Servidor rodando com sucesso
+
+## Correção de Lógica de Ciclo de Faturamento (03/05/2026)
+
+- [x] Ajustar cálculo de ciclo para sempre mostrar mês anterior (já fechado)
+- [x] Em maio, mostrar ciclo de março/abril (20/03 a 19/04)
+- [x] Remover lógica de paymentDelayMonths que causava confusão
+- [x] Testes: 195 passando
+- [x] Servidor rodando com nova lógica
