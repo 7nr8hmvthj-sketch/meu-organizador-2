@@ -628,7 +628,7 @@ export default function CalendarPage() {
           <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Faturamento</span></Button>}
+          {false && isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Faturamento</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCsvManager(true)}><FileSpreadsheet className="w-4 h-4 mr-1" /><span className="hidden md:inline"> CSV</span></Button>}
           {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Categorias</span></Button>}
           <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
@@ -636,7 +636,7 @@ export default function CalendarPage() {
       </div>
       
       {/* Painel Financeiro Recolhível - Apenas Admin Completo (não Paula) */}
-      {isAdmin && currentUsername !== 'PAULA' && (
+      {false && isAdmin && currentUsername !== 'PAULA' && (
         <Card className="mb-2 shadow-sm border-emerald-100 dark:border-emerald-900/30 overflow-hidden">
           <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
             <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors border-b cursor-pointer">
