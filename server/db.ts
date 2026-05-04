@@ -160,6 +160,12 @@ export async function getUserById(id: number): Promise<InsertUser | null> {
 
 // ============ EVENT FUNCTIONS ============
 
+// Força meio-dia UTC para evitar bug de dia anterior por timezone
+const parseDateSafe = (dateString: string) => {
+  if (dateString.length === 10) return new Date(`${dateString}T12:00:00Z`);
+  return new Date(dateString);
+};
+
 export async function getEventsByDate(userId: number, date: string): Promise<Event[]> {
   const db = await getDb();
   if (!db) {
@@ -189,10 +195,12 @@ export async function getEventsByDateRange(userId: number, startDate: string, en
     return [];
   }
   try {
+    const start = parseDateSafe(startDate);
+    const end = parseDateSafe(endDate);
     const result = await db
       .select()
       .from(events)
-      .where(sql`${events.userId} = ${userId} AND DATE(${events.date}) >= ${startDate} AND DATE(${events.date}) <= ${endDate}`)
+      .where(sql`${events.userId} = ${userId} AND DATE(${events.date}) >= DATE(${start.toISOString()}) AND DATE(${events.date}) <= DATE(${end.toISOString()})`)
       .orderBy(sql`${events.date} ASC`);
     return result;
   } catch (error) {

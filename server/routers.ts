@@ -91,17 +91,18 @@ setInterval(() => {
   _managedUserIds.clear();
 }, 5 * 60 * 1000);
 
-// Normaliza eventos do PostgreSQL (lowercase) para camelCase
+// Normaliza eventos do PostgreSQL garantindo o workplaceId explícito
 const normalizeEvent = (event: any) => ({
   ...event,
-  userId: event.userid ?? event.userId,
-  isShift: event.isshift ?? event.isShift,
-  isPassed: event.ispassed ?? event.isPassed,
-  passedReason: event.passedreason ?? event.passedReason,
-  isCancelled: event.iscancelled ?? event.isCancelled,
-  createdBy: event.createdby ?? event.createdBy,
-  createdAt: event.createdat ?? event.createdAt,
-  updatedAt: event.updatedat ?? event.updatedAt,
+  userId: event.userId,
+  workplaceId: event.workplaceId ?? null,
+  isShift: event.isShift,
+  isPassed: event.isPassed,
+  passedReason: event.passedReason,
+  isCancelled: event.isCancelled,
+  createdBy: event.createdBy,
+  createdAt: event.createdAt,
+  updatedAt: event.updatedAt,
 });
 
 const normalizeEvents = (events: any[]) => events.map(normalizeEvent);
@@ -300,11 +301,12 @@ export const appRouter = router({
         return normalizeEvents(events);
       }),
     
+    // ATUALIZADO: Aceita workplaceId
     create: protectedProcedure
-      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true) }))
+      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true), workplaceId: z.number().nullable().optional() }))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
-        const event = await db.createEvent({
+        const eventData: any = {
           userId: effectiveUserId,
           date: input.date.substring(0, 10),
           type: input.type,
@@ -313,11 +315,17 @@ export const appRouter = router({
           endTime: input.endTime || null,
           color: input.color || null,
           isShift: input.isShift,
-          createdBy: ctx.user.username, // Salva quem criou o evento
-        });
+          createdBy: ctx.user.username,
+        };
+        if (input.workplaceId !== undefined) {
+           eventData.workplaceId = input.workplaceId;
+        }
+
+        const event = await db.createEvent(eventData);
         return event ? normalizeEvent(event) : null;
       }),
     
+    // ATUALIZADO: Aceita workplaceId no Lote
     createMany: protectedProcedure
       .input(z.array(z.object({ 
         date: z.string(), 
@@ -326,32 +334,54 @@ export const appRouter = router({
         startTime: z.string().optional(),
         endTime: z.string().optional(),
         color: z.string().optional(),
-        isShift: z.boolean().default(true) 
+        isShift: z.boolean().default(true),
+        workplaceId: z.number().nullable().optional()
       })))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
-        const eventsToCreate = input.map(ev => ({
-          userId: effectiveUserId,
-          date: ev.date.substring(0, 10),
-          type: ev.type,
-          description: ev.description || null,
-          startTime: ev.startTime || null,
-          endTime: ev.endTime || null,
-          color: ev.color || null,
-          isShift: ev.isShift,
-          createdBy: ctx.user.username,
-        }));
+        const eventsToCreate = input.map(ev => {
+          const e: any = {
+            userId: effectiveUserId,
+            date: ev.date.substring(0, 10),
+            type: ev.type,
+            description: ev.description || null,
+            startTime: ev.startTime || null,
+            endTime: ev.endTime || null,
+            color: ev.color || null,
+            isShift: ev.isShift,
+            createdBy: ctx.user.username,
+          };
+          if (ev.workplaceId !== undefined) e.workplaceId = ev.workplaceId;
+          return e;
+        });
         const results = await db.createManyEvents(eventsToCreate);
         return results.map(normalizeEvent);
       }),
     
+    // ATUALIZADO: Aceita workplaceId e IMPEDE manipulação indevida de isPassed
     update: protectedProcedure
-      .input(z.object({ id: z.number(), date: z.string().optional(), type: z.string().optional(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isPassed: z.boolean().optional(), passedReason: z.string().optional() }))
+      .input(z.object({ 
+        id: z.number(), 
+        date: z.string().optional(), 
+        type: z.string().optional(), 
+        description: z.string().optional(), 
+        startTime: z.string().optional(), 
+        endTime: z.string().optional(), 
+        color: z.string().optional(), 
+        isPassed: z.boolean().optional(), 
+        passedReason: z.string().max(500, "Justificativa muito longa").optional(), 
+        workplaceId: z.number().nullable().optional() 
+      }))
       .mutation(async ({ input, ctx }) => {
         // Verifica se o usuário pode editar (admin ou criador do evento)
         const event = await db.getEventById(input.id);
         if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Evento não encontrado." });
         
+        // Bloqueio de Privacidade: Apenas admin pode alterar isPassed na rota update padrão
+        if (input.isPassed !== undefined && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Apenas administradores podem auditar ou passar eventos." });
+        }
+
         // Treinadoras só podem editar eventos que elas criaram (Musculação/Pilates)
         if (ctx.user.role === "trainer") {
           if (event.createdBy !== ctx.user.username) {
@@ -369,12 +399,15 @@ export const appRouter = router({
         if (data.color !== undefined) updateData.color = data.color || null;
         if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
         if (data.passedReason !== undefined) updateData.passedReason = data.passedReason;
+        if (data.workplaceId !== undefined) updateData.workplaceId = data.workplaceId;
+        
         const effectiveUserId = await getEffectiveUserId(ctx.user);
         return await db.updateEvent(id, effectiveUserId, updateData);
       }),
     
+    // Assegurado que seja adminProcedure e imposto max chars
     passShift: adminProcedure
-      .input(z.object({ id: z.number(), reason: z.string() }))
+      .input(z.object({ id: z.number(), reason: z.string().max(500, "Justificativa muito longa") }))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
         const event = await db.updateEvent(input.id, effectiveUserId, { isPassed: true, passedReason: input.reason });
@@ -389,7 +422,8 @@ export const appRouter = router({
         return event ? normalizeEvent(event) : null;
       }),
     
-    cancel: protectedProcedure
+    // Apenas Admins podem cancelar eventos globalmente
+    cancel: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
@@ -397,7 +431,7 @@ export const appRouter = router({
         return event ? normalizeEvent(event) : null;
       }),
     
-    undoCancel: protectedProcedure
+    undoCancel: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
@@ -405,7 +439,6 @@ export const appRouter = router({
         return event ? normalizeEvent(event) : null;
       }),
     
-    // ROTA DELETE ATUALIZADA AQUI:
     delete: protectedProcedure
       .input(z.object({ 
         id: z.number(), 
@@ -459,7 +492,7 @@ export const appRouter = router({
     
     resetPaidStatus: adminProcedure.mutation(async ({ ctx }) => { await db.resetExpensesPaidStatus(ctx.user.userId); return { success: true }; }),
 
-    // Resumo financeiro mensal com regras reais de faturamento
+    // --- NOVO MOTOR FINANCEIRO EXPLÍCITO ---
     monthlySummary: adminProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
@@ -470,180 +503,133 @@ export const appRouter = router({
         const totalFixed = fixedExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
         const totalVariable = variableExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
 
-        // === EVENTOS (range amplo para cobrir atrasos de pagamento) ===
+        // === EVENTOS ===
         const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
 
-        // Helper: calcula horas de um evento baseado no tipo
+        // Helper para extrair as horas de um evento independentemente do tipo
         const calcHours = (event: any): number => {
           if (event.isPassed) return 0;
-          const type = (event.type || "").toLowerCase();
-          const desc = (event.description || "").toLowerCase();
-          const fullText = `${type} ${desc}`;
-          const SHIFT_HOURS: Record<string, string> = {
-            "hc manhã": "7-13", "hc tarde": "13-19",
-            "corredor tarde": "13-19", "corredor manhã": "7-13",
-            "zona norte manhã": "7-13", "zona norte tarde": "13-19",
-            "noturno": "19-7", "apoio": "19-01",
-          };
-          let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
-          if (!timeMatch && SHIFT_HOURS[type]) {
-            timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
+          let startH = 0, endH = 0;
+          if (event.startTime && event.endTime) {
+              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
+              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
+              if (timeMatch && endMatch) {
+                  startH = parseInt(timeMatch[1], 10);
+                  endH = parseInt(endMatch[1], 10);
+              }
+          } else {
+              const fullText = `${event.type || ''} ${event.description || ''}`;
+              let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
+              if (!timeMatch) {
+                 const SHIFT_HOURS: Record<string, string> = {
+                   "hc manhã": "7-13", "hc tarde": "13-19",
+                   "corredor tarde": "13-19", "corredor manhã": "7-13",
+                   "zona norte manhã": "7-13", "zona norte tarde": "13-19",
+                   "noturno": "19-7", "apoio": "19-01",
+                 };
+                 const typeLower = (event.type || "").toLowerCase();
+                 if (SHIFT_HOURS[typeLower]) {
+                     timeMatch = SHIFT_HOURS[typeLower].match(/(\d{1,2})-(\d{1,2})/);
+                 }
+              }
+              if (timeMatch) {
+                  startH = parseInt(timeMatch[1], 10);
+                  endH = parseInt(timeMatch[2], 10);
+              }
           }
-          if (!timeMatch) return 0;
-          const startH = parseInt(timeMatch[1], 10);
-          const endH = parseInt(timeMatch[2], 10);
+          if (startH === 0 && endH === 0) return 0;
           let diff = endH - startH;
           if (diff < 0) diff += 24;
           return diff;
         };
 
-        // === MOTOR DINÂMICO DE WORKPLACES ===
+        // === MOTOR EXPLÍCITO DE WORKPLACES ===
         const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
+        
+        let workplacesSummary = [];
+        let totalRecebimentos = 0;
 
-        // Se não há workplaces configurados, usa lógica legada (ZN/HC hardcoded)
-        const VALOR_HORA_ZN = 136;
-        const VALOR_HORA_HC = 108;
-        const HC_DELAY_MONTHS = 3;
+        // Processa hospitais criados pelo usuário
+        for (const wp of userWorkplaces) {
+          const rate = parseFloat(String(wp.hourlyRate));
+          const delay = wp.paymentDelayMonths;
 
-        let workplacesSummary: Array<{
-          id: number;
-          name: string;
-          hourlyRate: number;
-          hours: number;
-          total: number;
-          refStart: string;
-          refEnd: string;
-          paymentDay: number;
-          cycleStartDay: number;
-          cycleEndDay: number;
-        }> = [];
+          let refMonth = input.month - delay;
+          let refYear = input.year;
+          while (refMonth < 1) { refMonth += 12; refYear--; }
 
-        if (userWorkplaces.length > 0) {
-          // Motor dinâmico: calcula para cada workplace
-          for (const wp of userWorkplaces) {
-            const rate = parseFloat(String(wp.hourlyRate));
-            const delay = wp.paymentDelayMonths;
-            const keywords = wp.keywords.split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
-
-            // CORREÇÃO: Mostrar ciclo anterior com consideração de atraso de pagamento
-            // ZN (delay=0): Em maio, mostra ciclo de abril
-            // HC (delay=3): Em maio, mostra ciclo de fevereiro (maio - 3 = fevereiro)
-            let refMonth = input.month - 1 - delay;
-            let refYear = input.year;
-            while (refMonth < 1) { refMonth += 12; refYear--; }
-
-            // Calcular datas do ciclo
-            let cycleStartMonth = refMonth;
-            let cycleStartYear = refYear;
-            // Se cycleStartDay > cycleEndDay, o ciclo começa no mês anterior
-            if (wp.cycleStartDay > wp.cycleEndDay) {
-              cycleStartMonth = refMonth - 1;
-              if (cycleStartMonth < 1) { cycleStartMonth = 12; cycleStartYear--; }
-            }
-            const refStart = `${cycleStartYear}-${String(cycleStartMonth).padStart(2, '0')}-${String(wp.cycleStartDay).padStart(2, '0')}`;
-            const refEnd = `${refYear}-${String(refMonth).padStart(2, '0')}-${String(wp.cycleEndDay).padStart(2, '0')}`;
-
-            // Filtrar eventos que correspondem às keywords e ao range de datas
-            let wpHours = 0;
-            for (const event of allEvents) {
-              const eventDate = event.date;
-              if (eventDate < refStart || eventDate > refEnd) continue;
-              const fullText = `${(event.type || '').toLowerCase()} ${(event.description || '').toLowerCase()}`;
-              const matches = keywords.some(kw => fullText.includes(kw));
-              if (!matches) continue;
-              wpHours += calcHours(event);
-            }
-
-            workplacesSummary.push({
-              id: wp.id,
-              name: wp.name,
-              hourlyRate: rate,
-              hours: wpHours,
-              total: wpHours * rate,
-              refStart,
-              refEnd,
-              paymentDay: wp.paymentDay,
-              cycleStartDay: wp.cycleStartDay,
-              cycleEndDay: wp.cycleEndDay,
-            });
+          let cycleStartMonth = refMonth;
+          let cycleStartYear = refYear;
+          if (wp.cycleStartDay > wp.cycleEndDay) {
+            cycleStartMonth = refMonth - 1;
+            if (cycleStartMonth < 1) { cycleStartMonth = 12; cycleStartYear--; }
           }
-        } else {
-          // Fallback legado: ZN e HC hardcoded
-          const isZNGroup = (event: any): boolean => {
-            const t = (event.type || "").toLowerCase();
-            const d = (event.description || "").toLowerCase();
-            const full = `${t} ${d}`;
-            return full.includes("zn") || full.includes("zona norte") || full.includes("noturno")
-              || full.includes("apoio") || full.includes("corredor") || full.includes("observação") || full.includes("observacao")
-              || full.includes("porta") || full.includes("sala");
-          };
-          const isHC = (event: any): boolean => {
-            const t = (event.type || "").toLowerCase();
-            return t.includes("hc") || t.includes("home care") || t.includes("enfermaria");
-          };
+          const refStart = `${cycleStartYear}-${String(cycleStartMonth).padStart(2, '0')}-${String(wp.cycleStartDay).padStart(2, '0')}`;
+          const refEnd = `${refYear}-${String(refMonth).padStart(2, '0')}-${String(wp.cycleEndDay).padStart(2, '0')}`;
 
-          let znStartMonth = input.month - 1;
-          let znStartYear = input.year;
-          if (znStartMonth < 1) { znStartMonth = 12; znStartYear--; }
-          const znStartDate = `${znStartYear}-${String(znStartMonth).padStart(2, '0')}-20`;
-          const znEndDate = `${input.year}-${String(input.month).padStart(2, '0')}-19`;
-          let znHours = 0;
-          allEvents.forEach(event => {
-            if (event.date < znStartDate || event.date > znEndDate) return;
-            if (!isZNGroup(event)) return;
-            znHours += calcHours(event);
-          });
-          workplacesSummary.push({
-            id: -1, name: "Zona Norte (legado)", hourlyRate: VALOR_HORA_ZN,
-            hours: znHours, total: znHours * VALOR_HORA_ZN,
-            refStart: znStartDate, refEnd: znEndDate, paymentDay: 5,
-            cycleStartDay: 20, cycleEndDay: 19,
-          });
+          let wpHours = 0;
+          let breakdown: Record<string, number> = {};
 
-          let hcMonth = input.month - HC_DELAY_MONTHS;
-          let hcYear = input.year;
-          while (hcMonth < 1) { hcMonth += 12; hcYear--; }
-          const hcStartDate = `${hcYear}-${String(hcMonth).padStart(2, '0')}-01`;
-          const hcLastDay = new Date(hcYear, hcMonth, 0).getDate();
-          const hcEndDate = `${hcYear}-${String(hcMonth).padStart(2, '0')}-${String(hcLastDay).padStart(2, '0')}`;
-          let hcHours = 0;
-          allEvents.forEach(event => {
-            if (event.date < hcStartDate || event.date > hcEndDate) return;
-            if (!isHC(event)) return;
-            hcHours += calcHours(event);
-          });
+          for (const event of allEvents) {
+            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
+            if (eventDate < refStart || eventDate > refEnd) continue;
+            
+            // CONDIÇÃO EXPLICITA: Só soma se o ID bater! Zero mágica de palavras.
+            if (event.workplaceId === wp.id) {
+               const h = calcHours(event);
+               wpHours += h;
+               const typeName = event.type || "Outro";
+               breakdown[typeName] = (breakdown[typeName] || 0) + h;
+            }
+          }
+
+          const wpTotal = wpHours * rate;
+          totalRecebimentos += wpTotal;
+
           workplacesSummary.push({
-            id: -2, name: "Home Care (legado)", hourlyRate: VALOR_HORA_HC,
-            hours: hcHours, total: hcHours * VALOR_HORA_HC,
-            refStart: hcStartDate, refEnd: hcEndDate, paymentDay: 5,
-            cycleStartDay: 1, cycleEndDay: 31,
+            id: wp.id,
+            name: wp.name,
+            hourlyRate: rate,
+            hours: wpHours,
+            total: wpTotal,
+            refStart,
+            refEnd,
+            paymentDay: wp.paymentDay,
+            cycleStartDay: wp.cycleStartDay,
+            cycleEndDay: wp.cycleEndDay,
+            breakdown 
           });
         }
 
-        const totalRecebimentos = workplacesSummary.reduce((sum, wp) => sum + wp.total, 0);
+        // PLANTÕES AVULSOS (Aqueles marcados como isShift mas sem workplaceId)
+        let avulsoHours = 0;
+        let avulsoBreakdown: Record<string, number> = {};
+        const startAvulso = `${input.year}-${String(input.month).padStart(2, '0')}-01`;
+        const lastDay = new Date(input.year, input.month, 0).getDate();
+        const endAvulso = `${input.year}-${String(input.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        for (const event of allEvents) {
+            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
+            if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            
+            // É plantão, mas não tem vínculo com nenhum hospital
+            if (event.isShift && !event.workplaceId) {
+               const h = calcHours(event);
+               avulsoHours += h;
+               const typeName = event.type || "Outro";
+               avulsoBreakdown[typeName] = (avulsoBreakdown[typeName] || 0) + h;
+            }
+        }
 
         return {
           month: input.month,
           year: input.year,
-          // Workplaces dinâmicos
           workplacesSummary,
-          // Legado (compatibilidade com frontend antigo)
-          znHours: workplacesSummary.find(w => w.id === -1)?.hours ?? workplacesSummary[0]?.hours ?? 0,
-          znBreakdown: { zn: 0, noturno: 0, apoio: 0, observacao: 0, porta: 0, sala: 0 },
-          znRefStart: workplacesSummary[0]?.refStart ?? '',
-          znRefEnd: workplacesSummary[0]?.refEnd ?? '',
-          valorHoraZN: VALOR_HORA_ZN,
-          totalZN: workplacesSummary.find(w => w.id === -1)?.total ?? workplacesSummary[0]?.total ?? 0,
-          hcHours: workplacesSummary.find(w => w.id === -2)?.hours ?? workplacesSummary[1]?.hours ?? 0,
-          hcRefMonth: input.month,
-          hcRefYear: input.year,
-          valorHoraHC: VALOR_HORA_HC,
-          totalHC: workplacesSummary.find(w => w.id === -2)?.total ?? workplacesSummary[1]?.total ?? 0,
-          // Despesas
+          avulsoHours,
+          avulsoBreakdown,
           totalFixed,
           totalVariable,
           totalDespesas: totalFixed + totalVariable,
-          // Saldo
           totalRecebimentos,
           saldoEstimado: totalRecebimentos - totalFixed,
         };
@@ -678,23 +664,38 @@ export const appRouter = router({
 
   // Medications router
   medications: router({
-    list: adminProcedure.query(async ({ ctx }) => await db.getMedicationsByUserId(ctx.user.userId)),
+    list: adminProcedure.query(async ({ ctx }) => {
+      return await db.getMedicationsByUserId(ctx.user.userId);
+    }),
     
     create: adminProcedure
       .input(z.object({ name: z.string(), time: z.string(), order: z.number().optional() }))
-      .mutation(async ({ input, ctx }) => await db.createMedication({ userId: ctx.user.userId, name: input.name, time: input.time, order: input.order || 0 })),
+      .mutation(async ({ input, ctx }) => {
+        return await db.createMedication({ userId: ctx.user.userId, name: input.name, time: input.time, order: input.order || 0 });
+      }),
     
     update: adminProcedure
       .input(z.object({ id: z.number(), name: z.string().optional(), time: z.string().optional(), order: z.number().optional() }))
-      .mutation(async ({ input, ctx }) => { const { id, ...rest } = input; const data: Record<string, unknown> = {}; if (rest.name !== undefined) data.name = rest.name; if (rest.time !== undefined) data.time = rest.time; if (rest.order !== undefined) data.order = rest.order; return await db.updateMedication(id, ctx.user.userId, data as any); }),
+      .mutation(async ({ input, ctx }) => {
+        const { id, ...rest } = input;
+        const data: Record<string, unknown> = {};
+        if (rest.name !== undefined) data.name = rest.name;
+        if (rest.time !== undefined) data.time = rest.time;
+        if (rest.order !== undefined) data.order = rest.order;
+        return await db.updateMedication(id, ctx.user.userId, data as any);
+      }),
     
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input, ctx }) => await db.deleteMedication(input.id, ctx.user.userId)),
+      .mutation(async ({ input, ctx }) => {
+        return await db.deleteMedication(input.id, ctx.user.userId);
+      }),
     
     getLogs: adminProcedure
       .input(z.object({ date: z.string() }))
-      .query(async ({ input, ctx }) => await db.getMedicationLogsByDate(ctx.user.userId, input.date)),
+      .query(async ({ input, ctx }) => {
+        return await db.getMedicationLogsByDate(ctx.user.userId, input.date);
+      }),
     
     logTaken: adminProcedure
       .input(z.object({ medicationId: z.number(), date: z.string() }))

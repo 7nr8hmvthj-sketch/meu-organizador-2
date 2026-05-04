@@ -8,66 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ChevronLeft, ChevronRight, Pencil, Trash2, Plus } from "lucide-react";
-import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, isToday } from "date-fns";
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { normalizeDateKey } from "@/lib/dateUtils";
-
-// --- HELPERS ---
-
-function getEventColor(type: string, isPassed: boolean): string {
-  if (isPassed) return "bg-gray-100 dark:bg-gray-800 border-gray-300 text-gray-400";
-  const typeLower = (type || "").toLowerCase();
-  
-  if (typeLower.includes("natação") || typeLower.includes("natacao")) return "bg-blue-50 dark:bg-blue-900/30 border-blue-300 text-blue-700 dark:text-blue-300";
-  if (typeLower.includes("musculação") || typeLower.includes("musculacao")) return "bg-green-50 dark:bg-green-900/30 border-green-300 text-green-700 dark:text-green-300";
-  if (typeLower.includes("pilates")) return "bg-purple-50 dark:bg-purple-900/30 border-purple-300 text-purple-700 dark:text-purple-300";
-  if (typeLower.includes("hc")) return "bg-red-50 dark:bg-red-900/30 border-red-300 text-red-700 dark:text-red-300";
-  if (typeLower.includes("zn")) return "bg-amber-50 dark:bg-amber-900/30 border-amber-300 text-amber-700 dark:text-amber-300";
-  if (typeLower.includes("noturno")) return "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 text-indigo-700 dark:text-indigo-300";
-  if (typeLower.includes("apoio")) return "bg-pink-50 dark:bg-pink-900/30 border-pink-300 text-pink-700 dark:text-pink-300";
-  if (typeLower.includes("home care")) return "bg-teal-50 dark:bg-teal-900/30 border-teal-300 text-teal-700 dark:text-teal-300";
-  if (typeLower.includes("lembrete")) return "bg-gray-100 dark:bg-gray-800/30 border-gray-300 text-gray-700 dark:text-gray-300";
-  
-  return "bg-slate-50 dark:bg-slate-900/30 border-slate-300 text-slate-700 dark:text-slate-300";
-}
-
-function getEventLabel(event: { type?: string; description?: string | null }): string {
-  const type = event.type || "";
-  const desc = event.description || "";
-  
-  // Se o tipo contém intervalo de horário (ex: 7-13, 13-19, 19-01), retorna o tipo completo
-  if (/\d{1,2}-\d{1,2}/.test(type)) {
-    return type;
-  }
-  
-  const typeLower = type.toLowerCase();
-  
-  const timeMatchColon = desc.match(/(\d{1,2}:\d{2})/) || type.match(/(\d{1,2}:\d{2})/);
-  const timeMatchHyphen = type.match(/(\d{1,2}-\d{1,2})/);
-  let timeStr = timeMatchColon ? timeMatchColon[0] : (timeMatchHyphen ? timeMatchHyphen[0] : "");
-
-  let label = type;
-  if (typeLower.includes("natação") || typeLower.includes("natacao")) label = "Natação";
-  else if (typeLower.includes("musculação") || typeLower.includes("musculacao")) label = "Musculação";
-  else if (typeLower.includes("pilates")) label = "Pilates";
-  else if (typeLower.includes("hc")) label = "HC";
-  else if (typeLower.includes("zn") || typeLower.includes("zona norte")) label = "ZN";
-  else if (typeLower.includes("noturno")) label = "Noturno";
-  else if (typeLower.includes("apoio")) label = "Apoio";
-  
-  if (timeStr && !label.includes(timeStr)) {
-    return `${label} ${timeStr}`;
-  }
-  
-  return label;
-}
-
-function extractTimeFromDescription(desc: string): string {
-  if (!desc) return "";
-  const match = desc.match(/(\d{1,2}):(\d{2})/);
-  return match ? match[0] : "";
-}
+import { getEventColor, getEventLabel, extractTimeFromDescription } from "@/lib/eventUtils";
 
 // --- COMPONENT ---
 
@@ -334,16 +279,20 @@ export default function WeeklyCalendarPage() {
                     <p className="text-xs text-muted-foreground/50 text-center py-4">Sem eventos</p>
                   ) : (
                     dayEvents.slice(0, 4).map((e) => {
-                      // Determinar cor do indicador
+                      // Determinar cor do indicador usando classes padrão do tailwind baseado no getEventColor
                       const getIndicatorColor = () => {
                         if (e.isPassed) return 'bg-gray-400';
                         const typeLower = e.type.toLowerCase();
                         if (typeLower.includes('natação') || typeLower.includes('natacao')) return 'bg-blue-500';
                         if (typeLower.includes('musculação') || typeLower.includes('musculacao')) return 'bg-green-500';
                         if (typeLower.includes('pilates')) return 'bg-purple-500';
-                        if (typeLower.includes('hc')) return 'bg-red-500';
-                        if (typeLower.includes('zn') || typeLower.includes('zona norte')) return 'bg-amber-500';
+                        if (typeLower.includes('hc') || typeLower.includes('enfermaria')) return 'bg-red-500';
+                        if (typeLower.includes('zn') || typeLower.includes('zona norte') || typeLower.includes('porta')) return 'bg-amber-500';
+                        if (typeLower.includes('sala')) return 'bg-orange-500';
                         if (typeLower.includes('noturno')) return 'bg-indigo-500';
+                        if (typeLower.includes('apoio')) return 'bg-pink-500';
+                        if (typeLower.includes('home care')) return 'bg-teal-500';
+                        if (typeLower.includes('observação')) return 'bg-cyan-500';
                         return 'bg-gray-400';
                       };
                       
@@ -430,9 +379,13 @@ export default function WeeklyCalendarPage() {
                     if (typeLower.includes('natação') || typeLower.includes('natacao')) return 'bg-blue-500';
                     if (typeLower.includes('musculação') || typeLower.includes('musculacao')) return 'bg-green-500';
                     if (typeLower.includes('pilates')) return 'bg-purple-500';
-                    if (typeLower.includes('hc')) return 'bg-red-500';
-                    if (typeLower.includes('zn') || typeLower.includes('zona norte')) return 'bg-amber-500';
+                    if (typeLower.includes('hc') || typeLower.includes('enfermaria')) return 'bg-red-500';
+                    if (typeLower.includes('zn') || typeLower.includes('zona norte') || typeLower.includes('porta')) return 'bg-amber-500';
+                    if (typeLower.includes('sala')) return 'bg-orange-500';
                     if (typeLower.includes('noturno')) return 'bg-indigo-500';
+                    if (typeLower.includes('apoio')) return 'bg-pink-500';
+                    if (typeLower.includes('home care')) return 'bg-teal-500';
+                    if (typeLower.includes('observação')) return 'bg-cyan-500';
                     return 'bg-gray-400';
                   };
                   
