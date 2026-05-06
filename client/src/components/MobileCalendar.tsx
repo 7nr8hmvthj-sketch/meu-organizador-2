@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, isToday, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,6 +17,8 @@ interface MobileCalendarProps {
   onEditEvent: (event: any) => void;
   onDeleteEvent: (event: any) => void;
   onTodayClick: () => void;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
   getEventColor: (type: string, isPassed: boolean) => string;
   normalizeDateKey: (date: Date) => string;
 }
@@ -34,6 +36,8 @@ export function MobileCalendar({
   onEditEvent,
   onDeleteEvent,
   onTodayClick,
+  onPrevMonth,
+  onNextMonth,
   getEventColor,
   normalizeDateKey,
 }: MobileCalendarProps) {
@@ -56,15 +60,15 @@ export function MobileCalendar({
     <Card className="shadow-md md:hidden">
       <CardHeader className="pb-3 border-b">
         <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={onTodayClick}>
-            Hoje
-          </Button>
-          <CardTitle className="text-base font-semibold uppercase">
-            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-          </CardTitle>
-          <Button variant="ghost" size="icon" onClick={onAddEvent}>
-            <Plus className="w-5 h-5" />
-          </Button>
+          <Button variant="ghost" size="sm" onClick={onTodayClick}>Hoje</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onPrevMonth}><ChevronLeft className="w-4 h-4" /></Button>
+            <CardTitle className="text-base font-semibold uppercase">
+              {format(currentMonth, "MMM yyyy", { locale: ptBR })}
+            </CardTitle>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onNextMonth}><ChevronRight className="w-4 h-4" /></Button>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onAddEvent}><Plus className="w-5 h-5" /></Button>
         </div>
       </CardHeader>
 

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock, FileSpreadsheet, Building } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Pencil, Trash2, Plus, BookOpen, Tags, Filter, Briefcase, Heart, LayoutGrid, DollarSign, TrendingUp, ChevronDown, ChevronUp, Clock, FileSpreadsheet, Building, Circle } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -128,6 +128,7 @@ export default function CalendarPage() {
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [eventColor, setEventColor] = useState<string>("default");
+  const [viewMode, setViewMode] = useState<'text' | 'dots'>('text');
   
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showWorkplaceManager, setShowWorkplaceManager] = useState(false);
@@ -491,24 +492,21 @@ export default function CalendarPage() {
                 <div className="text-xs font-semibold mb-1">
                   {format(day, "d")}
                 </div>
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 2).map((event, idx) => (
-                    <div
-                      key={idx}
-                      className={`text-xs p-1 rounded truncate ${getEventColor(event.type, event.isPassed || false)}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditEventClick(event);
-                      }}
-                    >
-                      {getEventLabel({ type: event.type, description: event.description })}
-                    </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <div className="text-xs text-muted-foreground">
-                      +{dayEvents.length - 2} mais
-                    </div>
-                  )}
+                <div className={`w-full ${viewMode === 'dots' ? 'flex flex-wrap gap-1 mt-1' : 'space-y-0.5'} overflow-hidden`}>
+                  {dayEvents.slice(0, viewMode === 'text' ? 4 : 12).map((e: any) => {
+                    const baseColor = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
+                    if (viewMode === 'dots') {
+                      const colorMatch = baseColor.match(/text-([a-z]+)-700/);
+                      const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
+                      return <div key={e.id} className={`w-2.5 h-2.5 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""}`} title={getEventLabel({type: e.type, description: e.description})} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }} />;
+                    }
+                    return (
+                      <div key={e.id} className={`text-[9px] px-1 py-[1px] leading-tight rounded-[2px] truncate w-full border-l-2 text-left font-medium ${baseColor} ${e.isPassed ? "line-through opacity-60" : ""}`} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }}>
+                        <span className="font-bold mr-0.5">{e.startTime}</span>{getEventLabel({type: e.type, description: e.description})}
+                      </div>
+                    );
+                  })}
+                  {dayEvents.length > (viewMode === 'text' ? 4 : 12) && <div className="text-[9px] text-muted-foreground pl-1 mt-0.5">+{dayEvents.length - (viewMode === 'text' ? 4 : 12)} mais</div>}
                 </div>
               </div>
             );
@@ -538,6 +536,10 @@ export default function CalendarPage() {
           >
             Pessoal
           </Button>
+          <div className="flex items-center bg-muted/50 rounded-md p-0.5 ml-4">
+            <Button variant={viewMode === "text" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("text")}>Texto</Button>
+            <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}><Circle className="w-3 h-3 mr-1" /> Bolinhas</Button>
+          </div>
         </div>
 
         {/* Events List */}
