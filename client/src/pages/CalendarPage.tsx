@@ -497,11 +497,14 @@ export default function CalendarPage() {
         </div>
 
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
+        <div className="grid grid-cols-7 gap-1 auto-rows-fr mb-4">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
             <div key={day} className="text-center font-semibold text-xs py-2">
               {day}
             </div>
+          ))}
+          {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
+            <div key={`empty-${i}`} className="min-h-[100px] bg-gray-50/50 dark:bg-gray-900/10 rounded-md" />
           ))}
           {calendarDays.map((day) => {
             const dayKey = normalizeDateKey(day);
@@ -522,21 +525,21 @@ export default function CalendarPage() {
                 <div className="text-xs font-semibold mb-1">
                   {format(day, "d")}
                 </div>
-                <div className={`w-full ${viewMode === 'dots' ? 'flex flex-wrap gap-0.5 mt-1' : 'space-y-[1px]'} overflow-hidden`}>
-                  {dayEvents.slice(0, viewMode === 'text' ? 4 : 15).map((e: any) => {
+                <div className={`w-full ${viewMode === 'dots' ? 'flex flex-row flex-wrap justify-center gap-1.5 mt-2' : 'space-y-1'} overflow-hidden`}>
+                  {dayEvents.slice(0, viewMode === 'text' ? 4 : 12).map((e: any) => {
                     const baseColorClasses = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
                     if (viewMode === 'dots') {
                       const colorMatch = baseColorClasses.match(/text-([a-z]+)-700/);
                       const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
-                      return <div key={e.id} className={`w-2.5 h-2.5 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""}`} title={getEventLabel({type: e.type, description: e.description})} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }} />;
+                      return <div key={e.id} className={`w-2 h-2 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""}`} title={getEventLabel({type: e.type, description: e.description})} />;
                     }
                     return (
-                      <div key={e.id} className={`text-[8px] px-1 py-[0.5px] leading-tight rounded-[1px] truncate w-full border-l-2 text-left font-bold ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }}>
-                        {e.startTime && <span className="font-extrabold mr-0.5">{e.startTime}</span>}{getEventLabel({type: e.type, description: e.description})}
+                      <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-[3px] truncate w-full border-l-4 text-left font-medium ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }}>
+                        {e.startTime && <span className="font-bold mr-1">{e.startTime}</span>}{getEventLabel({type: e.type, description: e.description})}
                       </div>
                     );
                   })}
-                  {dayEvents.length > (viewMode === 'text' ? 4 : 15) && <div className="text-[8px] text-muted-foreground pl-0.5 mt-0.5">+{dayEvents.length - (viewMode === 'text' ? 4 : 15)} mais</div>}
+                  {dayEvents.length > (viewMode === 'text' ? 4 : 12) && <div className="text-[10px] text-muted-foreground text-center mt-1">+{dayEvents.length - (viewMode === 'text' ? 4 : 12)} mais</div>}
                 </div>
               </div>
             );
