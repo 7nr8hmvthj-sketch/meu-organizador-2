@@ -394,7 +394,7 @@ export default function CalendarPage() {
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
     if (isTrainer) setShowAddTrainingModal(true);
-    else setShowDayModal(true);
+    // Desktop: não abre modal, mostra eventos inline abaixo do calendário
   };
 
   const handleNavigateMonth = (direction: "prev" | "next") => {
@@ -555,45 +555,65 @@ export default function CalendarPage() {
           </div>
         </div>
 
-        {/* Events List */}
-        <div className="space-y-2">
-          {filteredEvents.length > 0 ? (
-            filteredEvents.map((event: any) => (
-              <Card key={event.id} className={getEventColor(event.type, event.isPassed || false)}>
-                <CardContent className="pt-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold">{event.type}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {format(parseISO(event.date), "dd/MM/yyyy")}
-                    </p>
-                    {event.description && (
-                      <p className="text-sm">{event.description}</p>
-                    )}
+        {/* Eventos do Dia Selecionado - Inline (Desktop) */}
+        <div className="hidden md:block border-t pt-4 mt-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold">
+              {selectedDate
+                ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR })
+                : "Selecione um dia"}
+            </h3>
+            {isAdmin && selectedDate && (
+              <Button size="sm" onClick={() => setShowAddEventModal(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Novo Evento
+              </Button>
+            )}
+          </div>
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {(() => {
+              const dayKey = selectedDate ? normalizeDateKey(selectedDate) : "";
+              const dayEvents = dayKey ? (eventsByDate[dayKey] || []) : [];
+              if (!selectedDate) return <p className="text-center text-muted-foreground text-sm py-4">Clique num dia para ver os eventos.</p>;
+              if (dayEvents.length === 0) return <p className="text-center text-muted-foreground text-sm py-4">Sem eventos neste dia.</p>;
+              return dayEvents.map((event: any) => {
+                const colorClass = event.color || getEventColor(event.type, event.isPassed || false);
+                const bgMatch = colorClass.match(/bg-([a-z]+)-/);
+                const barColor = bgMatch ? `bg-${bgMatch[1]}-400` : "bg-slate-400";
+                return (
+                  <div key={event.id} className="flex shadow-sm rounded-md bg-card border overflow-hidden">
+                    <div className={`w-3 shrink-0 ${barColor} ${event.isPassed ? "opacity-50" : ""}`}></div>
+                    <div className={`flex-1 p-3 flex justify-between items-center ${event.isPassed ? "opacity-60" : ""}`}>
+                      <div className="flex-1 pr-2">
+                        {event.startTime && (
+                          <div className="text-[11px] text-muted-foreground font-medium mb-0.5">
+                            {event.startTime} {event.endTime ? `- ${event.endTime}` : ""}
+                          </div>
+                        )}
+                        <div className="text-sm font-bold text-foreground leading-tight">
+                          {event.description && event.description.length > 2 && event.description !== event.type
+                            ? event.description
+                            : event.type}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground mt-0.5">
+                          {event.type} {event.isPassed && "(Repassado)"}
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <div className="flex gap-2 shrink-0">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted/50" onClick={() => handleEditEventClick(event)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 bg-red-50 dark:bg-red-900/20 text-red-500 hover:text-red-700" onClick={() => handleDeleteClick(event)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditEventClick(event)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDeleteClick(event)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhum evento neste período
-            </p>
-          )}
+                );
+              });
+            })()}
+          </div>
         </div>
       </div>
 

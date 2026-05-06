@@ -535,3 +535,4 @@
 - [x] Fix: Adicionar Domingo ao calendário semanal (WeeklyCalendarPage)
 - [x] Fix: Novos usuários (ex: Yana) sem acesso ao menu lateral - corrigir filtro adminOnly
 - [x] Fix: Bolinhas do desktop devem ficar iguais às do mobile (tamanho, disposição, estilo)
+- [ ] Fix: Desktop - clique no dia mostra eventos inline abaixo do calendário (sem popup)
