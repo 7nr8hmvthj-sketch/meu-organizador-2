@@ -406,7 +406,7 @@ export default function CalendarPage() {
     <div className="w-full max-w-full bg-background">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background border-b">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3 gap-4">
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5" />
             <h1 className="text-lg font-semibold">Calendário</h1>
@@ -492,25 +492,34 @@ export default function CalendarPage() {
                 <div className="text-xs font-semibold mb-1">
                   {format(day, "d")}
                 </div>
-                <div className={`w-full ${viewMode === 'dots' ? 'flex flex-wrap gap-1 mt-1' : 'space-y-0.5'} overflow-hidden`}>
-                  {dayEvents.slice(0, viewMode === 'text' ? 4 : 12).map((e: any) => {
-                    const baseColor = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
+                <div className={`w-full ${viewMode === 'dots' ? 'flex flex-wrap gap-0.5 mt-1' : 'space-y-[1px]'} overflow-hidden`}>
+                  {dayEvents.slice(0, viewMode === 'text' ? 4 : 15).map((e: any) => {
+                    const baseColorClasses = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
                     if (viewMode === 'dots') {
-                      const colorMatch = baseColor.match(/text-([a-z]+)-700/);
+                      const colorMatch = baseColorClasses.match(/text-([a-z]+)-700/);
                       const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
                       return <div key={e.id} className={`w-2.5 h-2.5 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""}`} title={getEventLabel({type: e.type, description: e.description})} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }} />;
                     }
                     return (
-                      <div key={e.id} className={`text-[9px] px-1 py-[1px] leading-tight rounded-[2px] truncate w-full border-l-2 text-left font-medium ${baseColor} ${e.isPassed ? "line-through opacity-60" : ""}`} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }}>
-                        <span className="font-bold mr-0.5">{e.startTime}</span>{getEventLabel({type: e.type, description: e.description})}
+                      <div key={e.id} className={`text-[8px] px-1 py-[0.5px] leading-tight rounded-[1px] truncate w-full border-l-2 text-left font-bold ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }}>
+                        {e.startTime && <span className="font-extrabold mr-0.5">{e.startTime}</span>}{getEventLabel({type: e.type, description: e.description})}
                       </div>
                     );
                   })}
-                  {dayEvents.length > (viewMode === 'text' ? 4 : 12) && <div className="text-[9px] text-muted-foreground pl-1 mt-0.5">+{dayEvents.length - (viewMode === 'text' ? 4 : 12)} mais</div>}
+                  {dayEvents.length > (viewMode === 'text' ? 4 : 15) && <div className="text-[8px] text-muted-foreground pl-0.5 mt-0.5">+{dayEvents.length - (viewMode === 'text' ? 4 : 15)} mais</div>}
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Legenda Desktop */}
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] justify-center mt-3 pt-3 border-t">
+          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span>Natação</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div><span>Musculação</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500"></div><span>Pilates</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500"></div><span>HC</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div><span>ZN</span></div>
         </div>
 
         {/* Filter Buttons */}

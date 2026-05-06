@@ -21,18 +21,17 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, CalendarDays, CalendarRange, Briefcase, FileText } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Agenda Mensal", path: "/" },
-  { icon: LayoutDashboard, label: "Agenda Semanal", path: "/semana" },
-  { icon: Users, label: "Diário", path: "/diario", adminOnly: true },
-  { icon: Users, label: "Medicações", path: "/medicacoes", adminOnly: true },
-  { icon: Users, label: "Eventos Anuais", path: "/eventos", adminOnly: true },
+  { icon: CalendarDays, label: "mensal", path: "/" },
+  { icon: CalendarRange, label: "semanal", path: "/semana" },
+  { icon: Briefcase, label: "Faturamento", path: "/workplaces", adminOnly: true },
+  { icon: FileText, label: "Diário", path: "/diario", adminOnly: true },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
