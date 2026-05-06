@@ -96,6 +96,7 @@ const normalizeEvent = (event: any) => ({
   ...event,
   userId: event.userId,
   workplaceId: event.workplaceId ?? null,
+  value: event.value ?? null,
   isShift: event.isShift,
   isPassed: event.isPassed,
   passedReason: event.passedReason,
@@ -303,7 +304,7 @@ export const appRouter = router({
     
     // ATUALIZADO: Aceita workplaceId
     create: protectedProcedure
-      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true), workplaceId: z.number().nullable().optional() }))
+      .input(z.object({ date: z.string(), type: z.string(), description: z.string().optional(), startTime: z.string().optional(), endTime: z.string().optional(), color: z.string().optional(), isShift: z.boolean().default(true), workplaceId: z.number().nullable().optional(), value: z.number().nullable().optional() }))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
         const eventData: any = {
@@ -320,6 +321,9 @@ export const appRouter = router({
         if (input.workplaceId !== undefined) {
            eventData.workplaceId = input.workplaceId;
         }
+        if (input.value !== undefined) {
+           eventData.value = input.value !== null ? String(input.value) : null;
+        }
 
         const event = await db.createEvent(eventData);
         return event ? normalizeEvent(event) : null;
@@ -335,7 +339,8 @@ export const appRouter = router({
         endTime: z.string().optional(),
         color: z.string().optional(),
         isShift: z.boolean().default(true),
-        workplaceId: z.number().nullable().optional()
+        workplaceId: z.number().nullable().optional(),
+        value: z.number().nullable().optional()
       })))
       .mutation(async ({ input, ctx }) => {
         const effectiveUserId = await getEffectiveUserId(ctx.user);
@@ -370,7 +375,8 @@ export const appRouter = router({
         color: z.string().optional(), 
         isPassed: z.boolean().optional(), 
         passedReason: z.string().max(500, "Justificativa muito longa").optional(), 
-        workplaceId: z.number().nullable().optional() 
+        workplaceId: z.number().nullable().optional(),
+        value: z.number().nullable().optional()
       }))
       .mutation(async ({ input, ctx }) => {
         // Verifica se o usuário pode editar (admin ou criador do evento)
@@ -400,6 +406,7 @@ export const appRouter = router({
         if (data.isPassed !== undefined) updateData.isPassed = data.isPassed;
         if (data.passedReason !== undefined) updateData.passedReason = data.passedReason;
         if (data.workplaceId !== undefined) updateData.workplaceId = data.workplaceId;
+        if (data.value !== undefined) updateData.value = data.value !== null ? String(data.value) : null;
         
         const effectiveUserId = await getEffectiveUserId(ctx.user);
         return await db.updateEvent(id, effectiveUserId, updateData);

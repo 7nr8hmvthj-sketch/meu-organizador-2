@@ -128,6 +128,7 @@ export default function CalendarPage() {
   const [startTime, setStartTime] = useState<string>("");
   const [endTime, setEndTime] = useState<string>("");
   const [eventColor, setEventColor] = useState<string>("default");
+  const [eventValue, setEventValue] = useState<string>("");
   const [viewMode, setViewMode] = useState<'text' | 'dots'>('text');
   
   const [showCategoryManager, setShowCategoryManager] = useState(false);
@@ -328,6 +329,7 @@ export default function CalendarPage() {
       color: eventColor !== "default" ? eventColor : undefined,
       isShift: false,
       workplaceId: workplaceId ? Number(workplaceId) : undefined,
+      value: eventValue ? Number(eventValue) : undefined,
     });
   };
 
@@ -343,6 +345,7 @@ export default function CalendarPage() {
       color: eventColor !== "default" ? eventColor : undefined,
       isPassed: isPassed,
       workplaceId: workplaceId ? Number(workplaceId) : undefined,
+      value: eventValue ? Number(eventValue) : null,
     });
   };
 
@@ -365,6 +368,7 @@ export default function CalendarPage() {
     setEventColor(event.color ?? "default");
     setIsPassed(event.isPassed || false);
     setWorkplaceId(event.workplaceId ?? "");
+    setEventValue(event.value ? String(event.value) : "");
     setShowEditModal(true);
   };
 
@@ -601,6 +605,7 @@ export default function CalendarPage() {
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-0.5">
                           {event.type} {event.isPassed && "(Repassado)"}
+                          {event.value && <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">R$ {Number(event.value).toFixed(2).replace('.', ',')}</span>}
                         </div>
                       </div>
                       {isAdmin && (
@@ -703,6 +708,7 @@ export default function CalendarPage() {
                     <div className="flex-1">
                       <p className="font-semibold text-sm">{getEventLabel({ type: event.type, description: event.description })}</p>
                       {event.description && <p className="text-xs text-muted-foreground mt-1">{event.description}</p>}
+                      {event.value && <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">R$ {Number(event.value).toFixed(2).replace('.', ',')}</p>}
                       <p className="text-xs text-muted-foreground mt-1">Criado por: {event.createdBy || 'Sistema'}</p>
                     </div>
                     <div className="flex gap-2">
@@ -780,6 +786,18 @@ export default function CalendarPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label>Valor do Plantão - R$ (opcional)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={eventValue}
+                onChange={(e) => setEventValue(e.target.value)}
+                placeholder="Ex: 150.00"
+              />
             </div>
           </div>
 
@@ -861,6 +879,18 @@ export default function CalendarPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label>Valor do Plantão - R$ (opcional)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={eventValue}
+                onChange={(e) => setEventValue(e.target.value)}
+                placeholder="Ex: 150.00"
+              />
             </div>
           </div>
 

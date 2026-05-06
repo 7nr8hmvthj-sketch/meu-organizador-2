@@ -41,6 +41,7 @@ export const events = pgTable("events", {
   isShift: boolean("isshift").default(true).notNull(),
   isPassed: boolean("ispassed").default(false).notNull(),
   passedReason: text("passedreason"),
+  value: numeric("value", { precision: 10, scale: 2 }),
   isCancelled: boolean("iscancelled").default(false).notNull(),
   createdBy: varchar("createdby", { length: 50 }),
   createdAt: timestamp("createdat", { withTimezone: true }).defaultNow().notNull(),

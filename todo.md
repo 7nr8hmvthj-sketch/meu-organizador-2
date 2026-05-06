@@ -536,3 +536,7 @@
 - [x] Fix: Novos usuários (ex: Yana) sem acesso ao menu lateral - corrigir filtro adminOnly
 - [x] Fix: Bolinhas do desktop devem ficar iguais às do mobile (tamanho, disposição, estilo)
 - [x] Fix: Desktop - clique no dia mostra eventos inline abaixo do calendário (sem popup)
+- [ ] Feat: Adicionar coluna 'value' (numeric) à tabela events no schema
+- [ ] Feat: Atualizar rotas tRPC para aceitar campo 'value' em criação/edição de eventos
+- [ ] Feat: Adicionar input de valor (R$) nos formulários de novo/editar evento
+- [ ] Feat: Exibir valor formatado (R$ X,XX) na visualização de eventos

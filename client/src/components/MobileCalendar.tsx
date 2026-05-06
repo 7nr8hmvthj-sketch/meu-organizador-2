@@ -164,6 +164,7 @@ export function MobileCalendar({
                         </div>
                         <div className="text-[11px] text-muted-foreground mt-0.5">
                           {event.type} {event.isPassed && "(Repassado)"}
+                          {event.value && <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">R$ {Number(event.value).toFixed(2).replace('.', ',')}</span>}
                         </div>
                       </div>
                       {isAdmin && (
