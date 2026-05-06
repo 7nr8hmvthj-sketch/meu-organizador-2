@@ -196,3 +196,21 @@ export const workplaces = pgTable("workplaces", {
 });
 export type Workplace = typeof workplaces.$inferSelect;
 export type InsertWorkplace = typeof workplaces.$inferInsert;
+
+
+// --- PLANTÕES SEM VÍNCULO (AVULSOS) ---
+/**
+ * Unlinked Rates - plantões avulsos sem vínculo com workplace
+ * Usados para eventos que não pertencem a nenhum local de trabalho específico
+ */
+export const unlinkedRates = pgTable("unlinked_rates", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: varchar("name", { length: 100 }).notNull(),
+  hourlyRate: numeric("hourly_rate", { precision: 10, scale: 2 }).notNull(),
+  type: varchar("type", { length: 20 }).notNull().default('automatico'),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type UnlinkedRate = typeof unlinkedRates.$inferSelect;
+export type InsertUnlinkedRate = typeof unlinkedRates.$inferInsert;

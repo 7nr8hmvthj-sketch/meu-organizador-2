@@ -12,7 +12,8 @@ import {
   categories, InsertCategory, Category,
   monthlyAdjustments, InsertMonthlyAdjustment, MonthlyAdjustment,
   agendaManagers, InsertAgendaManager, AgendaManager,
-  workplaces, InsertWorkplace, Workplace
+  workplaces, InsertWorkplace, Workplace,
+  unlinkedRates, InsertUnlinkedRate, UnlinkedRate
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { sql } from "drizzle-orm";
@@ -1033,6 +1034,55 @@ export async function deleteWorkplace(id: number, userId: number): Promise<boole
     return result.length > 0;
   } catch (error) {
     console.error("[Database] Delete workplace failed:", error);
+    return false;
+  }
+}
+
+
+// ─── Unlinked Rates (Plantões Avulsos) CRUD ──────────────────────────────────
+export async function getUnlinkedRates(userId: number): Promise<UnlinkedRate[]> {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    return await db.select().from(unlinkedRates).where(sql`${unlinkedRates.userId} = ${userId}`).orderBy(unlinkedRates.createdAt);
+  } catch (error) {
+    console.error("[Database] Get unlinked rates failed:", error);
+    return [];
+  }
+}
+
+export async function createUnlinkedRate(data: InsertUnlinkedRate): Promise<UnlinkedRate | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.insert(unlinkedRates).values(data).returning();
+    return result[0] ?? null;
+  } catch (error) {
+    console.error("[Database] Create unlinked rate failed:", error);
+    return null;
+  }
+}
+
+export async function updateUnlinkedRate(id: number, userId: number, data: Partial<Omit<InsertUnlinkedRate, "id" | "userId" | "createdAt">>): Promise<UnlinkedRate | null> {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const result = await db.update(unlinkedRates).set(data).where(sql`${unlinkedRates.id} = ${id} AND ${unlinkedRates.userId} = ${userId}`).returning();
+    return result[0] ?? null;
+  } catch (error) {
+    console.error("[Database] Update unlinked rate failed:", error);
+    return null;
+  }
+}
+
+export async function deleteUnlinkedRate(id: number, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    const result = await db.delete(unlinkedRates).where(sql`${unlinkedRates.id} = ${id} AND ${unlinkedRates.userId} = ${userId}`).returning();
+    return result.length > 0;
+  } catch (error) {
+    console.error("[Database] Delete unlinked rate failed:", error);
     return false;
   }
 }

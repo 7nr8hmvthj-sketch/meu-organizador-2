@@ -496,17 +496,17 @@ export const appRouter = router({
     monthlySummary: adminProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
-        // === DESPESAS ===
-        const allExpenses = await db.getExpensesByUserId(ctx.user.userId);
-        const fixedExpenses = allExpenses.filter(e => e.category === "fixed");
-        const variableExpenses = allExpenses.filter(e => e.category === "variable");
-        const totalFixed = fixedExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
-        const totalVariable = variableExpenses.reduce((sum, e) => sum + parseFloat(String(e.amount || "0")), 0);
+        let workedMonth = input.month - 1;
+        let workedYear = input.year;
+        if (workedMonth < 1) {
+          workedMonth = 12;
+          workedYear--;
+        }
 
-        // === EVENTOS ===
         const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
+        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
+        const unlinkedRatesList = await db.getUnlinkedRates(ctx.user.userId);
 
-        // Helper para extrair as horas de um evento independentemente do tipo
         const calcHours = (event: any): number => {
           if (event.isPassed) return 0;
           let startH = 0, endH = 0;
@@ -517,25 +517,6 @@ export const appRouter = router({
                   startH = parseInt(timeMatch[1], 10);
                   endH = parseInt(endMatch[1], 10);
               }
-          } else {
-              const fullText = `${event.type || ''} ${event.description || ''}`;
-              let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
-              if (!timeMatch) {
-                 const SHIFT_HOURS: Record<string, string> = {
-                   "hc manhã": "7-13", "hc tarde": "13-19",
-                   "corredor tarde": "13-19", "corredor manhã": "7-13",
-                   "zona norte manhã": "7-13", "zona norte tarde": "13-19",
-                   "noturno": "19-7", "apoio": "19-01",
-                 };
-                 const typeLower = (event.type || "").toLowerCase();
-                 if (SHIFT_HOURS[typeLower]) {
-                     timeMatch = SHIFT_HOURS[typeLower].match(/(\d{1,2})-(\d{1,2})/);
-                 }
-              }
-              if (timeMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(timeMatch[2], 10);
-              }
           }
           if (startH === 0 && endH === 0) return 0;
           let diff = endH - startH;
@@ -543,43 +524,28 @@ export const appRouter = router({
           return diff;
         };
 
-        // === MOTOR EXPLÍCITO DE WORKPLACES ===
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        
         let workplacesSummary = [];
         let totalRecebimentos = 0;
 
-        // Processa hospitais criados pelo usuário
         for (const wp of userWorkplaces) {
           const rate = parseFloat(String(wp.hourlyRate));
-          const delay = wp.paymentDelayMonths;
+          const cutoffDay = wp.cycleEndDay;
+          
+          let prevMonth = workedMonth - 1;
+          let prevYear = workedYear;
+          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
 
-          let refMonth = input.month - delay;
-          let refYear = input.year;
-          while (refMonth < 1) { refMonth += 12; refYear--; }
-
-          let cycleStartMonth = refMonth;
-          let cycleStartYear = refYear;
-          if (wp.cycleStartDay > wp.cycleEndDay) {
-            cycleStartMonth = refMonth - 1;
-            if (cycleStartMonth < 1) { cycleStartMonth = 12; cycleStartYear--; }
-          }
-          const refStart = `${cycleStartYear}-${String(cycleStartMonth).padStart(2, '0')}-${String(wp.cycleStartDay).padStart(2, '0')}`;
-          const refEnd = `${refYear}-${String(refMonth).padStart(2, '0')}-${String(wp.cycleEndDay).padStart(2, '0')}`;
+          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
+          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
 
           let wpHours = 0;
-          let breakdown: Record<string, number> = {};
 
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            // CONDIÇÃO EXPLICITA: Só soma se o ID bater! Zero mágica de palavras.
             if (event.workplaceId === wp.id) {
-               const h = calcHours(event);
-               wpHours += h;
-               const typeName = event.type || "Outro";
-               breakdown[typeName] = (breakdown[typeName] || 0) + h;
+               wpHours += calcHours(event);
             }
           }
 
@@ -592,46 +558,52 @@ export const appRouter = router({
             hourlyRate: rate,
             hours: wpHours,
             total: wpTotal,
-            refStart,
-            refEnd,
-            paymentDay: wp.paymentDay,
-            cycleStartDay: wp.cycleStartDay,
-            cycleEndDay: wp.cycleEndDay,
-            breakdown 
+            cycleStart: refStart,
+            cycleEnd: refEnd
           });
         }
 
-        // PLANTÕES AVULSOS (Aqueles marcados como isShift mas sem workplaceId)
-        let avulsoHours = 0;
-        let avulsoBreakdown: Record<string, number> = {};
-        const startAvulso = `${input.year}-${String(input.month).padStart(2, '0')}-01`;
-        const lastDay = new Date(input.year, input.month, 0).getDate();
-        const endAvulso = `${input.year}-${String(input.month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        let unlinkedSummary = [];
+        let unlinkedTotal = 0;
+        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
+        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
+        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-        for (const event of allEvents) {
+        for (const rateObj of unlinkedRatesList) {
+          let hours = 0;
+          const rateValue = parseFloat(String(rateObj.hourlyRate));
+
+          for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            // É plantão, mas não tem vínculo com nenhum hospital
-            if (event.isShift && !event.workplaceId) {
-               const h = calcHours(event);
-               avulsoHours += h;
-               const typeName = event.type || "Outro";
-               avulsoBreakdown[typeName] = (avulsoBreakdown[typeName] || 0) + h;
+            if (!event.workplaceId && event.type === rateObj.name) {
+               hours += calcHours(event);
             }
+          }
+
+          const total = hours * rateValue;
+          unlinkedTotal += total;
+          totalRecebimentos += total;
+
+          unlinkedSummary.push({
+            id: rateObj.id,
+            name: rateObj.name,
+            type: rateObj.type,
+            hourlyRate: rateValue,
+            hours: hours,
+            total: total
+          });
         }
 
         return {
-          month: input.month,
-          year: input.year,
+          receivingMonth: input.month,
+          receivingYear: input.year,
+          workedMonth,
+          workedYear,
           workplacesSummary,
-          avulsoHours,
-          avulsoBreakdown,
-          totalFixed,
-          totalVariable,
-          totalDespesas: totalFixed + totalVariable,
-          totalRecebimentos,
-          saldoEstimado: totalRecebimentos - totalFixed,
+          unlinkedSummary,
+          totalRecebimentos
         };
       }),
 
@@ -923,6 +895,24 @@ export const appRouter = router({
         if (!success) throw new TRPCError({ code: 'NOT_FOUND', message: 'Workplace not found or unauthorized' });
         return { success: true };
       }),
+  }),
+
+  unlinkedRates: router({
+    list: protectedProcedure.query(async ({ ctx }) => await db.getUnlinkedRates(ctx.user.userId)),
+    create: protectedProcedure
+      .input(z.object({ name: z.string().min(1), hourlyRate: z.number().positive(), type: z.string().default('automatico') }))
+      .mutation(async ({ ctx, input }) => await db.createUnlinkedRate({ userId: ctx.user.userId, name: input.name, hourlyRate: String(input.hourlyRate), type: input.type })),
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), name: z.string().min(1).optional(), hourlyRate: z.number().positive().optional(), type: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        const updateData: any = { ...data };
+        if (data.hourlyRate !== undefined) updateData.hourlyRate = String(data.hourlyRate);
+        return await db.updateUnlinkedRate(id, ctx.user.userId, updateData);
+      }),
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => await db.deleteUnlinkedRate(input.id, ctx.user.userId)),
   }),
 
   // User preferences router
