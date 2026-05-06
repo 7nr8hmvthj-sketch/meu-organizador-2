@@ -17,10 +17,10 @@ import { getEventColor, getEventLabel, extractTimeFromDescription } from "@/lib/
 // --- COMPONENT ---
 
 export default function WeeklyCalendarPage() {
-  // Começa na segunda-feira da semana atual
+  // Começa no domingo da semana atual
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const today = new Date();
-    return startOfWeek(today, { weekStartsOn: 1 }); // 1 = Segunda-feira
+    return startOfWeek(today, { weekStartsOn: 0 }); // 0 = Domingo
   });
   
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -87,10 +87,10 @@ export default function WeeklyCalendarPage() {
     setTrainingDescription("");
   };
 
-  // Gera os 6 dias da semana (segunda a sábado)
+  // Gera os 7 dias da semana (domingo a sábado)
   const weekDays = useMemo(() => {
     const days = [];
-    for (let i = 0; i < 6; i++) { // 0=seg, 1=ter, 2=qua, 3=qui, 4=sex, 5=sáb
+    for (let i = 0; i < 7; i++) { // 0=dom, 1=seg, 2=ter, 3=qua, 4=qui, 5=sex, 6=sáb
       days.push(addDays(currentWeekStart, i));
     }
     return days;
@@ -204,14 +204,14 @@ export default function WeeklyCalendarPage() {
   };
 
   const goToToday = () => {
-    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }));
+    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
   };
 
-  const dayNames = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+  const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
   // Formata o período da semana para exibição
   const weekPeriod = useMemo(() => {
-    const endOfWeekDate = addDays(currentWeekStart, 5); // Sábado
+    const endOfWeekDate = addDays(currentWeekStart, 6); // Sábado
     const startMonth = format(currentWeekStart, "MMM", { locale: ptBR });
     const endMonth = format(endOfWeekDate, "MMM", { locale: ptBR });
     

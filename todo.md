@@ -527,3 +527,11 @@
 - [x] Testar código errado (deve falhar)
 - [x] Testar código correto (deve passar)
 - [x] Checkpoint e publicação
+
+## Correções Urgentes (06/05/2026)
+
+- [ ] Fix: MobileCalendar exibir lista de eventos ao clicar no dia (inline, sem Dialog)
+- [ ] Fix: Renomear menu lateral - "Mensal" para agenda mensal, "Semanal" para agenda semanal
+- [ ] Fix: Adicionar Domingo ao calendário semanal (WeeklyCalendarPage)
+- [ ] Fix: Novos usuários (ex: Yana) sem acesso ao menu lateral - corrigir filtro adminOnly
+- [ ] Fix: Bolinhas do desktop devem ficar iguais às do mobile (tamanho, disposição, estilo)

@@ -28,8 +28,8 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: CalendarDays, label: "mensal", path: "/" },
-  { icon: CalendarRange, label: "semanal", path: "/semana" },
+  { icon: CalendarDays, label: "Mensal", path: "/" },
+  { icon: CalendarRange, label: "Semanal", path: "/semana" },
   { icon: Briefcase, label: "Faturamento", path: "/workplaces", adminOnly: true },
   { icon: FileText, label: "Diário", path: "/diario", adminOnly: true },
 ];

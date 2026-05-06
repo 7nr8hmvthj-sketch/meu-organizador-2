@@ -18,7 +18,8 @@ import DiaryPage from "./pages/DiaryPage";
 import { 
   LayoutDashboard, 
   Calendar, 
-  CalendarDays, 
+  CalendarDays,
+  CalendarRange,
   DollarSign, 
   Pill, 
   Sun as SunIcon,
@@ -56,10 +57,10 @@ function Navigation({ userRole, username }: NavigationProps) {
   // Define navigation items based on user role
   // excludeUsernames: lista de usernames que NÃO devem ver este item
   const allNavItems = [
-    { path: "/", label: "Calendário", icon: CalendarDays, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
+    { path: "/agenda", label: "Semanal", icon: CalendarRange, roles: ["admin", "trainer", "user"] },
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: ["PAULA"] },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: ["PAULA"] },
-    { path: "/agenda", label: "Calendário", icon: CalendarDays, roles: ["admin", "trainer"] },
     { path: "/diario", label: "Diário", icon: Book, roles: ["admin"], excludeUsernames: ["PAULA"] },
     { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"], excludeUsernames: ["PAULA"] },
     { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"], excludeUsernames: ["PAULA"] },

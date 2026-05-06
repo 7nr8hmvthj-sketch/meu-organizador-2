@@ -478,63 +478,81 @@ export default function CalendarPage() {
         </div>
 
         {/* Calendar Grid - Desktop Only */}
-        <div className="hidden md:grid grid-cols-7 gap-1 auto-rows-fr mb-4">
-          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-            <div key={day} className="text-center font-semibold text-[10px] md:text-xs py-1 md:py-2">
-              {day}
-            </div>
-          ))}
-          {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[60px] sm:min-h-[80px] md:min-h-[120px] bg-gray-50/50 dark:bg-gray-900/10 rounded-md" />
-          ))}
-          {calendarDays.map((day) => {
-            const dayKey = normalizeDateKey(day);
-            const dayEvents = eventsByDate[dayKey] || [];
-            const isCurrentMonth = isSameMonth(day, currentMonth);
-            const isTodayDate = isToday(day);
+        <div className="hidden md:block">
+          {/* Day Headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"].map((day) => (
+              <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-1">
+                {day}
+              </div>
+            ))}
+          </div>
 
-            return (
-              <button
-                key={dayKey}
-                onClick={() => handleDayClick(day)}
-                className={`min-h-[60px] sm:min-h-[80px] md:min-h-[120px] p-1 md:p-2 rounded-lg text-sm relative border transition-all flex flex-col items-center md:items-start gap-0.5 md:gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/10 md:bg-primary/5" : "border-transparent md:border-border bg-transparent md:bg-card hover:bg-muted/30 md:hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-30 md:opacity-40" : ""}`}
-              >
-                <span className={`text-[10px] md:text-xs font-bold w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full mb-0 md:mb-1 ${isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{format(day, "d")}</span>
-                
-                <div className={`w-full flex ${viewMode === 'dots' ? 'flex-row flex-wrap justify-center gap-1 md:gap-1.5 mt-1' : 'flex-row flex-wrap justify-center gap-1 mt-0.5 md:mt-0 md:flex-col md:space-y-1'} overflow-hidden`}>
-                  {dayEvents.slice(0, 12).map((e: any) => {
-                    const baseColorClasses = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
-                    const colorMatch = baseColorClasses.match(/text-([a-z]+)-700/);
-                    const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
-                    
-                    return (
-                      <div key={e.id} className="w-full flex justify-center md:block">
-                        {/* Bolinha (Forçada no Mobile, opcional no Desktop) */}
-                        <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""} ${viewMode === 'text' ? 'block md:hidden' : 'block'}`} title={getEventLabel({type: e.type, description: e.description})} />
-                        
-                        {/* Texto com Borda (Apenas Desktop) */}
-                        {viewMode === 'text' && (
-                          <div className={`hidden md:block text-[9px] md:text-[10px] px-1 md:px-1.5 py-[1px] md:py-0.5 rounded-[2px] md:rounded-[3px] truncate w-full border-l-2 md:border-l-4 text-left font-medium ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`}>
-                            {e.startTime && <span className="font-extrabold mr-0.5 md:mr-1">{e.startTime}</span>}
+          {/* Day Grid */}
+          <div className="grid grid-cols-7 gap-1 mb-4">
+            {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
+              <div key={`empty-${i}`} className="aspect-square bg-gray-50/50 dark:bg-gray-900/10 rounded" />
+            ))}
+            {calendarDays.map((day) => {
+              const dayKey = normalizeDateKey(day);
+              const dayEvents = eventsByDate[dayKey] || [];
+
+              return (
+                <button
+                  key={dayKey}
+                  onClick={() => handleDayClick(day)}
+                  className={`aspect-square flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all ${
+                    isToday(day)
+                      ? "bg-primary/10 ring-2 ring-primary/30 text-primary"
+                      : "bg-gray-50 dark:bg-gray-900/20 text-foreground hover:bg-muted/50"
+                  } ${!isSameMonth(day, currentMonth) ? "opacity-30" : ""}`}
+                >
+                  <span className={`text-sm font-bold ${isToday(day) ? "text-primary" : ""}`}>{format(day, "d")}</span>
+                  
+                  {viewMode === 'dots' ? (
+                    <div className="flex flex-wrap justify-center gap-[3px] mt-1 px-1">
+                      {dayEvents.slice(0, 6).map((e: any) => {
+                        const baseColorClasses = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
+                        const colorMatch = baseColorClasses.match(/text-([a-z]+)-700/);
+                        const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
+                        return (
+                          <div
+                            key={e.id}
+                            className={`w-2 h-2 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""}`}
+                            title={getEventLabel({type: e.type, description: e.description})}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-0.5 w-full px-1 mt-1 overflow-hidden">
+                      {dayEvents.slice(0, 4).map((e: any) => {
+                        const baseColorClasses = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
+                        return (
+                          <div key={e.id} className={`text-[9px] px-1 py-0.5 rounded-sm truncate w-full border-l-4 text-left font-medium ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`}>
+                            {e.startTime && <span className="font-extrabold mr-0.5">{e.startTime}</span>}
                             {getEventLabel({type: e.type, description: e.description})}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                        );
+                      })}
+                      {dayEvents.length > 4 && (
+                        <span className="text-[8px] text-muted-foreground text-center">+{dayEvents.length - 4}</span>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Legenda Desktop */}
-        <div className="hidden md:flex flex-wrap gap-x-3 gap-y-1 text-[10px] justify-center mt-3 pt-3 border-t">
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span>Natação</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div><span>Musculação</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500"></div><span>Pilates</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500"></div><span>HC</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div><span>ZN</span></div>
+          {/* Legenda Desktop */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs justify-center pt-3 border-t">
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span>Natação</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"></div><span>Musculação</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div><span>Pilates</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div><span>HC</span></div>
+            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span>ZN</span></div>
+          </div>
         </div>
 
         {/* Events List */}
