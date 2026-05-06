@@ -393,7 +393,8 @@ export default function CalendarPage() {
 
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
-    setShowDayModal(true);
+    if (isTrainer) setShowAddTrainingModal(true);
+    else setShowDayModal(true);
   };
 
   const handleNavigateMonth = (direction: "prev" | "next") => {
@@ -409,7 +410,7 @@ export default function CalendarPage() {
         <div className="flex items-center justify-between px-4 py-3 gap-4">
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5" />
-            <h1 className="text-lg font-semibold">Calendário</h1>
+            <h1 className="text-lg font-semibold">Agenda Mensal</h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -466,6 +467,35 @@ export default function CalendarPage() {
           </Button>
         </div>
 
+        {/* Filter Buttons and Toggle */}
+        <div className="flex gap-2 mb-4 mt-3 pt-3 border-t">
+          <Button
+            variant={calendarFilter === "todos" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCalendarFilter("todos")}
+          >
+            Todos
+          </Button>
+          <Button
+            variant={calendarFilter === "plantoes" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCalendarFilter("plantoes")}
+          >
+            Plantões
+          </Button>
+          <Button
+            variant={calendarFilter === "pessoal" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCalendarFilter("pessoal")}
+          >
+            Pessoal
+          </Button>
+          <div className="flex items-center bg-muted/50 rounded-md p-0.5 ml-4">
+            <Button variant={viewMode === "text" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("text")}>Texto</Button>
+            <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}><Circle className="w-3 h-3 mr-1" /> Bolinhas</Button>
+          </div>
+        </div>
+
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1 mb-4">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
@@ -520,35 +550,6 @@ export default function CalendarPage() {
           <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500"></div><span>Pilates</span></div>
           <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-red-500"></div><span>HC</span></div>
           <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-amber-500"></div><span>ZN</span></div>
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="flex gap-2 mb-4">
-          <Button
-            variant={calendarFilter === "todos" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCalendarFilter("todos")}
-          >
-            Todos
-          </Button>
-          <Button
-            variant={calendarFilter === "plantoes" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCalendarFilter("plantoes")}
-          >
-            Plantões
-          </Button>
-          <Button
-            variant={calendarFilter === "pessoal" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCalendarFilter("pessoal")}
-          >
-            Pessoal
-          </Button>
-          <div className="flex items-center bg-muted/50 rounded-md p-0.5 ml-4">
-            <Button variant={viewMode === "text" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("text")}>Texto</Button>
-            <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}><Circle className="w-3 h-3 mr-1" /> Bolinhas</Button>
-          </div>
         </div>
 
         {/* Events List */}
@@ -658,36 +659,34 @@ export default function CalendarPage() {
 
       {/* Day Modal */}
       <Dialog open={showDayModal} onOpenChange={setShowDayModal}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {selectedDate && format(selectedDate, "dd/MM/yyyy")}
+            <DialogTitle className="flex items-center justify-between">
+              <span>{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
+              {isAdmin && <Button size="sm" onClick={() => { setShowDayModal(false); setShowAddEventModal(true); }} className="ml-4"><Plus className="w-4 h-4 mr-1" /> Novo Evento</Button>}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <Button
-              className="w-full"
-              onClick={() => {
-                setShowAddEventModal(true);
-                setShowDayModal(false);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Evento
-            </Button>
-
-            <Button
-              className="w-full"
-              variant="outline"
-              onClick={() => {
-                setShowAddTrainingModal(true);
-                setShowDayModal(false);
-              }}
-            >
-              <Heart className="w-4 h-4 mr-2" />
-              Adicionar Treinamento
-            </Button>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {selectedDate && eventsByDate[normalizeDateKey(selectedDate)] && eventsByDate[normalizeDateKey(selectedDate)].length > 0 ? (
+              eventsByDate[normalizeDateKey(selectedDate)].map((event: any) => (
+                <Card key={event.id} className={getEventColor(event.type, event.isPassed || false)}>
+                  <CardContent className="pt-3 flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{getEventLabel({ type: event.type, description: event.description })}</p>
+                      {event.description && <p className="text-xs text-muted-foreground mt-1">{event.description}</p>}
+                      <p className="text-xs text-muted-foreground mt-1">Criado por: {event.createdBy || 'Sistema'}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="ghost" onClick={() => handleEditEventClick(event)}><Pencil className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setEventToDelete(event); setShowDeleteConfirm(true); }}><Trash2 className="w-4 h-4" /></Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Nenhum evento neste dia</p>
+            )}
           </div>
         </DialogContent>
       </Dialog>
