@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -391,10 +391,15 @@ export default function CalendarPage() {
     });
   };
 
+  const dayEventsRef = useRef<HTMLDivElement>(null);
+
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
     if (isTrainer) setShowAddTrainingModal(true);
-    // Desktop: não abre modal, mostra eventos inline abaixo do calendário
+    // Desktop: scroll para a lista de eventos inline
+    setTimeout(() => {
+      dayEventsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   const handleNavigateMonth = (direction: "prev" | "next") => {
@@ -556,7 +561,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Eventos do Dia Selecionado - Inline (Desktop) */}
-        <div className="hidden md:block border-t pt-4 mt-4">
+        <div ref={dayEventsRef} className="hidden md:block border-t pt-4 mt-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold">
               {selectedDate
