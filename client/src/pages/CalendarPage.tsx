@@ -446,19 +446,39 @@ export default function CalendarPage() {
 
       {/* Main Content */}
       <div className="p-4">
-        {/* Calendar Header - Responsive */}
-        <div className="flex items-center justify-between gap-2 md:gap-4 w-full mb-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-4 h-4 md:w-5 md:h-5" /></Button>
-          <h2 className="text-sm md:text-lg font-semibold capitalize flex-1 text-center whitespace-nowrap overflow-hidden text-ellipsis">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</h2>
-          <div className="hidden md:flex items-center bg-muted/50 rounded-md p-0.5 mx-2">
+        {/* Mobile Calendar */}
+        <MobileCalendar
+          currentMonth={currentMonth}
+          days={calendarDays}
+          startDayOfWeek={getDay(startOfMonth(currentMonth))}
+          selectedDate={selectedDate}
+          eventsByDate={new Map(Object.entries(eventsByDate))}
+          selectedDateEvents={selectedDate ? (eventsByDate[normalizeDateKey(selectedDate)] || []) : []}
+          isAdmin={isAdmin}
+          onDayClick={(day) => { setSelectedDate(day); }}
+          onAddEvent={() => setShowAddEventModal(true)}
+          onEditEvent={handleEditEventClick}
+          onDeleteEvent={handleDeleteClick}
+          onTodayClick={() => { setCurrentMonth(new Date()); setSelectedDate(new Date()); }}
+          onPrevMonth={() => setCurrentMonth(subMonths(currentMonth, 1))}
+          onNextMonth={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          getEventColor={getEventColor}
+          normalizeDateKey={normalizeDateKey}
+        />
+
+        {/* Desktop Calendar Header */}
+        <div className="hidden md:flex items-center justify-between gap-4 w-full mb-4">
+          <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-5 h-5" /></Button>
+          <h2 className="text-lg font-semibold capitalize flex-1 text-center whitespace-nowrap overflow-hidden text-ellipsis">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</h2>
+          <div className="flex items-center bg-muted/50 rounded-md p-0.5 mx-2">
             <Button variant={viewMode === "text" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("text")}>Texto</Button>
             <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}>Bolinhas</Button>
           </div>
-          <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-4 h-4 md:w-5 md:h-5" /></Button>
+          <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
         </div>
 
-        {/* Calendar Grid - Hybrid Responsive */}
-        <div className="grid grid-cols-7 gap-0.5 md:gap-1 auto-rows-fr mb-4">
+        {/* Calendar Grid - Desktop Only */}
+        <div className="hidden md:grid grid-cols-7 gap-1 auto-rows-fr mb-4">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
             <div key={day} className="text-center font-semibold text-[10px] md:text-xs py-1 md:py-2">
               {day}
@@ -509,7 +529,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Legenda Desktop */}
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] justify-center mt-3 pt-3 border-t">
+        <div className="hidden md:flex flex-wrap gap-x-3 gap-y-1 text-[10px] justify-center mt-3 pt-3 border-t">
           <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div><span>Natação</span></div>
           <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-green-500"></div><span>Musculação</span></div>
           <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-purple-500"></div><span>Pilates</span></div>
