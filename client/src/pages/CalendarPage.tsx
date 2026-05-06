@@ -14,6 +14,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import CategoryManager from "./CategoryManager";
 import WorkplaceManager from "../components/WorkplaceManager";
+import { UnlinkedRateManager } from "../components/UnlinkedRateManager";
+import FinancialDashboard from "../components/FinancialDashboard";
 import CsvManager from "@/components/CsvManager";
 import { MobileCalendar } from "@/components/MobileCalendar";
 import { useLocation } from "wouter";
@@ -110,10 +112,8 @@ export default function CalendarPage() {
   const [eventTime, setEventTime] = useState<string>("");
   const [eventDescription, setEventDescription] = useState<string>("");
   
-  // Adições de Estado para Workplace e Valores
+  // Adições de Estado para Workplace
   const [workplaceId, setWorkplaceId] = useState<number | "">("");
-  const [localRhHours, setLocalRhHours] = useState<Record<number, string>>({});
-  const [avulsoRate, setAvulsoRate] = useState<string>("150");
   
   const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null; date?: string; isPassed?: boolean; workplaceId?: number | null } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
@@ -131,15 +131,12 @@ export default function CalendarPage() {
   
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showWorkplaceManager, setShowWorkplaceManager] = useState(false);
+  const [showUnlinkedManager, setShowUnlinkedManager] = useState(false);
   const [showCsvManager, setShowCsvManager] = useState(false);
+  const [showFinanceModal, setShowFinanceModal] = useState(false);
 
   type CalendarFilter = "todos" | "plantoes" | "pessoal";
   const [calendarFilter, setCalendarFilter] = useState<CalendarFilter>("todos");
-
-  const [showFinancialPanel, setShowFinancialPanel] = useState(false);
-  const [taxMode, setTaxMode] = useState<'bruto' | 'pj' | 'pf'>('bruto');
-  
-  const FINANCIAL_TARGET = 20000; 
 
   const resetForm = () => {
     setEventType("");
@@ -209,889 +206,718 @@ export default function CalendarPage() {
 
   const currentMonthNum = currentMonth.getMonth() + 1;
   const currentYearNum = currentMonth.getFullYear();
-  const { data: financialSummary } = trpc.expenses.monthlySummary.useQuery(
-    { month: currentMonthNum, year: currentYearNum },
-    { enabled: !!isAdmin }
-  );
-
-  const { data: rhAdjustment } = trpc.expenses.getAdjustment.useQuery(
-    { month: currentMonthNum, year: currentYearNum },
-    { enabled: !!isAdmin }
-  );
-  const [rhZN, setRhZN] = useState<string>("");
-  const [rhHC, setRhHC] = useState<string>("");
-  const upsertAdjustment = trpc.expenses.upsertAdjustment.useMutation();
-
-  useEffect(() => {
-    if (rhAdjustment) {
-      setRhZN(rhAdjustment.rhHoursZN !== null ? String(rhAdjustment.rhHoursZN) : "");
-      setRhHC(rhAdjustment.rhHoursHC !== null ? String(rhAdjustment.rhHoursHC) : "");
-    } else {
-      setRhZN("");
-      setRhHC("");
-    }
-  }, [rhAdjustment, currentMonthNum, currentYearNum]);
-
-  const saveRhAdjustment = (znVal: string, hcVal: string) => {
-    const znNum = znVal.trim() !== "" ? parseFloat(znVal) : null;
-    const hcNum = hcVal.trim() !== "" ? parseFloat(hcVal) : null;
-    if (isNaN(znNum as number) && znVal.trim() !== "") return;
-    if (isNaN(hcNum as number) && hcVal.trim() !== "") return;
-    upsertAdjustment.mutate({ month: currentMonthNum, year: currentYearNum, rhHoursZN: znNum, rhHoursHC: hcNum });
-  };
-
-  const effectiveTotalRecebimentos = useMemo(() => {
-    if (!financialSummary) return 0;
-    let total = 0;
-    
-    financialSummary.workplacesSummary?.forEach((wp: any) => {
-      if (wp.id === -1 || wp.id === -2) {
-        // Cálculo legado para manter compatibilidade temporária
-        if (wp.id === -1) {
-          const effZN = rhZN.trim() !== "" && !isNaN(parseFloat(rhZN)) ? parseFloat(rhZN) : wp.hours;
-          total += effZN * wp.hourlyRate;
-        } else if (wp.id === -2) {
-          const effHC = rhHC.trim() !== "" && !isNaN(parseFloat(rhHC)) ? parseFloat(rhHC) : wp.hours;
-          total += effHC * wp.hourlyRate;
-        }
-      } else {
-        // Motor novo (dinâmico com input local)
-        const rh = localRhHours[wp.id];
-        const h = (rh !== undefined && rh !== "") ? parseFloat(rh) : wp.hours;
-        total += h * wp.hourlyRate;
-      }
-    });
-    
-    // Soma de avulsos
-    const avulsoTotal = (financialSummary.avulsoHours || 0) * (parseFloat(avulsoRate) || 0);
-    total += avulsoTotal;
-    
-    return total;
-  }, [financialSummary, localRhHours, avulsoRate, rhZN, rhHC]);
-
-  const effectiveSaldo = effectiveTotalRecebimentos - (financialSummary?.totalFixed || 0);
-  
-  const totalHoursMonth = useMemo(() => {
-    let hours = 0;
-    const monthStart = startOfMonth(currentMonth);
-    const monthEnd = endOfMonth(currentMonth);
-    
-    allEvents.forEach(event => {
-      const eventDate = typeof event.date === 'string' ? parseISO(event.date) : event.date;
-      if (eventDate >= monthStart && eventDate <= monthEnd && event.startTime && event.endTime) {
-        const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-        const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-        if (timeMatch && endMatch) {
-          const startHour = parseInt(timeMatch[1], 10);
-          const endHour = parseInt(endMatch[1], 10);
-          let diff = endHour - startHour;
-          if (diff < 0) diff += 24;
-          hours += diff;
-        }
-      }
-    });
-    return hours;
-  }, [allEvents, currentMonth]);
-  
-  const averageHourlyRate = totalHoursMonth > 0 ? effectiveTotalRecebimentos / totalHoursMonth : 0;
-  
-  const netValue = useMemo(() => {
-    if (taxMode === 'bruto') return effectiveTotalRecebimentos;
-    if (taxMode === 'pj') return effectiveTotalRecebimentos * 0.94;
-    if (taxMode === 'pf') return effectiveTotalRecebimentos * 0.725;
-    return effectiveTotalRecebimentos;
-  }, [effectiveTotalRecebimentos, taxMode]);
-  
-  const progressPercentage = Math.min((effectiveTotalRecebimentos / FINANCIAL_TARGET) * 100, 100);
-
-  const selectedDateKey = selectedDate ? normalizeDateKey(selectedDate) : null;
-  
-  const { data: diaryEntry } = trpc.diary.get.useQuery(
-    { date: selectedDateKey || "" },
-    { enabled: !!selectedDateKey && authData?.user?.role === "admin" }
-  );
-
-  const events = useMemo(() => {
-    return allEvents.filter(event => {
-      if (event.type === "Lembrete" && !isAdmin) return false;
-      return true;
-    });
-  }, [allEvents, isAdmin]);
-
-  const createEventMutation = trpc.events.create.useMutation({
-    onSuccess: () => {
-      try {
-        toast?.success?.("Evento adicionado com sucesso!");
-        utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
-        setShowAddTrainingModal?.(false);
-        setShowAddEventModal?.(false);
-        if (typeof resetForm === 'function') resetForm?.();
-      } catch (error) {
-        console.error('[CalendarPage] Error:', error);
-      }
-    },
-    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
-  });
-
-  const createManyMutation = trpc.events.createMany.useMutation({
-    onSuccess: () => {
-      try {
-        toast?.success?.("Serie de eventos adicionada com sucesso!");
-        utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
-        setShowAddEventModal?.(false);
-        setIsRecurring?.(false);
-        if (typeof resetForm === 'function') resetForm?.();
-      } catch (error) {
-        console.error('[CalendarPage] Error:', error);
-      }
-    },
-    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
-  });
-
-  const updateEventMutation = trpc.events.update.useMutation({
-    onSuccess: () => {
-      try {
-        toast?.success?.("Evento atualizado com sucesso!");
-        utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
-        setShowEditModal?.(false);
-        setEditingEvent?.(null);
-        if (typeof resetForm === 'function') resetForm?.();
-      } catch (error) {
-        console.error('[CalendarPage] Error:', error);
-      }
-    },
-    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
-  });
-
-  const deleteEventMutation = trpc.events.delete.useMutation({
-    onSuccess: (deletedEvents: any) => {
-      try {
-        utils?.events?.list?.invalidate?.();
-        utils?.expenses?.monthlySummary?.invalidate?.();
-        setShowDeleteConfirm?.(false);
-        setEventToDelete?.(null);
-        setShowDayModal?.(false);
-        setDeleteMode('single');
-        
-        const count = deletedEvents?.length || 1;
-        
-        toast?.success?.(`${count} Plantão(ões) excluído(s).`, {
-          action: {
-            label: 'Desfazer',
-            onClick: () => {
-              const payload = (deletedEvents || []).map((ev: any) => ({
-                date: typeof ev.date === 'string' ? ev.date.split('T')[0] : new Date(ev.date).toISOString().split('T')[0],
-                type: ev.type,
-                description: ev.description || undefined,
-                startTime: ev.startTime || undefined,
-                endTime: ev.endTime || undefined,
-                color: ev.color || undefined,
-                isShift: ev.isShift,
-                workplaceId: ev.workplaceId || ev.workplaceid || undefined
-              }));
-              if (payload.length > 0) {
-                createManyMutation.mutate(payload);
-              }
-            }
-          },
-          duration: 6000,
-        });
-      } catch (error) {
-        console.error('[CalendarPage] Error:', error);
-      }
-    },
-    onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
-  });
-
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const startDayOfWeek = getDay(monthStart);
-
-  const isShiftEvent = (event: any): boolean => {
-    if (event.isShift) return true;
-    const typeLower = (event.type || "").toLowerCase();
-    return ["hc", "zn", "zona norte", "noturno", "apoio", "corredor"].some(k => typeLower.includes(k));
-  };
 
   const filteredEvents = useMemo(() => {
-    if (calendarFilter === "todos") return events;
-    return events.filter(event => {
-      const isShift = isShiftEvent(event);
-      if (calendarFilter === "plantoes") return isShift;
-      if (calendarFilter === "pessoal") return !isShift;
-      return true;
-    });
-  }, [events, calendarFilter]);
+    if (calendarFilter === "todos") return allEvents;
+    if (calendarFilter === "plantoes") {
+      return allEvents.filter((e: any) => {
+        const type = (e.type || "").toLowerCase();
+        return type.includes("zn") || type.includes("hc") || type.includes("zona norte") || type.includes("home care");
+      });
+    }
+    if (calendarFilter === "pessoal") {
+      return allEvents.filter((e: any) => {
+        const type = (e.type || "").toLowerCase();
+        return !type.includes("zn") && !type.includes("hc") && !type.includes("zona norte") && !type.includes("home care");
+      });
+    }
+    return allEvents;
+  }, [allEvents, calendarFilter]);
 
   const eventsByDate = useMemo(() => {
-    const map = new Map<string, typeof filteredEvents>();
-    const processedIds = new Set<number>();
-    if (!filteredEvents) return map;
-    filteredEvents.forEach(e => {
-      if (e.id && processedIds.has(e.id)) return;
-      if (e.id) processedIds.add(e.id);
-      const dateStr = normalizeDateKey(e.date);
-      if (!map.has(dateStr)) map.set(dateStr, []);
-      map.get(dateStr)!.push(e);
+    const map: Record<string, any[]> = {};
+    filteredEvents.forEach((event: any) => {
+      const key = normalizeDateKey(event.date);
+      if (!map[key]) map[key] = [];
+      map[key].push(event);
     });
     return map;
   }, [filteredEvents]);
 
-  const selectedDateEvents = useMemo(() => {
-    if (!selectedDate) return [];
-    const dateStr = normalizeDateKey(selectedDate);
-    return eventsByDate.get(dateStr) || [];
-  }, [selectedDate, eventsByDate]);
+  const calendarDays = useMemo(() => {
+    const start = startOfMonth(currentMonth);
+    const end = endOfMonth(currentMonth);
+    return eachDayOfInterval({ start, end });
+  }, [currentMonth]);
 
-  const editableEvents = useMemo(() => {
-    if (!isTrainer) return [];
-    return selectedDateEvents.filter(e => 
-      e.createdBy === currentUsername && 
-      (e.type.toLowerCase().includes("musculação") || e.type.toLowerCase().includes("pilates"))
-    );
-  }, [selectedDateEvents, isTrainer, currentUsername]);
+  const createEventMutation = trpc.events.create.useMutation({
+    onSuccess: () => {
+      utils.events.list.invalidate();
+      toast.success("Evento criado com sucesso");
+      resetForm();
+      setShowAddEventModal(false);
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
 
-  const handleDayClick = (day: Date) => {
-    setSelectedDate(day);
-    if (isTrainer) setShowAddTrainingModal(true);
-    else setShowDayModal(true);
-  };
+  const updateEventMutation = trpc.events.update.useMutation({
+    onSuccess: () => {
+      utils.events.list.invalidate();
+      toast.success("Evento atualizado com sucesso");
+      resetForm();
+      setShowEditModal(false);
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
 
-  const handleAddTraining = () => {
-    if (!selectedDate || !trainingType || !trainingTime) {
-      toast?.error?.("Preencha campos.");
-      return;
-    }
-    try {
-      const dateStr = normalizeDateKey(selectedDate);
-      const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
-      createEventMutation.mutate({ date: dateStr, type: trainingType, description, isShift: false });
-    } catch (error) {
-      console.error('[CalendarPage] Error in handleAddTraining:', error);
-      toast.error("Erro ao salvar treino.");
-    }
-  };
+  const deleteEventMutation = trpc.events.delete.useMutation({
+    onSuccess: (deletedEvents) => {
+      utils.events.list.invalidate();
+      toast.success(`Plantão(ões) excluído(s).`, {
+        action: {
+          label: 'Desfazer',
+          onClick: () => {
+            const payload = deletedEvents.map((ev: any) => ({
+              date: typeof ev.date === 'string' ? ev.date.split('T')[0] : new Date(ev.date).toISOString().split('T')[0],
+              type: ev.type,
+              description: ev.description || undefined,
+              startTime: ev.startTime || undefined,
+              endTime: ev.endTime || undefined,
+              color: ev.color || undefined,
+              isShift: ev.isShift,
+              workplaceId: ev.workplaceId || undefined,
+            }));
+            createManyMutation.mutate(payload);
+          }
+        },
+        duration: 6000,
+      });
+      setShowDeleteConfirm(false);
+      setEventToDelete(null);
+    },
+    onError: (error) => {
+      toast.error(`Erro: ${error.message}`);
+    },
+  });
 
-  const handleEditTrainingClick = (event: typeof editableEvents[0]) => {
-    setEditingEvent(event);
-    setTrainingType(event.type);
-    const time = extractTimeFromDescription(event.description || "");
-    setTrainingTime(time);
-    setTrainingDescription((event.description || "").replace(event.type, "").replace(time, "").trim());
-    setShowAddTrainingModal(false);
-    setShowEditModal(true);
-  };
-
-  const handleUpdateTraining = () => {
-    if (!editingEvent || !trainingType || !trainingTime) {
-      toast?.error?.("Preencha campos.");
-      return;
-    }
-    try {
-      const description = trainingDescription ? `${trainingDescription} ${trainingTime}` : `${trainingType} ${trainingTime}`;
-      updateEventMutation.mutate({ id: editingEvent.id, type: trainingType, description });
-    } catch (error) {
-      console.error('[CalendarPage] Error:', error);
-      toast.error("Erro ao atualizar.");
-    }
-  };
+  const createManyMutation = trpc.events.createMany.useMutation({
+    onSuccess: () => {
+      utils.events.list.invalidate();
+      toast.success("Eventos restaurados");
+    },
+    onError: (error) => {
+      toast.error(`Erro ao restaurar: ${error.message}`);
+    },
+  });
 
   const handleAddEvent = () => {
     if (!selectedDate || !eventType) {
-      toast?.error?.("Selecione o tipo.");
+      toast.error("Selecione uma data e tipo de evento");
       return;
     }
-    const typeToSave = eventType === "Personalizado" ? customEventType : eventType;
-    if (!typeToSave) {
-      toast?.error?.("Digite o tipo.");
+
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const type = eventType === "Personalizado" ? customEventType : eventType;
+
+    if (!type.trim()) {
+      toast.error("Digite o tipo de evento personalizado");
       return;
     }
-    if (eventType === "Personalizado" && customEventType.trim()) {
-      addCustomCategoryMutation.mutate({ name: customEventType.trim() });
-    }
-    try {
-      const finalColor = eventColor === "default" ? undefined : eventColor;
-      const descToSave = eventDescription ? eventDescription.trim() : undefined;
-      const dateStr = normalizeDateKey(selectedDate);
-      const isShift = ["hc", "zn", "noturno", "apoio", "corredor", "porta", "sala", "enfermaria", "home care", "observação", "observacao", "emergência"].some(k => typeToSave.toLowerCase().includes(k));
-      const finalWpId = workplaceId === "" ? null : workplaceId;
 
-      if (!isRecurring) {
-        createEventMutation.mutate({ date: dateStr, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift, workplaceId: finalWpId });
-      } else {
-        const datesToCreate = [];
-        let current = new Date(dateStr + 'T12:00:00Z');
-        const end = new Date(recurrenceEndDate + 'T12:00:00Z');
-        const startDow = current.getDay();
-        if (recurrenceType === 'weekly') {
-          while (current <= end) {
-            datesToCreate.push(current.toISOString().split('T')[0]);
-            current.setDate(current.getDate() + (7 * recurrenceInterval));
-          }
-        } else if (recurrenceType === 'monthly') {
-          let currMonth = new Date(current);
-          currMonth.setDate(1);
-          while (currMonth <= end) {
-            let year = currMonth.getFullYear();
-            let month = currMonth.getMonth();
-            let d = new Date(Date.UTC(year, month, 1, 12, 0, 0));
-            let occurrencesFound = 0;
-            while (d.getMonth() === month && d <= end) {
-              if (d.getDay() === startDow) {
-                occurrencesFound++;
-                if (monthlyOccurrences.includes(occurrencesFound) && d >= new Date(dateStr + 'T12:00:00Z')) {
-                  datesToCreate.push(d.toISOString().split('T')[0]);
-                }
-              }
-              d.setDate(d.getDate() + 1);
-            }
-            currMonth.setMonth(currMonth.getMonth() + recurrenceInterval);
-          }
-        }
-        createManyMutation.mutate(datesToCreate.map(d => ({ date: d, type: typeToSave, description: descToSave || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isShift, workplaceId: finalWpId })));
-      }
-    } catch (error) {
-      console.error('[CalendarPage] Error:', error);
-      toast.error("Erro ao salvar evento.");
-    }
-  };
-
-  const handleEditEventClick = (event: typeof selectedDateEvents[0]) => {
-    setEditingEvent({ ...event, date: normalizeDateKey(event.date) });
-    setIsPassed(event.isPassed || false);
-    const exactMatch = EVENT_TYPES.find(t => t.value === event.type);
-    
-    if (exactMatch) {
-      setEventType(exactMatch.value);
-      setCustomEventType("");
-    } else {
-      setEventType("Personalizado");
-      setCustomEventType(event.type);
-    }
-    const time = extractTimeFromDescription(event.description || "");
-    setEventTime(time);
-    setEventDescription((event.description || "").replace(event.type, "").replace(time, "").trim());
-    setStartTime(event.startTime || "");
-    setEndTime(event.endTime || "");
-    setEventColor(event.color || "default");
-    
-    // Injetando WorkplaceId na edição
-    setWorkplaceId((event as any).workplaceId || (event as any).workplaceid || "");
-
-    setShowDayModal(false);
-    setShowEditModal(true);
+    createEventMutation.mutate({
+      date: dateStr,
+      type,
+      description: eventDescription || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      color: eventColor !== "default" ? eventColor : undefined,
+      isShift: false,
+      workplaceId: workplaceId ? Number(workplaceId) : undefined,
+    });
   };
 
   const handleUpdateEvent = () => {
-    if (!editingEvent || !eventType) {
-      toast?.error?.("Selecione o tipo.");
-      return;
-    }
-    const finalType = eventType === "Personalizado" ? customEventType : eventType;
-    if (!finalType) {
-      toast?.error?.("Digite o tipo.");
-      return;
-    }
-    if (eventType === "Personalizado" && customEventType.trim()) {
-      addCustomCategoryMutation.mutate({ name: customEventType.trim() });
-    }
-    const finalColor = eventColor === "default" ? undefined : eventColor;
-    let description = eventDescription || finalType;
-    if (eventTime) description = `${description} ${eventTime}`;
-    const finalWpId = workplaceId === "" ? null : workplaceId;
+    if (!editingEvent) return;
 
-    updateEventMutation.mutate({ id: editingEvent.id, type: finalType, description: description || undefined, startTime: startTime || undefined, endTime: endTime || undefined, color: finalColor || undefined, isPassed, workplaceId: finalWpId });
+    updateEventMutation.mutate({
+      id: editingEvent.id,
+      type: eventType === "Personalizado" ? customEventType : eventType,
+      description: eventDescription || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      color: eventColor !== "default" ? eventColor : undefined,
+      isPassed: isPassed,
+      workplaceId: workplaceId ? Number(workplaceId) : undefined,
+    });
   };
 
-  const handleDeleteClick = (event: { id: number; type: string }) => {
+  const handleDeleteEvent = () => {
+    if (!eventToDelete) return;
+
+    deleteEventMutation.mutate({
+      id: eventToDelete.id,
+      mode: deleteMode,
+    });
+  };
+
+  const handleEditEventClick = (event: any) => {
+    setEditingEvent(event);
+    setEventType(event.type);
+    setCustomEventType(event.type);
+    setEventDescription(event.description ?? "");
+    setStartTime(event.startTime ?? "");
+    setEndTime(event.endTime ?? "");
+    setEventColor(event.color ?? "default");
+    setIsPassed(event.isPassed || false);
+    setWorkplaceId(event.workplaceId ?? "");
+    setShowEditModal(true);
+  };
+
+  const handleDeleteClick = (event: any) => {
     setEventToDelete(event);
+    setDeleteMode("single");
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
-    if (eventToDelete) {
-      deleteEventMutation.mutate({ id: eventToDelete.id, mode: deleteMode });
+  const handleAddTraining = () => {
+    if (!selectedDate || !trainingType) {
+      toast.error("Selecione uma data e tipo de treinamento");
+      return;
     }
+
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+    createEventMutation.mutate({
+      date: dateStr,
+      type: trainingType,
+      description: trainingDescription || undefined,
+      startTime: trainingTime || undefined,
+      isShift: false,
+    });
   };
 
-  const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const handleDayClick = (day: Date) => {
+    setSelectedDate(day);
+    setShowDayModal(true);
+  };
+
+  const handleNavigateMonth = (direction: "prev" | "next") => {
+    setCurrentMonth(direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1));
+  };
+
+  const isRestrictedUser = isAdmin && currentUsername === "PAULA" || isTrainer;
 
   return (
-    <div className="space-y-2 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-primary"><CalendarIcon className="w-6 h-6" /> Calendário</h1>
-          <p className="text-muted-foreground text-sm">{isTrainer ? "Adicione treinos." : "Gerencie eventos."}</p>
-        </div>
-        <div className="flex gap-2">
-          {false && isAdmin && <Button variant="outline" size="sm" onClick={() => setShowWorkplaceManager(true)}><Building className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Faturamento</span></Button>}
-          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCsvManager(true)}><FileSpreadsheet className="w-4 h-4 mr-1" /><span className="hidden md:inline"> CSV</span></Button>}
-          {isAdmin && <Button variant="outline" size="sm" onClick={() => setShowCategoryManager(true)}><Tags className="w-4 h-4 mr-1" /><span className="hidden md:inline"> Categorias</span></Button>}
-          <Button variant="outline" size="sm" onClick={() => setCurrentMonth(new Date())}>Hoje</Button>
+    <div className="w-full max-w-full bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-background border-b">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="w-5 h-5" />
+            <h1 className="text-lg font-semibold">Calendário</h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!isRestrictedUser && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFinanceModal(true)}
+              >
+                <DollarSign className="w-4 h-4 mr-1" />
+                Faturamento
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCategoryManager(true)}
+            >
+              <Tags className="w-4 h-4 mr-1" />
+              Categorias
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCsvManager(true)}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-1" />
+              CSV
+            </Button>
+          </div>
         </div>
       </div>
-      
-      {/* Painel Financeiro Recolhível - Apenas Admin Completo (não Paula) */}
-      {false && isAdmin && currentUsername !== 'PAULA' && (
-        <Card className="mb-2 shadow-sm border-emerald-100 dark:border-emerald-900/30 overflow-hidden">
-          <Collapsible open={showFinancialPanel} onOpenChange={setShowFinancialPanel}>
-            <CollapsibleTrigger className="w-full px-4 py-2 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors border-b cursor-pointer">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <DollarSign className="w-4 h-4 text-emerald-600" />
-                <span>Painel Financeiro</span>
-                <span className="text-xs text-muted-foreground ml-2">
-                  (R$ {effectiveTotalRecebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 0 })})
-                </span>
-              </div>
-              {showFinancialPanel ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="px-4 py-3 bg-muted/10 border-b space-y-4">
-                
-                {/* === LOCAIS DE TRABALHO (DINÂMICO/EXPLICITO) === */}
-                <div>
-                  <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">
-                    Resumo por Local de Trabalho
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {financialSummary?.workplacesSummary?.map((wp: any) => {
-                      const isLegacy = wp.id === -1 || wp.id === -2;
-                      const rh = isLegacy ? (wp.id === -1 ? rhZN : rhHC) : localRhHours[wp.id];
-                      const currentH = (rh !== undefined && rh !== "" && !isNaN(parseFloat(rh))) ? parseFloat(rh) : wp.hours;
-                      const currentTotal = currentH * wp.hourlyRate;
-                      const diff = (rh !== undefined && rh !== "" && !isNaN(parseFloat(rh))) ? parseFloat(rh) - wp.hours : null;
 
-                      return (
-                        <div key={wp.id} className="bg-card border rounded-md p-3 shadow-sm">
-                          <div className="flex justify-between items-start mb-2 border-b pb-2">
-                            <div>
-                              <div className="font-semibold text-sm flex items-center gap-1 text-primary">
-                                <Building className="w-3 h-3" />
-                                {wp.name}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
-                                Ciclo: {wp.refStart.split('-').reverse().join('/')} a {wp.refEnd.split('-').reverse().join('/')}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-xs font-medium text-muted-foreground">Valor/Hora</div>
-                              <div className="text-sm font-semibold text-foreground">R$ {wp.hourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                            </div>
-                          </div>
-                          
-                          {/* Raio-X Breakdown (Nova interface visual) */}
-                          {!isLegacy && (
-                            <div className="mb-3 space-y-1">
-                              {Object.keys(wp.breakdown || {}).length === 0 ? (
-                                 <div className="text-[10px] text-muted-foreground italic">Nenhum plantão neste ciclo.</div>
-                              ) : (
-                                 Object.entries(wp.breakdown).map(([tipo, hrs]: any) => (
-                                   <div key={tipo} className="flex justify-between text-[11px] text-muted-foreground">
-                                     <span>• {tipo}</span><span>{hrs}h</span>
-                                   </div>
-                                 ))
-                              )}
-                            </div>
-                          )}
-                          
-                          {/* Input de RH e Total Renderizado Padrão */}
-                          <div className={`mt-3 flex items-center justify-between gap-2 rounded-md p-2 border ${isLegacy ? 'bg-amber-50/50 dark:bg-amber-900/10 border-dashed border-amber-300' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'}`}>
-                            <span className="text-xs font-medium whitespace-nowrap">Ajuste RH (h):</span>
-                            <div className="flex items-center gap-1">
-                              {isLegacy ? (
-                                <input type="number" step="0.5" className="w-16 text-xs border rounded px-1.5 py-1 bg-white dark:bg-gray-800 text-right" value={wp.id === -1 ? rhZN : rhHC} onChange={(e) => wp.id === -1 ? setRhZN(e.target.value) : setRhHC(e.target.value)} onBlur={() => saveRhAdjustment(rhZN, rhHC)} />
-                              ) : (
-                                <Input type="number" step="0.5" className="w-16 h-7 text-xs text-center" placeholder={String(wp.hours)} value={localRhHours[wp.id] ?? ""} onChange={e => setLocalRhHours(p => ({...p, [wp.id]: e.target.value}))} />
-                              )}
-                              <span className="text-xs text-muted-foreground">h</span>
-                            </div>
-                            <div className="flex flex-col items-end">
-                              <div className="text-sm font-bold text-emerald-600 dark:text-emerald-500">R$ {currentTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                              {diff !== null && <span className={`text-[10px] font-semibold ${diff >= 0 ? 'text-green-600' : 'text-red-600'}`}>Dif: {diff >= 0 ? '+' : ''}{diff}h</span>}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    
-                    {(!financialSummary?.workplacesSummary || financialSummary.workplacesSummary.length === 0) && (
-                      <div className="col-span-full text-center py-4 text-sm text-muted-foreground bg-muted/20 rounded-md border border-dashed">
-                        Nenhum faturamento encontrado neste período.
-                      </div>
-                    )}
-                  </div>
+      {/* Main Content */}
+      <div className="p-4">
+        {/* Calendar Navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleNavigateMonth("prev")}
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <h2 className="text-lg font-semibold">
+            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+          </h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleNavigateMonth("next")}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="grid grid-cols-7 gap-1 mb-4">
+          {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
+            <div key={day} className="text-center font-semibold text-xs py-2">
+              {day}
+            </div>
+          ))}
+          {calendarDays.map((day) => {
+            const dayKey = normalizeDateKey(day);
+            const dayEvents = eventsByDate[dayKey] || [];
+            const isCurrentMonth = isSameMonth(day, currentMonth);
+            const isTodayDate = isToday(day);
+
+            return (
+              <div
+                key={dayKey}
+                onClick={() => handleDayClick(day)}
+                className={`min-h-24 p-2 border rounded cursor-pointer transition ${
+                  isCurrentMonth
+                    ? "bg-background hover:bg-accent"
+                    : "bg-muted/30 text-muted-foreground"
+                } ${isTodayDate ? "border-primary border-2" : ""}`}
+              >
+                <div className="text-xs font-semibold mb-1">
+                  {format(day, "d")}
                 </div>
-
-                {/* === MALHA FINA (AVULSOS) === */}
-                {(financialSummary?.avulsoHours || 0) > 0 && (
-                  <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 rounded-md p-3 shadow-sm mt-4">
-                    <div className="flex justify-between items-start mb-2 border-b border-amber-200/50 pb-2">
-                       <div className="font-semibold text-sm flex items-center gap-1 text-amber-800 dark:text-amber-500">
-                         Plantões Avulsos (Sem Local Vinculado)
-                       </div>
-                       <div className="flex items-center gap-2">
-                         <Label className="text-xs text-amber-700 dark:text-amber-400">Valor Acordado/h (R$):</Label>
-                         <Input type="number" className="w-20 h-7 text-xs text-right bg-white dark:bg-slate-800" value={avulsoRate} onChange={e => setAvulsoRate(e.target.value)} />
-                       </div>
-                    </div>
-                    <div className="mb-2">
-                      {Object.entries(financialSummary?.avulsoBreakdown || {}).map(([tipo, hrs]: any) => (
-                          <div key={tipo} className="flex justify-between text-[11px] text-amber-700/80 dark:text-amber-400/80">
-                            <span>• {tipo}</span><span>{hrs}h</span>
-                          </div>
-                      ))}
-                    </div>
-                    <div className="flex justify-between items-end pt-2 border-t border-amber-200/50">
-                      <div className="text-sm font-bold text-amber-800 dark:text-amber-500">{financialSummary?.avulsoHours}h no mês corrente</div>
-                      <div className="text-sm font-bold text-emerald-600 dark:text-emerald-500">
-                         R$ {((financialSummary?.avulsoHours || 0) * (parseFloat(avulsoRate) || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* === TAX MODE SELECTOR E PROGRESSO === */}
-                <div className="pt-2 border-t">
-                  <div className="mb-3">
-                    <div className="text-xs font-semibold text-muted-foreground mb-2">Modo de Cálculo (Imposto):</div>
-                    <ToggleGroup type="single" value={taxMode} onValueChange={(val) => val && setTaxMode(val as 'bruto' | 'pj' | 'pf')} className="justify-start">
-                      <ToggleGroupItem value="bruto" aria-label="Bruto" className="text-xs h-8">Bruto</ToggleGroupItem>
-                      <ToggleGroupItem value="pj" aria-label="PJ" className="text-xs h-8">PJ (-6%)</ToggleGroupItem>
-                      <ToggleGroupItem value="pf" aria-label="PF" className="text-xs h-8">PF (-27.5%)</ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
-                  
-                  <div className="mb-3">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">Meta: R$ {FINANCIAL_TARGET.toLocaleString('pt-BR')}</span>
-                      <span className="text-xs font-bold text-emerald-600">{progressPercentage.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={progressPercentage} className="h-2" />
-                  </div>
-                  
-                  <div className="mb-3 bg-slate-50 dark:bg-slate-900/20 rounded-md p-2">
-                    <div className="text-xs text-muted-foreground">Valor Hora Médio Global</div>
-                    <div className="text-sm font-bold text-slate-700 dark:text-slate-300">R$ {averageHourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({totalHoursMonth}h)</div>
-                  </div>
-                </div>
-                
-                {/* === RESUMO FINAL === */}
-                <div className="pt-2 border-t">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 rounded-md p-2">
-                      <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      <div>
-                        <div className="text-[10px] text-emerald-600 dark:text-emerald-400">Recebimentos Brutos</div>
-                        <div className="text-sm font-bold text-emerald-700 dark:text-emerald-300">R$ {effectiveTotalRecebimentos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-md p-2">
-                      <DollarSign className="w-4 h-4 text-red-500" />
-                      <div>
-                        <div className="text-[10px] text-red-500 dark:text-red-400">Despesas Fixas</div>
-                        <div className="text-sm font-bold text-red-600 dark:text-red-300">R$ {(financialSummary?.totalFixed || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                      </div>
-                    </div>
-                    <div className={`flex items-center gap-2 rounded-md p-2 border ${effectiveSaldo >= 0 ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200' : 'bg-red-50 dark:bg-red-900/20 border-red-200'}`}>
-                      <DollarSign className={`w-4 h-4 ${effectiveSaldo >= 0 ? 'text-emerald-600' : 'text-red-500'}`} />
-                      <div>
-                        <div className="text-[10px] text-muted-foreground">Saldo Líquido ({taxMode.toUpperCase()})</div>
-                        <div className={`text-sm font-bold ${effectiveSaldo >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
-                          R$ {((netValue || 0) - (financialSummary?.totalFixed || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
-      )}
-
-      {/* DESKTOP VIEW */}
-      <Card className="shadow-md hidden md:block">
-        <CardHeader className="pb-4 border-b">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-5 h-5" /></Button>
-            <CardTitle className="text-lg font-semibold capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</CardTitle>
-            <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
-          </div>
-          <div className="flex items-center justify-center gap-1 mt-3 pt-3 border-t">
-            <Filter className="w-4 h-4 text-muted-foreground mr-1" />
-            <Button variant={calendarFilter === "todos" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("todos")}><LayoutGrid className="w-3 h-3 mr-1" /> Todos</Button>
-            <Button variant={calendarFilter === "plantoes" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("plantoes")}><Briefcase className="w-3 h-3 mr-1" /> Plantões</Button>
-            <Button variant={calendarFilter === "pessoal" ? "default" : "outline"} size="sm" className="h-7 text-xs px-3" onClick={() => setCalendarFilter("pessoal")}><Heart className="w-3 h-3 mr-1" /> Pessoal/Saúde</Button>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="pt-2">
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map(day => <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-2">{day}</div>)}
-          </div>
-          <div className="grid grid-cols-7 gap-1 auto-rows-fr">
-            {Array.from({ length: startDayOfWeek }).map((_, i) => <div key={`empty-${i}`} className="min-h-[100px] bg-gray-50/50 dark:bg-gray-900/10 rounded-md" />)}
-            {days.map(day => {
-              const dateStr = normalizeDateKey(day);
-              const dayEvents = eventsByDate.get(dateStr) || [];
-              return (
-                <button key={dateStr} onClick={() => handleDayClick(day)} className={`min-h-[140px] p-2 rounded-lg text-sm relative border transition-all flex flex-col items-start gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/5" : "border-border bg-card hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-40 bg-muted/20" : ""}`}>
-                  <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full mb-1 ${isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{format(day, "d")}</span>
-                  <div className="w-full space-y-1 overflow-hidden">
-                    {dayEvents.slice(0, 6).map(e => <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate w-full border-l-2 text-left font-medium ${e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed)} ${e.isPassed ? "line-through opacity-60" : ""}`}><span className="font-semibold mr-1">{e.startTime}</span>{getEventLabel(e)}</div>)}
-                    {dayEvents.length > 6 && <div className="text-[9px] text-muted-foreground pl-1">+{dayEvents.length - 6} mais</div>}
-                  </div>
-                  {format(day, "d") === "19" && isAdmin && (
-                    <div 
-                      onClick={(e) => e.stopPropagation()} 
-                      className="mt-auto mb-1 w-[95%] mx-auto bg-slate-800 text-slate-100 dark:bg-slate-200 dark:text-slate-800 text-[10px] font-bold py-1 px-1 rounded shadow-sm text-center cursor-default z-10"
+                <div className="space-y-1">
+                  {dayEvents.slice(0, 2).map((event, idx) => (
+                    <div
+                      key={idx}
+                      className={`text-xs p-1 rounded truncate ${getEventColor(event.type, event.isPassed || false)}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditEventClick(event);
+                      }}
                     >
-                      Total ZN: {calculateZNHours(allEvents, day)}h
+                      {getEventLabel({ type: event.type, description: event.description })}
+                    </div>
+                  ))}
+                  {dayEvents.length > 2 && (
+                    <div className="text-xs text-muted-foreground">
+                      +{dayEvents.length - 2} mais
                     </div>
                   )}
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-      {/* MOBILE VIEW */}
-      <MobileCalendar
-        currentMonth={currentMonth}
-        days={days}
-        startDayOfWeek={startDayOfWeek}
-        selectedDate={selectedDate}
-        eventsByDate={eventsByDate}
-        selectedDateEvents={selectedDateEvents}
-        isAdmin={isAdmin}
-        onDayClick={(day) => setSelectedDate(day)}
-        onAddEvent={() => setShowAddEventModal(true)}
-        onEditEvent={handleEditEventClick}
-        onDeleteEvent={handleDeleteClick}
-        onTodayClick={() => setCurrentMonth(new Date())}
-        getEventColor={getEventColor}
-        normalizeDateKey={normalizeDateKey}
+        {/* Filter Buttons */}
+        <div className="flex gap-2 mb-4">
+          <Button
+            variant={calendarFilter === "todos" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCalendarFilter("todos")}
+          >
+            Todos
+          </Button>
+          <Button
+            variant={calendarFilter === "plantoes" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCalendarFilter("plantoes")}
+          >
+            Plantões
+          </Button>
+          <Button
+            variant={calendarFilter === "pessoal" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setCalendarFilter("pessoal")}
+          >
+            Pessoal
+          </Button>
+        </div>
+
+        {/* Events List */}
+        <div className="space-y-2">
+          {filteredEvents.length > 0 ? (
+            filteredEvents.map((event: any) => (
+              <Card key={event.id} className={getEventColor(event.type, event.isPassed || false)}>
+                <CardContent className="pt-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">{event.type}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {format(parseISO(event.date), "dd/MM/yyyy")}
+                    </p>
+                    {event.description && (
+                      <p className="text-sm">{event.description}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditEventClick(event)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDeleteClick(event)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              Nenhum evento neste período
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Financial Modal */}
+      <Dialog open={showFinanceModal} onOpenChange={setShowFinanceModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Painel Financeiro</DialogTitle>
+          </DialogHeader>
+          
+          <FinancialDashboard targetDate={currentMonth} />
+
+          <DialogFooter className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowWorkplaceManager(true)}
+            >
+              <Building className="w-4 h-4 mr-1" />
+              Locais de Trabalho
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowUnlinkedManager(true)}
+            >
+              <DollarSign className="w-4 h-4 mr-1" />
+              Plantões Avulsos
+            </Button>
+            <Button onClick={() => setShowFinanceModal(false)}>
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Workplace Manager */}
+      <WorkplaceManager
+        open={showWorkplaceManager}
+        onOpenChange={setShowWorkplaceManager}
       />
 
-      <Dialog open={showDayModal} onOpenChange={setShowDayModal}>
-        <DialogContent className="max-w-lg">
+      {/* Unlinked Rate Manager */}
+      <UnlinkedRateManager
+        open={showUnlinkedManager}
+        onOpenChange={setShowUnlinkedManager}
+      />
+
+      {/* Category Manager Dialog */}
+      <Dialog open={showCategoryManager} onOpenChange={setShowCategoryManager}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
-              <span>{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
-              {isAdmin && <Button size="sm" onClick={() => { setShowDayModal(false); setShowAddEventModal(true); }} className="ml-4"><Plus className="w-4 h-4 mr-1" /> Novo Evento</Button>}
+            <DialogTitle>Gerenciador de Categorias</DialogTitle>
+          </DialogHeader>
+          <CategoryManager open={showCategoryManager} onOpenChange={setShowCategoryManager} />
+        </DialogContent>
+      </Dialog>
+
+      {/* CSV Manager Dialog */}
+      <Dialog open={showCsvManager} onOpenChange={setShowCsvManager}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Importar CSV</DialogTitle>
+          </DialogHeader>
+          <CsvManager open={showCsvManager} onOpenChange={setShowCsvManager} allEvents={allEvents} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Day Modal */}
+      <Dialog open={showDayModal} onOpenChange={setShowDayModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDate && format(selectedDate, "dd/MM/yyyy")}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
-            {selectedDateEvents.length === 0 ? <p className="text-center text-muted-foreground py-8">Sem eventos.</p> : selectedDateEvents.map(event => (
-              <div key={event.id} className={`p-3 rounded-md border ${event.color ? (event.isPassed ? "opacity-50 " + event.color : event.color) : getEventColor(event.type, event.isPassed)}`}>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2"><span className="font-semibold">{event.type}</span>{event.startTime && <span className="text-xs font-mono">{event.startTime}{event.endTime ? ' - ' + event.endTime : ''}</span>}</div>
-                    {event.description && <div className="text-xs mt-0.5 opacity-80 whitespace-pre-wrap">{event.description}</div>}
-                    {event.workplaceId && <div className="text-[10px] mt-1 bg-white/50 dark:bg-black/20 inline-block px-1 rounded text-slate-600 dark:text-slate-300"><Building className="w-3 h-3 inline mr-1"/>{workplaces.find((w: any) => w.id === event.workplaceId || w.id === (event as any).workplaceid)?.name || 'Local Vinculado'}</div>}
-                  </div>
-                  {isAdmin && <div className="flex gap-1 ml-2"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditEventClick(event)}><Pencil className="w-4 h-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => handleDeleteClick({ id: event.id, type: event.type })}><Trash2 className="w-4 h-4" /></Button></div>}
-                </div>
-              </div>
-            ))}
-            {isAdmin && (
-              <div className="mt-4 pt-4 border-t">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-primary" /> Diário do Dia</h4>
-                  <Button variant="link" size="sm" className="text-xs h-auto p-0" onClick={() => { setShowDayModal(false); navigate(`/diario?date=${normalizeDateKey(selectedDate!)}`); }}>Abrir Diário Completo &rarr;</Button>
-                </div>
-                <div className="bg-muted/30 p-3 rounded-md text-sm text-muted-foreground italic min-h-[60px]">
-                  {diaryEntry?.content ? (
-                    <div>
-                      {diaryEntry.title && <p className="font-semibold not-italic text-foreground mb-1">{diaryEntry.title}</p>}
-                      <p className="line-clamp-3">"{diaryEntry.content.substring(0, 200)}..."</p>
-                    </div>
-                  ) : <span className="opacity-50">Nenhum registro.</span>}
-                </div>
-              </div>
-            )}
+
+          <div className="space-y-4">
+            <Button
+              className="w-full"
+              onClick={() => {
+                setShowAddEventModal(true);
+                setShowDayModal(false);
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Evento
+            </Button>
+
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => {
+                setShowAddTrainingModal(true);
+                setShowDayModal(false);
+              }}
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Adicionar Treinamento
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
-      
-      <Dialog open={showAddEventModal} onOpenChange={(open) => { setShowAddEventModal(open); if(!open) resetForm(); }}>
+
+      {/* Add Event Modal */}
+      <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Novo Evento</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <Select value={eventType} onValueChange={setEventType}>
-              <SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger>
-              <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-            </Select>
-            {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
-            
-            {isAdmin && (
-              <div className="space-y-1">
-                <Label className="flex items-center gap-1 text-primary"><Building className="w-3 h-3"/> Local de Trabalho</Label>
-                <Select value={workplaceId === "" ? "none" : String(workplaceId)} onValueChange={(v) => setWorkplaceId(v === "none" ? "" : Number(v))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o local..." /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum (Plantão Avulso)</SelectItem>
-                    {workplaces.map((wp: any) => (<SelectItem key={wp.id} value={String(wp.id)}>{wp.name}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+          <DialogHeader>
+            <DialogTitle>Adicionar Evento</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Tipo de Evento</Label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {eventType === "Personalizado" && (
+              <div>
+                <Label>Nome Personalizado</Label>
+                <Input
+                  value={customEventType}
+                  onChange={(e) => setCustomEventType(e.target.value)}
+                  placeholder="Ex: Pilates"
+                />
               </div>
             )}
 
             <div>
-              <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
-              <div className="flex flex-wrap gap-1">
-                {[{label:"7-13",s:"07:00",e:"13:00"},{label:"13-19",s:"13:00",e:"19:00"},{label:"7-19",s:"07:00",e:"19:00"},{label:"19-01",s:"19:00",e:"01:00"},{label:"19-07",s:"19:00",e:"07:00"}].map(q => (
-                  <Button key={q.label} type="button" variant={startTime===q.s && endTime===q.e ? "default" : "outline"} size="sm" className="h-7 text-xs px-2" onClick={() => { setStartTime(q.s); setEndTime(q.e); }}>{q.label}</Button>
-                ))}
-              </div>
+              <Label>Descrição (opcional)</Label>
+              <Textarea
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+                placeholder="Adicione detalhes..."
+              />
             </div>
-            
-            <div className="flex space-x-2">
-              <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-              <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
-            </div>
-            
-            <div className="space-y-1 mt-2">
-              <label className="text-xs text-gray-500 block">Cor Personalizada</label>
-              <Select value={eventColor} onValueChange={setEventColor}>
-                <SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger>
-                <SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value !== "default" && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent>
+
+            <div>
+              <Label>Local de Trabalho (opcional)</Label>
+              <Select
+                value={String(workplaceId)}
+                onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum</SelectItem>
+                  {workplaces.map((wp: any) => (
+                    <SelectItem key={wp.id} value={String(wp.id)}>
+                      {wp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
-            
-            <Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} placeholder="Obs" />
-            
-            <div className="border-t pt-4 mt-4">
-              <label className="flex items-center space-x-2 font-medium cursor-pointer">
-                <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-4 h-4" />
-                <span>Repetir este evento</span>
-              </label>
-              {isRecurring && (
-                <div className="mt-3 pl-4 border-l-2 space-y-3">
-                  <Select value={recurrenceType} onValueChange={(v: any) => setRecurrenceType(v)}>
-                    <SelectTrigger><SelectValue placeholder="Frequencia" /></SelectTrigger>
-                    <SelectContent><SelectItem value="weekly">Semanal</SelectItem><SelectItem value="monthly">Mensal (Semanas Especificas)</SelectItem></SelectContent>
-                  </Select>
-                  {recurrenceType === 'weekly' ? (
-                    <div className="flex items-center space-x-2 text-sm"><span>A cada</span><Input type="number" min="1" value={recurrenceInterval} onChange={(e) => setRecurrenceInterval(Number(e.target.value))} className="w-20 h-8" /><span>semana(s)</span></div>
-                  ) : (
-                    <div className="text-sm space-y-1"><span>Ocorrera nas seguintes semanas do mes:</span><div className="flex gap-3 mt-1">{[1, 2, 3, 4, 5].map(num => (<label key={num} className="flex items-center space-x-1 cursor-pointer"><input type="checkbox" checked={monthlyOccurrences.includes(num)} onChange={(e) => {if (e.target.checked) setMonthlyOccurrences([...monthlyOccurrences, num]); else setMonthlyOccurrences(monthlyOccurrences.filter(n => n !== num));}} className="w-4 h-4" /><span>{num}o</span></label>))}</div></div>
-                  )}
-                  <div className="text-sm"><span className="block mb-1">Repetir ate a data:</span><Input type="date" value={recurrenceEndDate} onChange={(e) => setRecurrenceEndDate(e.target.value)} /></div>
-                </div>
-              )}
-            </div>
           </div>
-          <DialogFooter><Button onClick={handleAddEvent} disabled={createEventMutation.isPending || createManyMutation.isPending}>{createEventMutation.isPending || createManyMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      <Dialog open={showAddTrainingModal} onOpenChange={(open) => { setShowAddTrainingModal(open); if(!open) resetForm(); }}><DialogContent><DialogHeader><DialogTitle>Novo Treino</DialogTitle></DialogHeader><div className="space-y-4 py-4"><Select value={trainingType} onValueChange={setTrainingType}><SelectTrigger><SelectValue placeholder="Tipo" /></SelectTrigger><SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent></Select><Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} /><Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} placeholder="Obs" /></div><DialogFooter><Button onClick={handleAddTraining} disabled={createEventMutation.isPending}>{createEventMutation.isPending ? "Salvando..." : "Salvar"}</Button></DialogFooter></DialogContent></Dialog>
-      
-      <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if(!open) resetForm(); }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Editar</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            {isAdmin ? (
-              <>
-                <Select value={eventType} onValueChange={setEventType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{EVENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
-                </Select>
-                {eventType === "Personalizado" && <Input value={customEventType} onChange={e => setCustomEventType(e.target.value)} placeholder="Digite o nome do tipo personalizado" />}
-                
-                {/* VINCULAÇÃO DE LOCAL NA EDIÇÃO */}
-                <div className="space-y-1">
-                  <Label className="flex items-center gap-1 text-primary"><Building className="w-3 h-3"/> Local de Trabalho</Label>
-                  <Select value={workplaceId === "" ? "none" : String(workplaceId)} onValueChange={(v) => setWorkplaceId(v === "none" ? "" : Number(v))}>
-                    <SelectTrigger><SelectValue placeholder="Selecione o local..." /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum (Plantão Avulso)</SelectItem>
-                      {workplaces.map((wp: any) => (<SelectItem key={wp.id} value={String(wp.id)}>{wp.name}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-500 mb-2 block flex items-center gap-1"><Clock className="w-3 h-3" /> Atalhos de Horário</label>
-                  <div className="flex flex-wrap gap-1">
-                    {[{label:"7-13",s:"07:00",e:"13:00"},{label:"13-19",s:"13:00",e:"19:00"},{label:"7-19",s:"07:00",e:"19:00"},{label:"19-01",s:"19:00",e:"01:00"},{label:"19-07",s:"19:00",e:"07:00"}].map(q => (
-                      <Button key={q.label} type="button" variant={startTime===q.s && endTime===q.e ? "default" : "outline"} size="sm" className="h-7 text-xs px-2" onClick={() => { setStartTime(q.s); setEndTime(q.e); }}>{q.label}</Button>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Início</label><Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} /></div>
-                  <div className="flex-1"><label className="text-xs text-gray-500 mb-1 block">Fim</label><Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} /></div>
-                </div>
-                <div className="space-y-1 mt-2">
-                  <label className="text-xs text-gray-500 block">Cor Personalizada</label>
-                  <Select value={eventColor} onValueChange={setEventColor}>
-                    <SelectTrigger><SelectValue placeholder="Selecione uma cor" /></SelectTrigger>
-                    <SelectContent>{PREDEFINED_COLORS.map(c => (<SelectItem key={c.name} value={c.value}><div className="flex items-center space-x-2">{c.value !== "default" && <div className={`w-3 h-3 rounded-full ${c.value.split(' ')[1]}`}></div>}<span>{c.name}</span></div></SelectItem>))}</SelectContent>
-                  </Select>
-                </div>
-                <Textarea value={eventDescription} onChange={e => setEventDescription(e.target.value)} />
-                <div className="flex items-center space-x-2 mt-4">
-                  <input type="checkbox" id="is-passed" checked={isPassed} onChange={e => setIsPassed(e.target.checked)} className="w-4 h-4" />
-                  <Label htmlFor="is-passed">Marcar como Passado/Repassado</Label>
-                </div>
-              </>
-            ) : (
-              <>
-                <Select value={trainingType} onValueChange={setTrainingType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="Musculação">Musculação</SelectItem><SelectItem value="Pilates">Pilates</SelectItem></SelectContent>
-                </Select>
-                <Input type="time" value={trainingTime} onChange={e => setTrainingTime(e.target.value)} />
-                <Textarea value={trainingDescription} onChange={e => setTrainingDescription(e.target.value)} />
-              </>
-            )}
-          </div>
-          <DialogFooter><Button onClick={isAdmin ? handleUpdateEvent : handleUpdateTraining}>Atualizar</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showDeleteConfirm} onOpenChange={(open) => { setShowDeleteConfirm(open); if(!open) resetForm(); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Exclusão</DialogTitle>
-          </DialogHeader>
-          <div className="py-2">
-            <p className="text-sm text-muted-foreground mb-4">
-              Como você deseja excluir o evento <strong>{eventToDelete?.type}</strong>?
-            </p>
-            <RadioGroup value={deleteMode} onValueChange={(val: any) => setDeleteMode(val)} className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="single" id="r-single" />
-                <Label htmlFor="r-single" className="cursor-pointer">Apenas este evento</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="future" id="r-future" />
-                <Label htmlFor="r-future" className="cursor-pointer">Este e os próximos (mesmo horário)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="all" id="r-all" />
-                <Label htmlFor="r-all" className="cursor-pointer">Todos desta série</Label>
-              </div>
-            </RadioGroup>
-          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>Cancelar</Button>
-            <Button variant="destructive" onClick={confirmDelete}>Excluir</Button>
+            <Button variant="outline" onClick={() => setShowAddEventModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddEvent}>Criar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
-      {/* Modais de Gerenciamento Adicionais */}
-      <WorkplaceManager open={showWorkplaceManager} onOpenChange={setShowWorkplaceManager} />
-      <CategoryManager open={showCategoryManager} onOpenChange={setShowCategoryManager} />
-      <CsvManager open={showCsvManager} onOpenChange={setShowCsvManager} allEvents={allEvents} />
+
+      {/* Edit Event Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Evento</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Tipo</Label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {eventType === "Personalizado" && (
+              <div>
+                <Label>Nome Personalizado</Label>
+                <Input
+                  value={customEventType}
+                  onChange={(e) => setCustomEventType(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div>
+              <Label>Descrição</Label>
+              <Textarea
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isPassed"
+                checked={isPassed}
+                onChange={(e) => setIsPassed(e.target.checked)}
+              />
+              <Label htmlFor="isPassed">Marcar como Passado/Repassado</Label>
+            </div>
+
+            <div>
+              <Label>Local de Trabalho</Label>
+              <Select
+                value={String(workplaceId)}
+                onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhum</SelectItem>
+                  {workplaces.map((wp: any) => (
+                    <SelectItem key={wp.id} value={String(wp.id)}>
+                      {wp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateEvent}>Atualizar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm Modal */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deletar Evento</DialogTitle>
+          </DialogHeader>
+
+          <p className="text-sm text-muted-foreground">
+            Como você gostaria de deletar este evento?
+          </p>
+
+          <RadioGroup value={deleteMode} onValueChange={(val: any) => setDeleteMode(val)}>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="single" id="single" />
+              <Label htmlFor="single">Apenas este evento</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="future" id="future" />
+              <Label htmlFor="future">Este e os próximos</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <RadioGroupItem value="all" id="all" />
+              <Label htmlFor="all">Todos desta série</Label>
+            </div>
+          </RadioGroup>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteEvent}>
+              Deletar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Training Modal */}
+      <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Treinamento</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Tipo de Treinamento</Label>
+              <Input
+                value={trainingType}
+                onChange={(e) => setTrainingType(e.target.value)}
+                placeholder="Ex: Musculação, Pilates"
+              />
+            </div>
+
+            <div>
+              <Label>Horário (opcional)</Label>
+              <Input
+                type="time"
+                value={trainingTime}
+                onChange={(e) => setTrainingTime(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label>Descrição (opcional)</Label>
+              <Textarea
+                value={trainingDescription}
+                onChange={(e) => setTrainingDescription(e.target.value)}
+                placeholder="Adicione detalhes..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddTrainingModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddTraining}>Criar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
