@@ -728,14 +728,13 @@ export default function CalendarPage() {
             <div>
               <Label>Local de Trabalho (opcional)</Label>
               <Select
-                value={String(workplaceId)}
+                value={workplaceId ? String(workplaceId) : ""}
                 onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
                   {workplaces.map((wp: any) => (
                     <SelectItem key={wp.id} value={String(wp.id)}>
                       {wp.name}
@@ -810,14 +809,13 @@ export default function CalendarPage() {
             <div>
               <Label>Local de Trabalho</Label>
               <Select
-                value={String(workplaceId)}
+                value={workplaceId ? String(workplaceId) : ""}
                 onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Nenhum" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
                   {workplaces.map((wp: any) => (
                     <SelectItem key={wp.id} value={String(wp.id)}>
                       {wp.name}
