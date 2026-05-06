@@ -446,65 +446,26 @@ export default function CalendarPage() {
 
       {/* Main Content */}
       <div className="p-4">
-        {/* Calendar Navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleNavigateMonth("prev")}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <h2 className="text-lg font-semibold">
-            {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-          </h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleNavigateMonth("next")}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Filter Buttons and Toggle */}
-        <div className="flex gap-2 mb-4 mt-3 pt-3 border-t">
-          <Button
-            variant={calendarFilter === "todos" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCalendarFilter("todos")}
-          >
-            Todos
-          </Button>
-          <Button
-            variant={calendarFilter === "plantoes" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCalendarFilter("plantoes")}
-          >
-            Plantões
-          </Button>
-          <Button
-            variant={calendarFilter === "pessoal" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setCalendarFilter("pessoal")}
-          >
-            Pessoal
-          </Button>
-          <div className="flex items-center bg-muted/50 rounded-md p-0.5 ml-4">
+        {/* Calendar Header - Responsive */}
+        <div className="flex items-center justify-between gap-2 md:gap-4 w-full mb-4">
+          <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="w-4 h-4 md:w-5 md:h-5" /></Button>
+          <h2 className="text-sm md:text-lg font-semibold capitalize flex-1 text-center whitespace-nowrap overflow-hidden text-ellipsis">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</h2>
+          <div className="hidden md:flex items-center bg-muted/50 rounded-md p-0.5 mx-2">
             <Button variant={viewMode === "text" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("text")}>Texto</Button>
-            <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}><Circle className="w-3 h-3 mr-1" /> Bolinhas</Button>
+            <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}>Bolinhas</Button>
           </div>
+          <Button variant="ghost" size="icon" className="h-8 w-8 md:h-10 md:w-10 flex-shrink-0" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-4 h-4 md:w-5 md:h-5" /></Button>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1 auto-rows-fr mb-4">
+        {/* Calendar Grid - Hybrid Responsive */}
+        <div className="grid grid-cols-7 gap-0.5 md:gap-1 auto-rows-fr mb-4">
           {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
-            <div key={day} className="text-center font-semibold text-xs py-2">
+            <div key={day} className="text-center font-semibold text-[10px] md:text-xs py-1 md:py-2">
               {day}
             </div>
           ))}
           {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-[100px] bg-gray-50/50 dark:bg-gray-900/10 rounded-md" />
+            <div key={`empty-${i}`} className="min-h-[60px] sm:min-h-[80px] md:min-h-[120px] bg-gray-50/50 dark:bg-gray-900/10 rounded-md" />
           ))}
           {calendarDays.map((day) => {
             const dayKey = normalizeDateKey(day);
@@ -513,35 +474,36 @@ export default function CalendarPage() {
             const isTodayDate = isToday(day);
 
             return (
-              <div
+              <button
                 key={dayKey}
                 onClick={() => handleDayClick(day)}
-                className={`min-h-24 p-2 border rounded cursor-pointer transition ${
-                  isCurrentMonth
-                    ? "bg-background hover:bg-accent"
-                    : "bg-muted/30 text-muted-foreground"
-                } ${isTodayDate ? "border-primary border-2" : ""}`}
+                className={`min-h-[60px] sm:min-h-[80px] md:min-h-[120px] p-1 md:p-2 rounded-lg text-sm relative border transition-all flex flex-col items-center md:items-start gap-0.5 md:gap-1 group ${isToday(day) ? "border-primary/50 bg-primary/10 md:bg-primary/5" : "border-transparent md:border-border bg-transparent md:bg-card hover:bg-muted/30 md:hover:border-primary/30"} ${!isSameMonth(day, currentMonth) ? "opacity-30 md:opacity-40" : ""}`}
               >
-                <div className="text-xs font-semibold mb-1">
-                  {format(day, "d")}
-                </div>
-                <div className={`w-full ${viewMode === 'dots' ? 'flex flex-row flex-wrap justify-center gap-1.5 mt-2' : 'space-y-1'} overflow-hidden`}>
-                  {dayEvents.slice(0, viewMode === 'text' ? 4 : 12).map((e: any) => {
+                <span className={`text-[10px] md:text-xs font-bold w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full mb-0 md:mb-1 ${isToday(day) ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{format(day, "d")}</span>
+                
+                <div className={`w-full flex ${viewMode === 'dots' ? 'flex-row flex-wrap justify-center gap-1 md:gap-1.5 mt-1' : 'flex-row flex-wrap justify-center gap-1 mt-0.5 md:mt-0 md:flex-col md:space-y-1'} overflow-hidden`}>
+                  {dayEvents.slice(0, 12).map((e: any) => {
                     const baseColorClasses = e.color ? (e.isPassed ? "opacity-50 " + e.color : e.color) : getEventColor(e.type, e.isPassed);
-                    if (viewMode === 'dots') {
-                      const colorMatch = baseColorClasses.match(/text-([a-z]+)-700/);
-                      const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
-                      return <div key={e.id} className={`w-2 h-2 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""}`} title={getEventLabel({type: e.type, description: e.description})} />;
-                    }
+                    const colorMatch = baseColorClasses.match(/text-([a-z]+)-700/);
+                    const dotBg = colorMatch ? `bg-${colorMatch[1]}-500` : 'bg-slate-400';
+                    
                     return (
-                      <div key={e.id} className={`text-[10px] px-1.5 py-0.5 rounded-[3px] truncate w-full border-l-4 text-left font-medium ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`} onClick={(evt) => { evt.stopPropagation(); handleEditEventClick(e); }}>
-                        {e.startTime && <span className="font-bold mr-1">{e.startTime}</span>}{getEventLabel({type: e.type, description: e.description})}
+                      <div key={e.id} className="w-full flex justify-center md:block">
+                        {/* Bolinha (Forçada no Mobile, opcional no Desktop) */}
+                        <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 md:w-2.5 md:h-2.5 rounded-full ${dotBg} ${e.isPassed ? "opacity-40" : ""} ${viewMode === 'text' ? 'block md:hidden' : 'block'}`} title={getEventLabel({type: e.type, description: e.description})} />
+                        
+                        {/* Texto com Borda (Apenas Desktop) */}
+                        {viewMode === 'text' && (
+                          <div className={`hidden md:block text-[9px] md:text-[10px] px-1 md:px-1.5 py-[1px] md:py-0.5 rounded-[2px] md:rounded-[3px] truncate w-full border-l-2 md:border-l-4 text-left font-medium ${baseColorClasses} ${e.isPassed ? "line-through opacity-60" : ""}`}>
+                            {e.startTime && <span className="font-extrabold mr-0.5 md:mr-1">{e.startTime}</span>}
+                            {getEventLabel({type: e.type, description: e.description})}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
-                  {dayEvents.length > (viewMode === 'text' ? 4 : 12) && <div className="text-[10px] text-muted-foreground text-center mt-1">+{dayEvents.length - (viewMode === 'text' ? 4 : 12)} mais</div>}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
