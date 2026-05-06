@@ -530,8 +530,8 @@
 
 ## Correções Urgentes (06/05/2026)
 
-- [ ] Fix: MobileCalendar exibir lista de eventos ao clicar no dia (inline, sem Dialog)
-- [ ] Fix: Renomear menu lateral - "Mensal" para agenda mensal, "Semanal" para agenda semanal
-- [ ] Fix: Adicionar Domingo ao calendário semanal (WeeklyCalendarPage)
-- [ ] Fix: Novos usuários (ex: Yana) sem acesso ao menu lateral - corrigir filtro adminOnly
-- [ ] Fix: Bolinhas do desktop devem ficar iguais às do mobile (tamanho, disposição, estilo)
+- [x] Fix: MobileCalendar exibir lista de eventos ao clicar no dia (inline, sem Dialog)
+- [x] Fix: Renomear menu lateral - "Mensal" para agenda mensal, "Semanal" para agenda semanal
+- [x] Fix: Adicionar Domingo ao calendário semanal (WeeklyCalendarPage)
+- [x] Fix: Novos usuários (ex: Yana) sem acesso ao menu lateral - corrigir filtro adminOnly
+- [x] Fix: Bolinhas do desktop devem ficar iguais às do mobile (tamanho, disposição, estilo)
