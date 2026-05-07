@@ -329,7 +329,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -354,7 +354,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -605,7 +605,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -630,7 +630,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -740,7 +740,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -765,7 +765,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -881,7 +881,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -906,7 +906,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -1039,7 +1039,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -1064,7 +1064,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -1198,7 +1198,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -1223,7 +1223,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -1339,7 +1339,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -1364,7 +1364,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
@@ -1441,7 +1441,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id || event.workplaceid === wp.id) { 
+            if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) wpFixedValues += eventValue;
                else wpHours += calcHours(event); 
@@ -1466,7 +1466,7 @@ export const appRouter = router({
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && !event.workplaceid && event.type === rateObj.name) { 
+            if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
                if (eventValue > 0) fixedValues += eventValue;
                else hours += calcHours(event); 
