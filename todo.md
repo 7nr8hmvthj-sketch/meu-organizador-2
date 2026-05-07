@@ -540,3 +540,10 @@
 - [x] Feat: Atualizar rotas tRPC para aceitar campo 'value' em criação/edição de eventos
 - [x] Feat: Adicionar input de valor (R$) nos formulários de novo/editar evento
 - [x] Feat: Exibir valor formatado (R$ X,XX) na visualização de eventos
+
+## Refatoração Motor Financeiro (06/05/2026)
+
+- [ ] Fix: Refatorar calcHours - contar isPassed, ignorar isCancelled
+- [ ] Fix: Implementar prioridade para value fixo nos eventos
+- [ ] Fix: Normalizar datas e case-insensitive workplaceId
+- [ ] Fix: Aplicar value fixo aos unlinkedRates

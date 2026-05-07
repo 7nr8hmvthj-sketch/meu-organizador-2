@@ -515,7 +515,8 @@ export const appRouter = router({
         const unlinkedRatesList = await db.getUnlinkedRates(ctx.user.userId);
 
         const calcHours = (event: any): number => {
-          if (event.isPassed) return 0;
+          // CORREÇÃO 1: Removido o "if (event.isPassed) return 0;". Plantões concluídos DEVEM somar no faturamento!
+          if (event.isCancelled) return 0; // Só zera se for explicitamente cancelado
           let startH = 0, endH = 0;
           if (event.startTime && event.endTime) {
               const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
@@ -546,17 +547,22 @@ export const appRouter = router({
           const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
 
           let wpHours = 0;
+          let wpFixedValues = 0;
 
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
             
-            if (event.workplaceId === wp.id) {
-               wpHours += calcHours(event);
+            if (event.workplaceId === wp.id) { 
+               const eventValue = event.value ? parseFloat(event.value) : 0;
+               if (eventValue > 0) {
+                 wpFixedValues += eventValue;
+               } else {
+                 wpHours += calcHours(event); 
+               }
             }
           }
-
-          const wpTotal = wpHours * rate;
+          const wpTotal = (wpHours * rate) + wpFixedValues;
           totalRecebimentos += wpTotal;
 
           workplacesSummary.push({
@@ -571,26 +577,29 @@ export const appRouter = router({
         }
 
         let unlinkedSummary = [];
-        let unlinkedTotal = 0;
         const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
         const lastDay = new Date(workedYear, workedMonth, 0).getDate();
         const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
         for (const rateObj of unlinkedRatesList) {
-          let hours = 0;
+          let hours = 0; 
+          let fixedValues = 0;
           const rateValue = parseFloat(String(rateObj.hourlyRate));
-
+          
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
             
-            if (!event.workplaceId && event.type === rateObj.name) {
-               hours += calcHours(event);
+            if (!event.workplaceId && event.type === rateObj.name) { 
+               const eventValue = event.value ? parseFloat(event.value) : 0;
+               if (eventValue > 0) {
+                 fixedValues += eventValue;
+               } else {
+                 hours += calcHours(event); 
+               }
             }
           }
-
-          const total = hours * rateValue;
-          unlinkedTotal += total;
+          const total = (hours * rateValue) + fixedValues; 
           totalRecebimentos += total;
 
           unlinkedSummary.push({
