@@ -831,18 +831,6 @@ export default function CalendarPage() {
               </Select>
             </div>
 
-            <div>
-              <Label>Valor do Plantão - R$ (opcional)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={eventValue}
-                onChange={(e) => setEventValue(e.target.value)}
-                placeholder="Ex: 150.00"
-              />
-            </div>
-
             {/* Recorrência */}
             <div className="border-t pt-3">
               <div className="flex items-center gap-2">
