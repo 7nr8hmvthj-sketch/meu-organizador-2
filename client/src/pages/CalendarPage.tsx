@@ -528,20 +528,20 @@ export default function CalendarPage() {
         </div>
 
         {/* Calendar Grid - Desktop Only */}
-        <div className="hidden md:block">
+        <div className="hidden md:block bg-slate-50 dark:bg-slate-900/30 rounded-xl p-3 border border-slate-200 dark:border-slate-700">
           {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className="grid grid-cols-7 gap-1.5 mb-2">
             {["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SÁB"].map((day) => (
-              <div key={day} className="text-center text-xs font-bold text-muted-foreground uppercase py-1">
+              <div key={day} className="text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase py-1">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Day Grid */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
+          <div className="grid grid-cols-7 gap-1.5 mb-4">
             {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
-              <div key={`empty-${i}`} className="aspect-square bg-gray-50/50 dark:bg-gray-900/10 rounded" />
+              <div key={`empty-${i}`} className="aspect-square bg-slate-100/60 dark:bg-slate-800/20 rounded-lg border border-slate-200/50 dark:border-slate-700/30" />
             ))}
             {calendarDays.map((day) => {
               const dayKey = normalizeDateKey(day);
@@ -551,10 +551,12 @@ export default function CalendarPage() {
                 <button
                   key={dayKey}
                   onClick={() => handleDayClick(day)}
-                  className={`aspect-square flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all ${
+                  className={`aspect-square flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all border ${
                     isToday(day)
-                      ? "bg-primary/10 ring-2 ring-primary/30 text-primary"
-                      : "bg-gray-50 dark:bg-gray-900/20 text-foreground hover:bg-muted/50"
+                      ? "bg-primary/10 border-primary/50 ring-2 ring-primary/25 text-primary shadow-sm"
+                      : selectedDate && normalizeDateKey(selectedDate) === dayKey
+                        ? "bg-white dark:bg-slate-800 border-slate-400 dark:border-slate-500 shadow-md text-foreground"
+                        : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-foreground hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm"
                   } ${!isSameMonth(day, currentMonth) ? "opacity-30" : ""}`}
                 >
                   <span className={`text-sm font-bold ${isToday(day) ? "text-primary" : ""}`}>{format(day, "d")}</span>
