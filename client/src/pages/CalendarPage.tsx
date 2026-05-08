@@ -297,14 +297,44 @@ export default function CalendarPage() {
   });
 
   const createManyMutation = trpc.events.createMany.useMutation({
-    onSuccess: () => {
+    onSuccess: (created) => {
       utils.events.list.invalidate();
-      toast.success("Eventos restaurados");
+      toast.success(`${created.length} evento(s) criado(s) com sucesso`);
+      resetForm();
+      setShowAddEventModal(false);
     },
     onError: (error) => {
-      toast.error(`Erro ao restaurar: ${error.message}`);
+      toast.error(`Erro ao criar eventos: ${error.message}`);
     },
   });
+
+  // Gera array de datas para eventos recorrentes
+  const generateRecurringDates = (startDate: Date): string[] => {
+    const dates: string[] = [];
+    const endDate = recurrenceEndDate ? new Date(recurrenceEndDate + "T12:00:00") : new Date(startDate.getFullYear(), 11, 31);
+    let cursor = new Date(startDate);
+
+    if (recurrenceType === "weekly") {
+      while (cursor <= endDate) {
+        dates.push(format(cursor, "yyyy-MM-dd"));
+        cursor = new Date(cursor);
+        cursor.setDate(cursor.getDate() + 7);
+      }
+    } else {
+      // Mensal: avança semana a semana mas filtra pela semana do mês
+      while (cursor <= endDate) {
+        // Calcula qual semana do mês é o cursor (1-5)
+        const dayOfMonth = cursor.getDate();
+        const weekOfMonth = Math.ceil(dayOfMonth / 7);
+        if (monthlyOccurrences.includes(weekOfMonth)) {
+          dates.push(format(cursor, "yyyy-MM-dd"));
+        }
+        cursor = new Date(cursor);
+        cursor.setDate(cursor.getDate() + 7);
+      }
+    }
+    return dates;
+  };
 
   const handleAddEvent = () => {
     if (!selectedDate || !eventType) {
@@ -320,8 +350,7 @@ export default function CalendarPage() {
       return;
     }
 
-    createEventMutation.mutate({
-      date: dateStr,
+    const basePayload = {
       type,
       description: eventDescription || undefined,
       startTime: startTime || undefined,
@@ -330,7 +359,19 @@ export default function CalendarPage() {
       isShift: false,
       workplaceId: workplaceId ? Number(workplaceId) : undefined,
       value: eventValue ? Number(eventValue) : undefined,
-    });
+    };
+
+    if (!isRecurring) {
+      createEventMutation.mutate({ ...basePayload, date: dateStr });
+    } else {
+      const dates = generateRecurringDates(selectedDate);
+      if (dates.length === 0) {
+        toast.error("Nenhuma data gerada. Verifique a data de término.");
+        return;
+      }
+      const batch = dates.map((d) => ({ ...basePayload, date: d }));
+      createManyMutation.mutate(batch);
+    }
   };
 
   const handleUpdateEvent = () => {
@@ -798,6 +839,76 @@ export default function CalendarPage() {
                 onChange={(e) => setEventValue(e.target.value)}
                 placeholder="Ex: 150.00"
               />
+            </div>
+
+            {/* Recorrência */}
+            <div className="border-t pt-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isRecurring"
+                  checked={isRecurring}
+                  onChange={(e) => setIsRecurring(e.target.checked)}
+                  className="w-4 h-4 accent-primary"
+                />
+                <Label htmlFor="isRecurring" className="cursor-pointer font-medium">Repetir Evento</Label>
+              </div>
+
+              {isRecurring && (
+                <div className="mt-3 space-y-3 pl-1">
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Frequência</Label>
+                    <Select value={recurrenceType} onValueChange={(v) => setRecurrenceType(v as "weekly" | "monthly")}>
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="weekly">Semanal (todo semana)</SelectItem>
+                        <SelectItem value="monthly">Mensal (semanas específicas)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {recurrenceType === "monthly" && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground mb-1 block">Semanas do mês</Label>
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((week) => (
+                          <button
+                            key={week}
+                            type="button"
+                            onClick={() => {
+                              setMonthlyOccurrences((prev) =>
+                                prev.includes(week)
+                                  ? prev.filter((w) => w !== week)
+                                  : [...prev, week].sort()
+                              );
+                            }}
+                            className={`w-8 h-8 rounded text-xs font-semibold border transition-colors ${
+                              monthlyOccurrences.includes(week)
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                            }`}
+                          >
+                            {week}ª
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">Selecione as semanas em que o evento ocorre</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Repetir até</Label>
+                    <Input
+                      type="date"
+                      value={recurrenceEndDate}
+                      onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
