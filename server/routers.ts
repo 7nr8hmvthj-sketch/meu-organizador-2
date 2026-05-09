@@ -1293,6 +1293,108 @@ export const appRouter = router({
         if (!success) throw new TRPCError({ code: 'NOT_FOUND', message: 'Workplace not found or unauthorized' });
         return { success: true };
       }),
+
+    /**
+     * getMonthlySummary - Motor de Cálculo Financeiro
+     * Retorna horas e valores agrupados por Local de Trabalho para um dado mês/ano.
+     *
+     * Prioridade de cálculo por plantão:
+     *   1. value > 0 → usa diretamente como shiftValue
+     *   2. startTime + endTime → calcula horas, multiplica por hourlyRate
+     *   3. Regex no campo type/description → detecta padrões "7-13", "7-19", etc.
+     */
+    getMonthlySummary: protectedProcedure
+      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const { month, year } = input;
+
+        // Janela do mês completo
+        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+        const allEvents = await db.getEventsByDateRange(ctx.user.userId, startDate, endDate);
+        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
+
+        // ─── Função auxiliar: detecta horas via regex no texto ───────────────
+        const parseHoursFromText = (text: string): number => {
+          if (!text) return 0;
+          // Padrões de 12h: 7-19, 07-19, 19-7, 19-07
+          if (/\b(7-19|07-19|19-7|19-07)\b/.test(text)) return 12;
+          // Padrões de 6h: 7-13, 07-13, 13-19, 13-7
+          if (/\b(7-13|07-13|13-19|13-7)\b/.test(text)) return 6;
+          // Padrão genérico HH-HH: calcula a diferença
+          const m = text.match(/\b(\d{1,2})-(\d{1,2})\b/);
+          if (m) {
+            let diff = parseInt(m[2], 10) - parseInt(m[1], 10);
+            if (diff < 0) diff += 24;
+            return diff;
+          }
+          return 0;
+        };
+
+        // ─── Função auxiliar: calcula horas via startTime/endTime ─────────────
+        const parseHoursFromTimes = (startTime?: string | null, endTime?: string | null): number => {
+          if (!startTime || !endTime) return 0;
+          const s = startTime.match(/(\d{1,2}):(\d{2})/);
+          const e = endTime.match(/(\d{1,2}):(\d{2})/);
+          if (!s || !e) return 0;
+          let diff = parseInt(e[1], 10) - parseInt(s[1], 10);
+          if (diff < 0) diff += 24;
+          return diff;
+        };
+
+        // ─── Função principal: valor e horas de um plantão ───────────────────
+        const calcShift = (event: any, hourlyRate: number): { hours: number; value: number } => {
+          if (event.isCancelled) return { hours: 0, value: 0 };
+
+          // Prioridade 1: valor salvo diretamente no evento
+          const savedValue = event.value ? parseFloat(String(event.value)) : 0;
+          if (savedValue > 0) return { hours: 0, value: savedValue };
+
+          // Prioridade 2: calcular pelas colunas startTime/endTime
+          const hoursFromTime = parseHoursFromTimes(event.startTime, event.endTime);
+          if (hoursFromTime > 0) return { hours: hoursFromTime, value: hoursFromTime * hourlyRate };
+
+          // Prioridade 3: regex no campo type e description
+          const textToSearch = `${event.type ?? ''} ${event.description ?? ''}`;
+          const hoursFromText = parseHoursFromText(textToSearch);
+          if (hoursFromText > 0) return { hours: hoursFromText, value: hoursFromText * hourlyRate };
+
+          return { hours: 0, value: 0 };
+        };
+
+        // ─── Agrupar por workplace ────────────────────────────────────────────
+        const wpMap = new Map<number, { workplaceId: number; workplaceName: string; totalHours: number; totalValue: number }>();
+
+        for (const wp of userWorkplaces) {
+          wpMap.set(wp.id, { workplaceId: wp.id, workplaceName: wp.name, totalHours: 0, totalValue: 0 });
+        }
+
+        for (const event of allEvents) {
+          if (!event.isShift || event.isCancelled) continue;
+          if (!event.workplaceId) continue;
+
+          const wp = userWorkplaces.find((w: any) => w.id === event.workplaceId);
+          if (!wp) continue;
+
+          const hourlyRate = parseFloat(String(wp.hourlyRate));
+          const { hours, value } = calcShift(event, hourlyRate);
+
+          const entry = wpMap.get(wp.id)!;
+          entry.totalHours += hours;
+          entry.totalValue += value;
+        }
+
+        // Retorna array consolidado por workplace
+        return Array.from(wpMap.values()) as Array<{
+          workplaceId: number;
+          workplaceName: string;
+          totalHours: number;
+          totalValue: number;
+        }>;
+      }),
+
     monthlySummary: adminProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {

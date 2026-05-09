@@ -1,0 +1,14 @@
+{
+  "query": "SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('information_schema', 'pg_catalog', 'mysql', 'sys', 'performance_schema') ORDER BY table_schema, table_name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('information_schema', 'pg_catalog', 'mysql', 'sys', 'performance_schema') ORDER BY table_schema, table_name;",
+  "rows": [
+    {
+      "table_schema": "gPiHJoB3NKeoE8WP6B5f8y",
+      "table_name": "__drizzle_migrations"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_schema\ttable_name\ngPiHJoB3NKeoE8WP6B5f8y\t__drizzle_migrations\n",
+  "stderr": "",
+  "execution_time_ms": 412
+}

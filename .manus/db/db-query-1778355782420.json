@@ -1,0 +1,130 @@
+{
+  "query": "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'events' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'events' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "EVENT_CATALOG",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "EVENT_SCHEMA",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "EVENT_NAME",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "DEFINER",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "TIME_ZONE",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "EVENT_BODY",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "EVENT_DEFINITION",
+      "data_type": "longtext",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "EVENT_TYPE",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "EXECUTE_AT",
+      "data_type": "datetime",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "INTERVAL_VALUE",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "INTERVAL_FIELD",
+      "data_type": "varchar",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "SQL_MODE",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "STARTS",
+      "data_type": "datetime",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "ENDS",
+      "data_type": "datetime",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "STATUS",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "ON_COMPLETION",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "CREATED",
+      "data_type": "datetime",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "LAST_ALTERED",
+      "data_type": "datetime",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "LAST_EXECUTED",
+      "data_type": "datetime",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "EVENT_COMMENT",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "ORIGINATOR",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "CHARACTER_SET_CLIENT",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "COLLATION_CONNECTION",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "DATABASE_COLLATION",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\tis_nullable\nEVENT_CATALOG\tvarchar\tNO\nEVENT_SCHEMA\tvarchar\tNO\nEVENT_NAME\tvarchar\tNO\nDEFINER\tvarchar\tNO\nTIME_ZONE\tvarchar\tNO\nEVENT_BODY\tvarchar\tNO\nEVENT_DEFINITION\tlongtext\tYES\nEVENT_TYPE\tvarchar\tNO\nEXECUTE_AT\tdatetime\tYES\nINTERVAL_VALUE\tvarchar\tYES\nINTERVAL_FIELD\tvarchar\tYES\nSQL_MODE\tvarchar\tNO\nSTARTS\tdatetime\tYES\nENDS\tdatetime\tYES\nSTATUS\tvarchar\tNO\nON_COMPLETION\tvarchar\tNO\nCREATED\tdatetime\tNO\nLAST_ALTERED\tdatetime\tNO\nLAST_EXECUTED\tdatetime\tYES\nEVENT_COMMENT\tvarchar\tNO\nORIGINATOR\tint\tNO\nCHARACTER_SET_CLIENT\tvarchar\tNO\nCOLLATION_CONNECTION\tvarchar\tNO\nDATABASE_COLLATION\tvarchar\tNO\n",
+  "stderr": "",
+  "execution_time_ms": 898
+}
