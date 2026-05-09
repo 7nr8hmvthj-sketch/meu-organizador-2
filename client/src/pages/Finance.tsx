@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, DollarSign, CheckCircle2, Circle, Trash2, Pencil, RefreshCw } from "lucide-react";
+import { FinancialSummaryCard } from "@/components/FinancialSummaryCard";
 import { toast } from "sonner";
 
 // --- HELPERS ---
@@ -232,6 +233,9 @@ export default function FinancePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Recebimentos por Local de Trabalho */}
+      <FinancialSummaryCard />
 
       {/* Listas de Despesas */}
       <Tabs defaultValue="all" className="w-full">
