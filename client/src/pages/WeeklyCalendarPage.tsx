@@ -35,6 +35,12 @@ export default function WeeklyCalendarPage() {
   const [editingEvent, setEditingEvent] = useState<{ id: number; type: string; description: string | null; createdBy?: string | null } | null>(null);
   const [eventToDelete, setEventToDelete] = useState<{ id: number; type: string } | null>(null);
 
+  const [showShiftDivider, setShowShiftDivider] = useState(false);
+  const [doctorsCount, setDoctorsCount] = useState<number>(2);
+  const [dividerStartTime, setDividerStartTime] = useState("01:00");
+  const [dividerEndTime, setDividerEndTime] = useState("07:00");
+  const [dividedShifts, setDividedShifts] = useState<string[]>([]);
+
   const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const utils = trpc.useUtils();
@@ -85,6 +91,46 @@ export default function WeeklyCalendarPage() {
     setTrainingType("");
     setTrainingTime("");
     setTrainingDescription("");
+  };
+
+  const calculateDivision = () => {
+    if (!dividerStartTime || !dividerEndTime) {
+      toast.error("Preencha os horários");
+      return;
+    }
+    const [startH, startM] = dividerStartTime.split(':').map(Number);
+    const [endH, endM] = dividerEndTime.split(':').map(Number);
+
+    let startTotal = startH * 60 + startM;
+    let endTotal = endH * 60 + endM;
+
+    if (endTotal <= startTotal) endTotal += 24 * 60;
+
+    const diff = endTotal - startTotal;
+    const slice = Math.floor(diff / doctorsCount);
+
+    const result: string[] = [];
+    let current = startTotal;
+    for (let i = 0; i < doctorsCount; i++) {
+      const next = current + slice;
+      const sh = Math.floor((current % (24 * 60)) / 60).toString().padStart(2, '0');
+      const sm = (current % 60).toString().padStart(2, '0');
+      const eh = Math.floor((next % (24 * 60)) / 60).toString().padStart(2, '0');
+      const em = (next % 60).toString().padStart(2, '0');
+
+      const durationH = Math.floor(slice / 60);
+      const durationM = slice % 60;
+      const durationStr = durationM > 0 ? `${durationH}h${durationM}m` : `${durationH}h`;
+
+      result.push(`Médico ${i + 1}: ${sh}:${sm} às ${eh}:${em} (${durationStr})`);
+      current = next;
+    }
+    setDividedShifts(result);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(dividedShifts.join('\n'));
+    toast.success("Copiado para a área de transferência!");
   };
 
   // Gera os 7 dias da semana (domingo a sábado)
@@ -229,9 +275,14 @@ export default function WeeklyCalendarPage() {
           <h1 className="text-xl font-bold text-primary">Agenda Semanal</h1>
           <p className="text-muted-foreground text-xs">Toque em um dia para adicionar treino</p>
         </div>
-        <Button variant="outline" size="sm" onClick={goToToday}>
-          Hoje
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { setShowShiftDivider(true); setDividedShifts([]); }} title="Divisor de Plantões">
+            <span className="font-bold">÷ Horas</span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={goToToday}>
+            Hoje
+          </Button>
+        </div>
       </div>
 
       {/* Navegação da Semana */}
@@ -563,6 +614,39 @@ export default function WeeklyCalendarPage() {
               {deleteEventMutation.isPending ? "Excluindo..." : "Excluir"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showShiftDivider} onOpenChange={setShowShiftDivider}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader><DialogTitle>Divisor de Plantões</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Número de Médicos</Label>
+              <Input type="number" min="2" max="10" value={doctorsCount} onChange={e => setDoctorsCount(Number(e.target.value))} />
+            </div>
+            <div className="flex space-x-2">
+              <div className="flex-1">
+                <Label>Horário Início</Label>
+                <Input type="time" value={dividerStartTime} onChange={e => setDividerStartTime(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <Label>Horário Fim</Label>
+                <Input type="time" value={dividerEndTime} onChange={e => setDividerEndTime(e.target.value)} />
+              </div>
+            </div>
+            <Button onClick={calculateDivision} className="w-full">Calcular Divisão</Button>
+
+            {dividedShifts.length > 0 && (
+              <div className="mt-4 p-3 bg-muted rounded-md space-y-2">
+                <h4 className="font-semibold text-sm">Resultado:</h4>
+                {dividedShifts.map((shift, idx) => (
+                  <div key={idx} className="text-sm font-mono">{shift}</div>
+                ))}
+                <Button variant="outline" size="sm" onClick={copyToClipboard} className="w-full mt-2">Copiar para WhatsApp</Button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
