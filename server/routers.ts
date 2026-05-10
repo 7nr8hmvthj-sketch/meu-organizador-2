@@ -217,10 +217,12 @@ export const appRouter = router({
         inviteCode: z.string().min(1),
       }))
       .mutation(async ({ input, ctx }) => {
-        // Código de convite válido (pode ser configurado via env no futuro)
+        // Códigos de convite lidos de variáveis de ambiente (fallback para os valores padrão)
+        const expectedAdminCode = (process.env.ADMIN_INVITE_CODE || 'AGENDA2026').toUpperCase();
+        const expectedTrainerCode = (process.env.TRAINER_INVITE_CODE || 'TRAINER2026').toUpperCase();
         const VALID_INVITE_CODES: Record<string, string> = {
-          "AGENDA2026": "user",
-          "TRAINER2026": "trainer",
+          [expectedAdminCode]: "user",
+          [expectedTrainerCode]: "trainer",
         };
         
         const codeUpper = input.inviteCode.toUpperCase();

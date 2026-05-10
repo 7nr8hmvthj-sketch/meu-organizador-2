@@ -12,7 +12,6 @@ import CalendarPage from "./pages/CalendarPage";
 import WeeklyCalendarPage from "./pages/WeeklyCalendarPage";
 import Finance from "./pages/Finance";
 import Medications from "./pages/Medications";
-import Today from "./pages/Today";
 import DiaryPage from "./pages/DiaryPage";
 
 import { 
@@ -22,7 +21,6 @@ import {
   CalendarRange,
   DollarSign, 
   Pill, 
-  Sun as SunIcon,
   Moon,
   Sun,
   LogOut,

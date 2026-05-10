@@ -901,16 +901,20 @@ export async function getAppUserByUsername(username: string) {
 
 export async function getNextAppUserId(): Promise<number> {
   const db = await getDb();
-  if (!db) return Date.now();
+  if (!db) throw new Error('Falha ao gerar novo ID de usuário: banco de dados indisponível');
   try {
     const result = await db.execute(
       sql`SELECT COALESCE(MAX(user_id), 0) + 1 as next_id FROM app_users`
     );
     const rows = (result as any).rows || (result as any);
-    return rows[0]?.next_id || Date.now();
+    const nextId = rows[0]?.next_id;
+    if (!nextId || typeof nextId !== 'number') {
+      throw new Error('Falha ao gerar novo ID de usuário: resultado inválido do banco');
+    }
+    return nextId;
   } catch (error) {
     console.error("[Database] Error getting next user ID:", error);
-    return Date.now();
+    throw error instanceof Error ? error : new Error('Falha ao gerar novo ID de usuário');
   }
 }
 
