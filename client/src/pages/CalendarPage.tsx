@@ -97,6 +97,12 @@ export default function CalendarPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
+
+  const [showShiftDivider, setShowShiftDivider] = useState(false);
+  const [doctorsCount, setDoctorsCount] = useState<number>(2);
+  const [dividerStartTime, setDividerStartTime] = useState("01:00");
+  const [dividerEndTime, setDividerEndTime] = useState("07:00");
+  const [dividedShifts, setDividedShifts] = useState<string[]>([]);
   
   const [deleteMode, setDeleteMode] = useState<'single' | 'future' | 'all'>('single');
 
@@ -459,6 +465,42 @@ export default function CalendarPage() {
 
   const isRestrictedUser = (isAdmin && currentUsername === "PAULA") || isTrainer;
 
+  const calculateDivision = () => {
+    if (!dividerStartTime || !dividerEndTime) {
+      toast.error("Preencha os horários");
+      return;
+    }
+    const [startH, startM] = dividerStartTime.split(':').map(Number);
+    const [endH, endM] = dividerEndTime.split(':').map(Number);
+
+    let startTotal = startH * 60 + startM;
+    let endTotal = endH * 60 + endM;
+
+    // Matemática da madrugada
+    if (endTotal <= startTotal) endTotal += 24 * 60;
+
+    const diff = endTotal - startTotal;
+    const slice = Math.floor(diff / doctorsCount);
+
+    const result: string[] = [];
+    let current = startTotal;
+    for (let i = 0; i < doctorsCount; i++) {
+      const next = current + slice;
+      const sh = Math.floor((current % (24 * 60)) / 60).toString().padStart(2, '0');
+      const sm = (current % 60).toString().padStart(2, '0');
+      const eh = Math.floor((next % (24 * 60)) / 60).toString().padStart(2, '0');
+      const em = (next % 60).toString().padStart(2, '0');
+      result.push(`Médico ${i + 1}: ${sh}:${sm} às ${eh}:${em}`);
+      current = next;
+    }
+    setDividedShifts(result);
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(dividedShifts.join('\n'));
+    toast.success("Copiado para a área de transferência!");
+  };
+
   return (
     <div className="w-full max-w-full bg-background">
       {/* Header */}
@@ -537,7 +579,10 @@ export default function CalendarPage() {
             <Button variant={viewMode === "text" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("text")}>Texto</Button>
             <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}>Bolinhas</Button>
           </div>
-          <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
+          <div className="flex gap-2 items-center">
+            <Button variant="outline" size="sm" onClick={() => { setShowShiftDivider(true); setDividedShifts([]); }}>Dividir Plantão</Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
+          </div>
         </div>
 
         {/* Calendar Grid - Desktop Only */}
@@ -1167,6 +1212,40 @@ export default function CalendarPage() {
             </Button>
             <Button onClick={handleAddTraining}>Criar</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Divisor de Plantões */}
+      <Dialog open={showShiftDivider} onOpenChange={setShowShiftDivider}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Divisor de Plantões</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Número de Médicos</Label>
+              <Input type="number" min="2" max="10" value={doctorsCount} onChange={e => setDoctorsCount(Number(e.target.value))} />
+            </div>
+            <div className="flex space-x-2">
+              <div className="flex-1">
+                <Label>Horário Início</Label>
+                <Input type="time" value={dividerStartTime} onChange={e => setDividerStartTime(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <Label>Horário Fim</Label>
+                <Input type="time" value={dividerEndTime} onChange={e => setDividerEndTime(e.target.value)} />
+              </div>
+            </div>
+            <Button onClick={calculateDivision} className="w-full">Calcular Divisão</Button>
+
+            {dividedShifts.length > 0 && (
+              <div className="mt-4 p-3 bg-muted rounded-md space-y-2">
+                <h4 className="font-semibold text-sm">Resultado:</h4>
+                {dividedShifts.map((shift, idx) => (
+                  <div key={idx} className="text-sm font-mono">{shift}</div>
+                ))}
+                <Button variant="outline" size="sm" onClick={copyToClipboard} className="w-full mt-2">Copiar para WhatsApp</Button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
