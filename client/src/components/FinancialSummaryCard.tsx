@@ -41,8 +41,10 @@ export function FinancialSummaryCard() {
 
   // ─── Query: resumo por workplace ──────────────────────────────────────────
   const utils = trpc.useUtils();
-  const { data: summary = [], isLoading: loadingSummary } =
+  const { data: summaryData, isLoading: loadingSummary } =
     trpc.workplaces.getMonthlySummary.useQuery({ month, year });
+  // Extrair o array de workplaces do objeto retornado (backend retorna { workplacesSummary, ... })
+  const summary: any[] = Array.isArray(summaryData?.workplacesSummary) ? summaryData.workplacesSummary : [];
 
   // ─── Query: eventos do mês para detectar plantões sem vínculo ────────────
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -72,8 +74,8 @@ export function FinancialSummaryCard() {
   );
 
   // ─── Totais consolidados ──────────────────────────────────────────────────
-  const totalHours = (summary as any[]).reduce((acc, wp) => acc + (wp.totalHours ?? 0), 0);
-  const totalValue = (summary as any[]).reduce((acc, wp) => acc + (wp.totalValue ?? 0), 0);
+  const totalHours = summary.reduce((acc: number, wp: any) => acc + (wp.totalHours ?? 0), 0);
+  const totalValue = summary.reduce((acc: number, wp: any) => acc + (wp.totalValue ?? 0), 0);
 
   // ─── Navegação de mês ─────────────────────────────────────────────────────
   const goToPrevMonth = () => {
@@ -173,7 +175,7 @@ export function FinancialSummaryCard() {
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : (summary as any[]).length === 0 ? (
+          ) : summary.length === 0 ? (
             <div className="py-10 text-center space-y-3">
               <Briefcase className="w-10 h-10 mx-auto text-muted-foreground/30" />
               <p className="text-muted-foreground font-medium text-sm">Nenhum local de trabalho cadastrado.</p>
@@ -211,7 +213,7 @@ export function FinancialSummaryCard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(summary as any[]).map((wp, idx) => (
+                    {summary.map((wp: any, idx: number) => (
                       <tr
                         key={wp.workplaceId}
                         className={`border-b border-border last:border-0 transition-colors hover:bg-muted/20 ${
