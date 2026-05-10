@@ -843,6 +843,57 @@ export default function CalendarPage() {
               </Select>
             </div>
 
+            {/* Horário com botões rápidos */}
+            <div>
+              <Label>Horário (opcional)</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[
+                  { label: "7-13", start: "07:00", end: "13:00" },
+                  { label: "13-19", start: "13:00", end: "19:00" },
+                  { label: "19-01", start: "19:00", end: "01:00" },
+                  { label: "19-07", start: "19:00", end: "07:00" },
+                ].map((slot) => (
+                  <Button
+                    key={slot.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setStartTime(slot.start); setEndTime(slot.end); }}
+                    className={startTime === slot.start && endTime === slot.end ? "border-primary text-primary" : ""}
+                  >
+                    {slot.label}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setStartTime(""); setEndTime(""); }}
+                  className="text-muted-foreground"
+                >
+                  Limpar
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground">Início</Label>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground">Fim</Label>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Recorrência */}
             <div className="border-t pt-3">
               <div className="flex items-center gap-2">
@@ -992,6 +1043,57 @@ export default function CalendarPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Horário com botões rápidos */}
+            <div>
+              <Label>Horário (opcional)</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[
+                  { label: "7-13", start: "07:00", end: "13:00" },
+                  { label: "13-19", start: "13:00", end: "19:00" },
+                  { label: "19-01", start: "19:00", end: "01:00" },
+                  { label: "19-07", start: "19:00", end: "07:00" },
+                ].map((slot) => (
+                  <Button
+                    key={slot.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setStartTime(slot.start); setEndTime(slot.end); }}
+                    className={startTime === slot.start && endTime === slot.end ? "border-primary text-primary" : ""}
+                  >
+                    {slot.label}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setStartTime(""); setEndTime(""); }}
+                  className="text-muted-foreground"
+                >
+                  Limpar
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground">Início</Label>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground">Fim</Label>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
