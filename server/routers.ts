@@ -1365,11 +1365,13 @@ export const appRouter = router({
         };
 
         // ─── Agrupar por workplace ────────────────────────────────────────────
-        const wpMap = new Map<number, { workplaceId: number; workplaceName: string; totalHours: number; totalValue: number }>();
+        const wpMap = new Map<number, { workplaceId: number; workplaceName: string; rawHours: number; hoursAdjustment: number; adjustmentReason: string | null; totalHours: number; totalValue: number; hourlyRate: number }>();
 
         for (const wp of userWorkplaces) {
-          wpMap.set(wp.id, { workplaceId: wp.id, workplaceName: wp.name, totalHours: 0, totalValue: 0 });
+          wpMap.set(wp.id, { workplaceId: wp.id, workplaceName: wp.name, rawHours: 0, hoursAdjustment: 0, adjustmentReason: null, totalHours: 0, totalValue: 0, hourlyRate: parseFloat(String(wp.hourlyRate)) });
         }
+
+        let fixedValueTotal = 0;
 
         for (const event of allEvents) {
           if (!event.isShift || event.isCancelled) continue;
@@ -1382,17 +1384,63 @@ export const appRouter = router({
           const { hours, value } = calcShift(event, hourlyRate);
 
           const entry = wpMap.get(wp.id)!;
-          entry.totalHours += hours;
-          entry.totalValue += value;
+          entry.rawHours += hours;
+          // Se value veio da Prioridade 1 (valor fixo), acumula separadamente
+          if (hours === 0 && value > 0) fixedValueTotal += value;
+          else entry.totalValue += value;
+        }
+
+        // ─── Aplicar ajustes RH por workplace ───────────────────────────────
+        const adjustments = await db.getWorkplaceAdjustments(ctx.user.userId, month, year);
+
+        for (const adj of adjustments) {
+          if (!adj.workplaceId) continue;
+          const entry = wpMap.get(adj.workplaceId);
+          if (!entry) continue;
+          const adjHours = adj.hoursAdjustment ? parseFloat(String(adj.hoursAdjustment)) : 0;
+          entry.hoursAdjustment = adjHours;
+          entry.adjustmentReason = adj.reason ?? null;
+        }
+
+        // Calcular totalHours e totalValue finais com ajustes
+        const wpEntries = Array.from(wpMap.values());
+        for (const entry of wpEntries) {
+          entry.totalHours = entry.rawHours + entry.hoursAdjustment;
+          // Recalcular valor baseado nas horas ajustadas
+          entry.totalValue = (entry.totalHours * entry.hourlyRate);
         }
 
         // Retorna array consolidado por workplace
-        return Array.from(wpMap.values()) as Array<{
-          workplaceId: number;
-          workplaceName: string;
-          totalHours: number;
-          totalValue: number;
-        }>;
+        return Array.from(wpMap.values()).map(e => ({
+          workplaceId: e.workplaceId,
+          workplaceName: e.workplaceName,
+          rawHours: e.rawHours,
+          hoursAdjustment: e.hoursAdjustment,
+          adjustmentReason: e.adjustmentReason,
+          totalHours: e.totalHours,
+          totalValue: e.totalValue,
+          hourlyRate: e.hourlyRate,
+        }));
+      }),
+
+    saveAdjustment: protectedProcedure
+      .input(z.object({
+        workplaceId: z.number(),
+        month: z.number().min(1).max(12),
+        year: z.number(),
+        hoursAdjustment: z.number(),
+        reason: z.string().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.upsertWorkplaceAdjustment(
+          ctx.user.userId,
+          input.workplaceId,
+          input.month,
+          input.year,
+          input.hoursAdjustment,
+          input.reason
+        );
+        return { success: !!result };
       }),
 
     monthlySummary: adminProcedure

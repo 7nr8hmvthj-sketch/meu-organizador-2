@@ -973,6 +973,67 @@ export async function getManagedUserIds(userId: number): Promise<number[]> {
   }
 }
 
+// ─── Workplace Adjustments (per-workplace) ─────────────────────────────────────
+
+export async function getWorkplaceAdjustments(userId: number, month: number, year: number) {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    const result = await db.select()
+      .from(monthlyAdjustments)
+      .where(sql`${monthlyAdjustments.userId} = ${userId} AND ${monthlyAdjustments.month} = ${month} AND ${monthlyAdjustments.year} = ${year} AND ${monthlyAdjustments.workplaceId} IS NOT NULL`);
+    return result;
+  } catch (error) {
+    console.error("[Database] Error fetching workplace adjustments:", error);
+    return [];
+  }
+}
+
+export async function upsertWorkplaceAdjustment(
+  userId: number,
+  workplaceId: number,
+  month: number,
+  year: number,
+  hoursAdjustment: number,
+  reason: string | null
+) {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const existing = await db.select()
+      .from(monthlyAdjustments)
+      .where(sql`${monthlyAdjustments.userId} = ${userId} AND ${monthlyAdjustments.workplaceId} = ${workplaceId} AND ${monthlyAdjustments.month} = ${month} AND ${monthlyAdjustments.year} = ${year}`)
+      .limit(1);
+
+    if (existing.length > 0) {
+      const updated = await db.update(monthlyAdjustments)
+        .set({
+          hoursAdjustment: String(hoursAdjustment),
+          reason,
+          updatedAt: new Date(),
+        })
+        .where(sql`${monthlyAdjustments.id} = ${existing[0].id}`)
+        .returning();
+      return updated[0];
+    } else {
+      const inserted = await db.insert(monthlyAdjustments)
+        .values({
+          userId,
+          workplaceId,
+          month,
+          year,
+          hoursAdjustment: String(hoursAdjustment),
+          reason,
+        })
+        .returning();
+      return inserted[0];
+    }
+  } catch (error) {
+    console.error("[Database] Error upserting workplace adjustment:", error);
+    return null;
+  }
+}
+
 // ─── Workplaces CRUD ─────────────────────────────────────────────────────────
 
 export async function getWorkplaces(userId: number): Promise<Workplace[]> {

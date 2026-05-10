@@ -19,7 +19,7 @@ import FinancialDashboard from "../components/FinancialDashboard";
 import CsvManager from "@/components/CsvManager";
 import { MobileCalendar } from "@/components/MobileCalendar";
 import { useLocation } from "wouter";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, addMonths, subMonths, getDay, getDate, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { normalizeDateKey } from "@/lib/dateUtils";
@@ -546,12 +546,14 @@ export default function CalendarPage() {
             {calendarDays.map((day) => {
               const dayKey = normalizeDateKey(day);
               const dayEvents = eventsByDate[dayKey] || [];
+              const dayNumber = getDate(day);
+              const closingWorkplaces = workplaces.filter((wp: any) => wp.cycleEndDay === dayNumber);
 
               return (
                 <button
                   key={dayKey}
                   onClick={() => handleDayClick(day)}
-                  className={`aspect-square flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all border ${
+                  className={`relative aspect-square flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all border ${
                     isToday(day)
                       ? "bg-primary/15 border-primary/60 ring-2 ring-primary/30 text-primary shadow-sm"
                       : selectedDate && normalizeDateKey(selectedDate) === dayKey
@@ -590,6 +592,16 @@ export default function CalendarPage() {
                       {dayEvents.length > 4 && (
                         <span className="text-[8px] text-muted-foreground text-center">+{dayEvents.length - 4}</span>
                       )}
+                    </div>
+                  )}
+                  {/* Badge de Fechamento de Ciclo */}
+                  {closingWorkplaces.length > 0 && (
+                    <div className="absolute bottom-0.5 left-0.5 right-0.5">
+                      {closingWorkplaces.slice(0, 1).map((wp: any) => (
+                        <span key={wp.id} className="block text-[7px] leading-tight font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-0.5 py-0 truncate text-center" title={`Fechamento: ${wp.name}`}>
+                          \uD83D\uDCB0 {wp.name.length > 6 ? wp.name.slice(0, 6) : wp.name}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </button>

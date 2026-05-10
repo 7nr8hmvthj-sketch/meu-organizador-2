@@ -150,12 +150,16 @@ export type InsertCategory = typeof categories.$inferInsert;
 
 /**
  * Monthly adjustments - stores RH confirmed hours for conciliation
+ * Supports both legacy (rhHoursZN/HC) and new per-workplace adjustments
  */
 export const monthlyAdjustments = pgTable("monthly_adjustments", {
   id: serial("id").primaryKey(),
   userId: integer("userid").notNull(),
+  workplaceId: integer("workplaceid"),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
+  hoursAdjustment: numeric("hoursadjustment", { precision: 10, scale: 2 }),
+  reason: text("reason"),
   rhHoursZN: numeric("rhhourszn", { precision: 10, scale: 2 }),
   rhHoursHC: numeric("rhhourshc", { precision: 10, scale: 2 }),
   updatedAt: timestamp("updatedat", { withTimezone: true }).defaultNow().notNull(),
