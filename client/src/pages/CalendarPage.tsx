@@ -599,7 +599,7 @@ export default function CalendarPage() {
                     <div className="absolute bottom-0.5 left-0.5 right-0.5">
                       {closingWorkplaces.slice(0, 1).map((wp: any) => (
                         <span key={wp.id} className="block text-[7px] leading-tight font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-0.5 py-0 truncate text-center" title={`Fechamento: ${wp.name}`}>
-                          \uD83D\uDCB0 {wp.name.length > 6 ? wp.name.slice(0, 6) : wp.name}
+                          💰 {wp.name.length > 6 ? wp.name.slice(0, 6) : wp.name}
                         </span>
                       ))}
                     </div>
