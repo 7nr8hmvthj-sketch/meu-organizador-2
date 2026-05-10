@@ -553,3 +553,12 @@
 - [x] Corrigir getNextAppUserId no db.ts: retornava string em vez de número, bloqueando registro de novos usuários
 - [x] Confirmar que isRestrictedUser no CalendarPage.tsx está correto para novos admins (JORDANA, EMANUELA, etc.)
 - [x] Confirmar que workplaces.create funciona para qualquer admin registrado com sucesso
+
+## Liberação de Workplaces para Todos os Usuários (10/05/2026)
+
+- [x] Alterar workplaces.create/getAll/update/delete de adminProcedure para protectedProcedure
+- [x] Liberar saveAdjustment e unlinkedRates para protectedProcedure também
+- [x] Garantir userId: ctx.user.userId na criação e filtro where userId na listagem
+- [x] Remover bloqueios visuais no CalendarPage (isRestrictedUser corrigido para isTrainer || PAULA)
+- [x] Confirmar que dropdown de Local de Trabalho no CalendarPage e WeeklyCalendarPage já é visível para todos
+- [x] Confirmar que rota /financeiro já é acessível para role=user no App.tsx

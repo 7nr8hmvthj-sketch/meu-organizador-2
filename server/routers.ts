@@ -741,10 +741,10 @@ export const appRouter = router({
   }),
   // Workplaces - dynamic billing engine
   workplaces: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getWorkplaces(ctx.user.userId);
     }),
-    create: adminProcedure
+    create: protectedProcedure
       .input(z.object({
         name: z.string().min(1).max(100),
         hourlyRate: z.number().positive(),
@@ -768,7 +768,7 @@ export const appRouter = router({
         if (!result) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create workplace' });
         return result;
       }),
-    update: adminProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.number(),
         name: z.string().min(1).max(100).optional(),
@@ -787,7 +787,7 @@ export const appRouter = router({
         if (!result) throw new TRPCError({ code: 'NOT_FOUND', message: 'Workplace not found or unauthorized' });
         return result;
       }),
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const success = await db.deleteWorkplace(input.id, ctx.user.userId);
@@ -810,7 +810,7 @@ export const appRouter = router({
      *   2. startTime + endTime → calcula horas, multiplica por hourlyRate
      *   3. Regex no campo type/description → detecta padrões "7-13", "7-19", etc.
      */
-    getMonthlySummary: adminProcedure
+    getMonthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         const { month, year } = input;
@@ -940,7 +940,7 @@ export const appRouter = router({
         };
       }),
 
-    saveAdjustment: adminProcedure
+    saveAdjustment: protectedProcedure
       .input(z.object({
         workplaceId: z.number(),
         month: z.number().min(1).max(12),
@@ -963,11 +963,11 @@ export const appRouter = router({
   }),
 
   unlinkedRates: router({
-    list: adminProcedure.query(async ({ ctx }) => await db.getUnlinkedRates(ctx.user.userId)),
-    create: adminProcedure
+    list: protectedProcedure.query(async ({ ctx }) => await db.getUnlinkedRates(ctx.user.userId)),
+    create: protectedProcedure
       .input(z.object({ name: z.string().min(1), hourlyRate: z.number().positive(), type: z.string().default('automatico') }))
       .mutation(async ({ ctx, input }) => await db.createUnlinkedRate({ userId: ctx.user.userId, name: input.name, hourlyRate: String(input.hourlyRate), type: input.type })),
-    update: adminProcedure
+    update: protectedProcedure
       .input(z.object({ id: z.number(), name: z.string().min(1).optional(), hourlyRate: z.number().positive().optional(), type: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
@@ -975,7 +975,7 @@ export const appRouter = router({
         if (data.hourlyRate !== undefined) updateData.hourlyRate = String(data.hourlyRate);
         return await db.updateUnlinkedRate(id, ctx.user.userId, updateData);
       }),
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
        .mutation(async ({ ctx, input }) => await db.deleteUnlinkedRate(input.id, ctx.user.userId)),
   }),
