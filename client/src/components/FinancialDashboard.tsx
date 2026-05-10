@@ -6,7 +6,7 @@ export default function FinancialDashboard({ targetDate }: { targetDate: Date })
   const currentMonthNum = targetDate.getMonth() + 1;
   const currentYearNum = targetDate.getFullYear();
 
-  const { data: financialData, isLoading } = trpc.expenses.monthlySummary.useQuery({ 
+  const { data: financialData, isLoading } = trpc.workplaces.getMonthlySummary.useQuery({ 
     month: currentMonthNum, 
     year: currentYearNum 
   });

@@ -287,92 +287,6 @@ export const appRouter = router({
       ctx.res.clearCookie("simple_auth", { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
-
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
   }),
 
   // Events/Shifts router
@@ -566,94 +480,8 @@ export const appRouter = router({
 
         return deletedEvents.map(normalizeEvent);
       }),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
 
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
   }),
-
   // Expenses router - Admin only
   expenses: router({
     list: protectedProcedure.query(async ({ ctx }) => await db.getExpensesByUserId(ctx.user.userId)),
@@ -703,94 +531,8 @@ export const appRouter = router({
         );
         return { success: !!result };
       }),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
 
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
   }),
-
   // Medications router
   medications: router({
     list: protectedProcedure.query(async ({ ctx }) => {
@@ -846,94 +588,8 @@ export const appRouter = router({
         if (log) return await db.deleteMedicationLog(log.id);
         return false;
       }),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
 
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
   }),
-
   // Diary router - Admin only (private diary)
   diary: router({
     // Get diary entry for a specific date
@@ -1008,94 +664,8 @@ export const appRouter = router({
         }
         return { success: false, message: 'Entry not found' };
       }),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
 
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
   }),
-
   // Categories router
   categories: router({
     list: protectedProcedure.query(async ({ ctx }) => {
@@ -1169,94 +739,8 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteCategory(input.id);
       }),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
 
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
   }),
-
   // Workplaces - dynamic billing engine
   workplaces: router({
     list: protectedProcedure.query(async ({ ctx }) => {
@@ -1314,11 +798,17 @@ export const appRouter = router({
       }),
 
     /**
-     * getMonthlySummary - Motor de Cálculo Financeiro
-     * Retorna horas e valores agrupados por Local de Trabalho para um dado mês/ano.
+     * getMonthlySummary - Motor de Cálculo Financeiro Unificado
+     *
+     * Retorna:
+     *  - workplacesSummary: horas/valores por Local de Trabalho (com ciclo de pagamento)
+     *  - unlinkedSummary: plantões avulsos sem vínculo
+     *  - totalRecebimentos: soma geral
+     *  - receivingMonth/Year: mês de recebimento (input)
+     *  - workedMonth/Year: mês de competência (input - 1)
      *
      * Prioridade de cálculo por plantão:
-     *   1. value > 0 → usa diretamente como shiftValue
+     *   1. value > 0 → usa diretamente como valor fixo
      *   2. startTime + endTime → calcula horas, multiplica por hourlyRate
      *   3. Regex no campo type/description → detecta padrões "7-13", "7-19", etc.
      */
@@ -1327,22 +817,27 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const { month, year } = input;
 
-        // Janela do mês completo
-        const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-        const lastDay = new Date(year, month, 0).getDate();
-        const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        // Mês de competência = mês trabalhado (recebimento é no mês seguinte)
+        let workedMonth = month - 1;
+        let workedYear = year;
+        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
 
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, startDate, endDate);
+        // Janela ampla para cobrir ciclos de pagamento que cruzam meses
+        const prevYear = workedMonth === 1 ? workedYear - 1 : workedYear;
+        const prevMonth = workedMonth === 1 ? 12 : workedMonth - 1;
+        const queryStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
+        const queryLastDay = new Date(workedYear, workedMonth, 0).getDate();
+        const queryEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(queryLastDay).padStart(2, '0')}`;
+
+        const allEvents = await db.getEventsByDateRange(ctx.user.userId, queryStart, queryEnd);
         const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
+        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
 
         // ─── Função auxiliar: detecta horas via regex no texto ───────────────
         const parseHoursFromText = (text: string): number => {
           if (!text) return 0;
-          // Padrões de 12h: 7-19, 07-19, 19-7, 19-07
           if (/\b(7-19|07-19|19-7|19-07)\b/.test(text)) return 12;
-          // Padrões de 6h: 7-13, 07-13, 13-19, 13-7
           if (/\b(7-13|07-13|13-19|13-7)\b/.test(text)) return 6;
-          // Padrão genérico HH-HH: calcula a diferença
           const m = text.match(/\b(\d{1,2})-(\d{1,2})\b/);
           if (m) {
             let diff = parseInt(m[2], 10) - parseInt(m[1], 10);
@@ -1365,81 +860,86 @@ export const appRouter = router({
 
         // ─── Função principal: valor e horas de um plantão ───────────────────
         const calcShift = (event: any, hourlyRate: number): { hours: number; value: number } => {
-          if (event.isCancelled) return { hours: 0, value: 0 };
-
-          // Prioridade 1: valor salvo diretamente no evento
+          if (event.isCancelled || event.isPassed) return { hours: 0, value: 0 };
           const savedValue = event.value ? parseFloat(String(event.value)) : 0;
           if (savedValue > 0) return { hours: 0, value: savedValue };
-
-          // Prioridade 2: calcular pelas colunas startTime/endTime
           const hoursFromTime = parseHoursFromTimes(event.startTime, event.endTime);
           if (hoursFromTime > 0) return { hours: hoursFromTime, value: hoursFromTime * hourlyRate };
-
-          // Prioridade 3: regex no campo type e description
           const textToSearch = `${event.type ?? ''} ${event.description ?? ''}`;
           const hoursFromText = parseHoursFromText(textToSearch);
           if (hoursFromText > 0) return { hours: hoursFromText, value: hoursFromText * hourlyRate };
-
           return { hours: 0, value: 0 };
         };
 
-        // ─── Agrupar por workplace ────────────────────────────────────────────
-        const wpMap = new Map<number, { workplaceId: number; workplaceName: string; rawHours: number; overrideHours: number | null; adjustmentReason: string | null; totalHours: number; totalValue: number; hourlyRate: number }>();
+        // ─── Calcular por workplace usando ciclo de pagamento ─────────────────
+        let totalRecebimentos = 0;
+        const workplacesSummary: { id: number; name: string; hourlyRate: number; hours: number; total: number; cycleStart: string; cycleEnd: string; rawHours: number; overrideHours: number | null; adjustmentReason: string | null; totalHours: number; totalValue: number }[] = [];
 
-        for (const wp of userWorkplaces) {
-          wpMap.set(wp.id, { workplaceId: wp.id, workplaceName: wp.name, rawHours: 0, overrideHours: null, adjustmentReason: null, totalHours: 0, totalValue: 0, hourlyRate: parseFloat(String(wp.hourlyRate)) });
-        }
-
-        let fixedValueTotal = 0;
-
-        for (const event of allEvents) {
-          if (!event.isShift || event.isCancelled) continue;
-          if (!event.workplaceId) continue;
-
-          const wp = userWorkplaces.find((w: any) => w.id === event.workplaceId);
-          if (!wp) continue;
-
-          const hourlyRate = parseFloat(String(wp.hourlyRate));
-          const { hours, value } = calcShift(event, hourlyRate);
-
-          const entry = wpMap.get(wp.id)!;
-          entry.rawHours += hours;
-          // Se value veio da Prioridade 1 (valor fixo), acumula separadamente
-          if (hours === 0 && value > 0) fixedValueTotal += value;
-          else entry.totalValue += value;
-        }
-
-        // ─── Buscar overrides RH por workplace ───────────────────────────────
         const adjustments = await db.getWorkplaceAdjustments(ctx.user.userId, month, year);
 
-        for (const adj of adjustments) {
-          if (!adj.workplaceId) continue;
-          const entry = wpMap.get(adj.workplaceId);
-          if (!entry) continue;
-          // Override absoluto: se existir, substitui o rawHours calculado
-          entry.overrideHours = adj.overrideHours ? parseFloat(String(adj.overrideHours)) : null;
-          entry.adjustmentReason = adj.reason ?? null;
+        for (const wp of userWorkplaces) {
+          const rate = parseFloat(String(wp.hourlyRate));
+          const cutoffDay = wp.cycleEndDay;
+          let prevM = workedMonth - 1; let prevY = workedYear;
+          if (prevM < 1) { prevM = 12; prevY--; }
+          const refStart = `${prevY}-${String(prevM).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
+          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
+
+          let rawHours = 0;
+          let wpFixedValues = 0;
+
+          for (const event of allEvents) {
+            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
+            if (eventDate < refStart || eventDate > refEnd) continue;
+            if (!event.workplaceId || event.workplaceId !== wp.id) continue;
+            const { hours, value } = calcShift(event, rate);
+            if (hours === 0 && value > 0) wpFixedValues += value;
+            else rawHours += hours;
+          }
+
+          // Override de horas
+          const adj = adjustments.find((a: any) => a.workplaceId === wp.id);
+          const overrideHours = adj?.overrideHours ? parseFloat(String(adj.overrideHours)) : null;
+          const adjustmentReason = adj?.reason ?? null;
+          const totalHours = overrideHours !== null ? overrideHours : rawHours;
+          const totalValue = (totalHours * rate) + wpFixedValues;
+
+          totalRecebimentos += totalValue;
+          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: totalHours, total: totalValue, cycleStart: refStart, cycleEnd: refEnd, rawHours, overrideHours, adjustmentReason, totalHours, totalValue });
         }
 
-        // Calcular totalHours e totalValue finais
-        const wpEntries = Array.from(wpMap.values());
-        for (const entry of wpEntries) {
-          // Se houver override, usa ele; caso contrário, usa o calculado dos plantões
-          entry.totalHours = entry.overrideHours !== null ? entry.overrideHours : entry.rawHours;
-          entry.totalValue = entry.totalHours * entry.hourlyRate;
+        // ─── Calcular plantões avulsos (mês cheio do mês trabalhado) ──────────
+        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
+        const lastDayAvulso = new Date(workedYear, workedMonth, 0).getDate();
+        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDayAvulso).padStart(2, '0')}`;
+        const unlinkedSummary: { id: number; name: string; type: string; hourlyRate: number; hours: number; total: number }[] = [];
+
+        for (const rateObj of unlinked) {
+          let hours = 0;
+          let fixedValues = 0;
+          const rateValue = parseFloat(String(rateObj.hourlyRate));
+          for (const event of allEvents) {
+            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
+            if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.workplaceId || event.type !== rateObj.name) continue;
+            const { hours: h, value: v } = calcShift(event, rateValue);
+            if (h === 0 && v > 0) fixedValues += v;
+            else hours += h;
+          }
+          const total = (hours * rateValue) + fixedValues;
+          totalRecebimentos += total;
+          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours, total });
         }
 
-        // Retorna array consolidado por workplace
-        return Array.from(wpMap.values()).map(e => ({
-          workplaceId: e.workplaceId,
-          workplaceName: e.workplaceName,
-          rawHours: e.rawHours,
-          overrideHours: e.overrideHours,
-          adjustmentReason: e.adjustmentReason,
-          totalHours: e.totalHours,
-          totalValue: e.totalValue,
-          hourlyRate: e.hourlyRate,
-        }));
+        return {
+          receivingMonth: month,
+          receivingYear: year,
+          workedMonth,
+          workedYear,
+          workplacesSummary,
+          unlinkedSummary,
+          totalRecebimentos,
+        };
       }),
 
     saveAdjustment: protectedProcedure
@@ -1479,93 +979,7 @@ export const appRouter = router({
       }),
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ ctx, input }) => await db.deleteUnlinkedRate(input.id, ctx.user.userId)),
-    monthlySummary: protectedProcedure
-      .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
-      .query(async ({ ctx, input }) => {
-        let workedMonth = input.month - 1;
-        let workedYear = input.year;
-        if (workedMonth < 1) { workedMonth = 12; workedYear--; }
-
-        const allEvents = await db.getEventsByDateRange(ctx.user.userId, '2024-01-01', '2027-12-31');
-        const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
-        const unlinked = await db.getUnlinkedRates(ctx.user.userId);
-
-        const calcHours = (event: any): number => {
-          if (event.isCancelled) return 0;
-          let startH = 0, endH = 0;
-          if (event.startTime && event.endTime) {
-              const timeMatch = event.startTime.match(/(\d{1,2}):(\d{2})/);
-              const endMatch = event.endTime.match(/(\d{1,2}):(\d{2})/);
-              if (timeMatch && endMatch) {
-                  startH = parseInt(timeMatch[1], 10);
-                  endH = parseInt(endMatch[1], 10);
-              }
-          }
-          if (startH === 0 && endH === 0) return 0;
-          let diff = endH - startH;
-          if (diff < 0) diff += 24;
-          return diff;
-        };
-
-        let workplacesSummary = [];
-        let totalRecebimentos = 0;
-
-        for (const wp of userWorkplaces) {
-          const rate = parseFloat(String(wp.hourlyRate));
-          const cutoffDay = wp.cycleEndDay;
-          let prevMonth = workedMonth - 1; let prevYear = workedYear;
-          if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-          const refStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
-
-          let wpHours = 0;
-          let wpFixedValues = 0;
-
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (event.isPassed) continue;
-            
-            if (event.workplaceId === wp.id) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) wpFixedValues += eventValue;
-               else wpHours += calcHours(event); 
-            }
-          }
-          const wpTotal = (wpHours * rate) + wpFixedValues; 
-          totalRecebimentos += wpTotal;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: wpHours, total: wpTotal, cycleStart: refStart, cycleEnd: refEnd });
-        }
-
-        let unlinkedSummary = [];
-        const startAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-01`;
-        const lastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const endAvulso = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-        for (const rateObj of unlinked) {
-          let hours = 0; 
-          let fixedValues = 0;
-          const rateValue = parseFloat(String(rateObj.hourlyRate));
-          
-          for (const event of allEvents) {
-            const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < startAvulso || eventDate > endAvulso) continue;
-            if (event.isPassed) continue;
-            
-            if (!event.workplaceId && event.type === rateObj.name) { 
-               const eventValue = event.value ? parseFloat(event.value) : 0;
-               if (eventValue > 0) fixedValues += eventValue;
-               else hours += calcHours(event); 
-            }
-          }
-          const total = (hours * rateValue) + fixedValues; 
-          totalRecebimentos += total;
-          unlinkedSummary.push({ id: rateObj.id, name: rateObj.name, type: rateObj.type, hourlyRate: rateValue, hours: hours, total: total });
-        }
-
-        return { receivingMonth: input.month, receivingYear: input.year, workedMonth, workedYear, workplacesSummary, unlinkedSummary, totalRecebimentos };
-      }),
+       .mutation(async ({ ctx, input }) => await db.deleteUnlinkedRate(input.id, ctx.user.userId)),
   }),
 
   // User preferences router

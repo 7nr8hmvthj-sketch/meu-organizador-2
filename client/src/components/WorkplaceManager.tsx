@@ -48,7 +48,7 @@ export default function WorkplaceManager({ open, onOpenChange }: WorkplaceManage
     onSuccess: () => {
       toast.success("Local de trabalho adicionado!");
       utils.workplaces.list.invalidate();
-      utils.expenses.monthlySummary.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       resetForm();
     },
     onError: (err) => toast.error(err.message),
@@ -58,7 +58,7 @@ export default function WorkplaceManager({ open, onOpenChange }: WorkplaceManage
     onSuccess: () => {
       toast.success("Local de trabalho atualizado!");
       utils.workplaces.list.invalidate();
-      utils.expenses.monthlySummary.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       resetForm();
     },
     onError: (err) => toast.error(err.message),
@@ -68,7 +68,7 @@ export default function WorkplaceManager({ open, onOpenChange }: WorkplaceManage
     onSuccess: () => {
       toast.success("Local de trabalho removido!");
       utils.workplaces.list.invalidate();
-      utils.expenses.monthlySummary.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });

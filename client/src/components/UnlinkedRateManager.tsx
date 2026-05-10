@@ -51,7 +51,7 @@ export function UnlinkedRateManager({
   const createMutation = trpc.unlinkedRates.create.useMutation({
     onSuccess: () => {
       utils.unlinkedRates.list.invalidate();
-      utils.expenses.monthlySummary.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       toast.success("Taxa de plantão criada com sucesso");
       resetForm();
     },
@@ -63,7 +63,7 @@ export function UnlinkedRateManager({
   const updateMutation = trpc.unlinkedRates.update.useMutation({
     onSuccess: () => {
       utils.unlinkedRates.list.invalidate();
-      utils.expenses.monthlySummary.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       toast.success("Taxa de plantão atualizada com sucesso");
       resetForm();
     },
@@ -75,7 +75,7 @@ export function UnlinkedRateManager({
   const deleteMutation = trpc.unlinkedRates.delete.useMutation({
     onSuccess: () => {
       utils.unlinkedRates.list.invalidate();
-      utils.expenses.monthlySummary.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       toast.success("Taxa de plantão deletada com sucesso");
     },
     onError: (error) => {
