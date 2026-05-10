@@ -61,9 +61,9 @@ function Navigation({ userRole, username }: NavigationProps) {
     { path: "/agenda", label: "Semanal", icon: CalendarRange, roles: ["admin", "trainer", "user"] },
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: ["PAULA"] },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: ["PAULA"] },
-    { path: "/diario", label: "Diário", icon: Book, roles: ["admin"], excludeUsernames: ["PAULA"] },
-    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"], excludeUsernames: ["PAULA"] },
-    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin"], excludeUsernames: ["PAULA"] },
+    { path: "/diario", label: "Diário", icon: Book, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
+    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
+    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
   ];
 
   const navItems = allNavItems.filter(item => {
@@ -218,7 +218,7 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
   useEffect(() => {
     if (isRestrictedUser(userRole, username)) {
       // Bloquear acesso a rotas sensíveis (exceto /)
-      const restrictedPaths = ["/eventos", "/dashboard", "/financeiro", "/medicamentos", "/diario"];
+      const restrictedPaths = ["/eventos", "/dashboard"];
       if (restrictedPaths.includes(location)) {
         setLocation("/agenda");
       }
@@ -233,11 +233,16 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
           <Switch>
             {/* Rota do calendário mensal - acessível a todos */}
             <Route path="/" component={CalendarPage} />
-            {/* Rotas exclusivas para admin completo (não Paula) */}
+            {/* Rotas exclusivas para admin */}
             {userRole === "admin" && username !== "PAULA" && (
               <>
                 <Route path="/eventos" component={Events} />
                 <Route path="/dashboard" component={Dashboard} />
+              </>
+            )}
+            {/* Rotas para todos os usuários logados (exceto trainers e Paula) */}
+            {(userRole === "admin" || userRole === "user") && username !== "PAULA" && (
+              <>
                 <Route path="/financeiro" component={Finance} />
                 <Route path="/medicamentos" component={Medications} />
                 <Route path="/diario" component={DiaryPage} />

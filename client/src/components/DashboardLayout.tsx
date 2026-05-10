@@ -30,8 +30,8 @@ import { Button } from "./ui/button";
 const menuItems = [
   { icon: CalendarDays, label: "Mensal", path: "/" },
   { icon: CalendarRange, label: "Semanal", path: "/semana" },
-  { icon: Briefcase, label: "Faturamento", path: "/workplaces", adminOnly: true },
-  { icon: FileText, label: "Diário", path: "/diario", adminOnly: true },
+  { icon: Briefcase, label: "Faturamento", path: "/workplaces" },
+  { icon: FileText, label: "Diário", path: "/diario" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -183,9 +183,6 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
-                // Esconde menus adminOnly se o user não for admin
-                if (item.adminOnly && user?.role !== "admin") return null;
-
                 const isActive = location === item.path;
                 return (
                   <SidebarMenuItem key={item.path}>
