@@ -871,7 +871,7 @@ export const appRouter = router({
 
         // ─── Calcular por workplace usando ciclo de pagamento ─────────────────
         let totalRecebimentos = 0;
-        const workplacesSummary: { id: number; name: string; hourlyRate: number; hours: number; total: number; cycleStart: string; cycleEnd: string; rawHours: number; overrideHours: number | null; adjustmentReason: string | null; totalHours: number; totalValue: number }[] = [];
+        const workplacesSummary: { id: number; workplaceId: number; name: string; workplaceName: string; hourlyRate: number; hours: number; total: number; cycleStart: string; cycleEnd: string; rawHours: number; overrideHours: number | null; adjustmentReason: string | null; totalHours: number; totalValue: number }[] = [];
 
         const adjustments = await db.getWorkplaceAdjustments(ctx.user.userId, month, year);
 
@@ -903,7 +903,7 @@ export const appRouter = router({
           const totalValue = (totalHours * rate) + wpFixedValues;
 
           totalRecebimentos += totalValue;
-          workplacesSummary.push({ id: wp.id, name: wp.name, hourlyRate: rate, hours: totalHours, total: totalValue, cycleStart: refStart, cycleEnd: refEnd, rawHours, overrideHours, adjustmentReason, totalHours, totalValue });
+          workplacesSummary.push({ id: wp.id, workplaceId: wp.id, name: wp.name, workplaceName: wp.name, hourlyRate: rate, hours: totalHours, total: totalValue, cycleStart: refStart, cycleEnd: refEnd, rawHours, overrideHours, adjustmentReason, totalHours, totalValue });
         }
 
         // ─── Calcular plantões avulsos (mês cheio do mês trabalhado) ──────────
