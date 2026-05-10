@@ -155,8 +155,21 @@ export function FinancialSummaryCard() {
               <div className="w-6 h-6 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : summary.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground text-sm">
-              Nenhum local de trabalho cadastrado ou nenhum plantão vinculado neste mês.
+            <div className="py-10 text-center space-y-3">
+              <Briefcase className="w-10 h-10 mx-auto text-muted-foreground/30" />
+              <p className="text-muted-foreground font-medium text-sm">Nenhum local de trabalho cadastrado.</p>
+              <p className="text-xs text-muted-foreground/70 max-w-xs mx-auto">
+                Cadastre seu primeiro local de trabalho para que o sistema calcule automaticamente seus recebimentos por plantão.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                onClick={() => window.location.href = '/locais'}
+              >
+                <Briefcase className="w-3 h-3 mr-2" />
+                Cadastrar meu primeiro local
+              </Button>
             </div>
           ) : (
             <>

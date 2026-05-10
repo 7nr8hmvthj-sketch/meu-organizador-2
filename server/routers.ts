@@ -283,7 +283,7 @@ export const appRouter = router({
       ctx.res.clearCookie("simple_auth", { ...cookieOptions, maxAge: -1 });
       return { success: true };
     }),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -559,7 +559,7 @@ export const appRouter = router({
 
         return deletedEvents.map(normalizeEvent);
       }),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -647,30 +647,30 @@ export const appRouter = router({
 
   // Expenses router - Admin only
   expenses: router({
-    list: adminProcedure.query(async ({ ctx }) => await db.getExpensesByUserId(ctx.user.userId)),
+    list: protectedProcedure.query(async ({ ctx }) => await db.getExpensesByUserId(ctx.user.userId)),
     
-    create: adminProcedure
+    create: protectedProcedure
       .input(z.object({ name: z.string(), amount: z.string(), dueDay: z.number(), category: z.enum(["fixed", "variable"]) }))
       .mutation(async ({ input, ctx }) => await db.createExpense({ userId: ctx.user.userId, name: input.name, amount: input.amount, dueDay: input.dueDay, category: input.category })),
     
-    update: adminProcedure
+    update: protectedProcedure
       .input(z.object({ id: z.number(), name: z.string().optional(), amount: z.string().optional(), dueDay: z.number().optional(), category: z.enum(["fixed", "variable"]).optional() }))
       .mutation(async ({ input, ctx }) => { const { id, ...data } = input; return await db.updateExpense(id, ctx.user.userId, data); }),
     
-    togglePaid: adminProcedure
+    togglePaid: protectedProcedure
       .input(z.object({ id: z.number(), isPaid: z.boolean(), month: z.number().optional(), year: z.number().optional() }))
       .mutation(async ({ input, ctx }) => await db.updateExpense(input.id, ctx.user.userId, { isPaid: input.isPaid, paidMonth: input.isPaid ? input.month : null, paidYear: input.isPaid ? input.year : null })),
     
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => await db.deleteExpense(input.id, ctx.user.userId)),
     
-    resetPaidStatus: adminProcedure.mutation(async ({ ctx }) => { await db.resetExpensesPaidStatus(ctx.user.userId); return { success: true }; }),
+    resetPaidStatus: protectedProcedure.mutation(async ({ ctx }) => { await db.resetExpensesPaidStatus(ctx.user.userId); return { success: true }; }),
 
 
 
     // RH Conciliation - get adjustment for a month
-    getAdjustment: adminProcedure
+    getAdjustment: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         const adj = await db.getMonthlyAdjustment(ctx.user.userId, input.month, input.year);
@@ -681,7 +681,7 @@ export const appRouter = router({
       }),
 
     // RH Conciliation - save adjustment for a month
-    upsertAdjustment: adminProcedure
+    upsertAdjustment: protectedProcedure
       .input(z.object({
         month: z.number().min(1).max(12),
         year: z.number(),
@@ -694,7 +694,7 @@ export const appRouter = router({
         );
         return { success: !!result };
       }),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -782,17 +782,17 @@ export const appRouter = router({
 
   // Medications router
   medications: router({
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getMedicationsByUserId(ctx.user.userId);
     }),
     
-    create: adminProcedure
+    create: protectedProcedure
       .input(z.object({ name: z.string(), time: z.string(), order: z.number().optional() }))
       .mutation(async ({ input, ctx }) => {
         return await db.createMedication({ userId: ctx.user.userId, name: input.name, time: input.time, order: input.order || 0 });
       }),
     
-    update: adminProcedure
+    update: protectedProcedure
       .input(z.object({ id: z.number(), name: z.string().optional(), time: z.string().optional(), order: z.number().optional() }))
       .mutation(async ({ input, ctx }) => {
         const { id, ...rest } = input;
@@ -803,19 +803,19 @@ export const appRouter = router({
         return await db.updateMedication(id, ctx.user.userId, data as any);
       }),
     
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input, ctx }) => {
         return await db.deleteMedication(input.id, ctx.user.userId);
       }),
     
-    getLogs: adminProcedure
+    getLogs: protectedProcedure
       .input(z.object({ date: z.string() }))
       .query(async ({ input, ctx }) => {
         return await db.getMedicationLogsByDate(ctx.user.userId, input.date);
       }),
     
-    logTaken: adminProcedure
+    logTaken: protectedProcedure
       .input(z.object({ medicationId: z.number(), date: z.string() }))
       .mutation(async ({ input, ctx }) => {
         const now = new Date();
@@ -827,7 +827,7 @@ export const appRouter = router({
         });
       }),
     
-    undoTaken: adminProcedure
+    undoTaken: protectedProcedure
       .input(z.object({ medicationId: z.number(), date: z.string() }))
       .mutation(async ({ input, ctx }) => {
         const logs = await db.getMedicationLogsByDate(ctx.user.userId, input.date);
@@ -835,7 +835,7 @@ export const appRouter = router({
         if (log) return await db.deleteMedicationLog(log.id);
         return false;
       }),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -924,14 +924,14 @@ export const appRouter = router({
   // Diary router - Admin only (private diary)
   diary: router({
     // Get diary entry for a specific date
-    get: adminProcedure
+    get: protectedProcedure
       .input(z.object({ date: z.string() }))
       .query(async ({ input, ctx }) => {
         return await db.getDiaryEntry(ctx.user.userId, input.date);
       }),
     
     // Save or update diary entry
-    save: adminProcedure
+    save: protectedProcedure
       .input(z.object({ 
         date: z.string(), 
         title: z.string().nullable().optional(),
@@ -949,19 +949,19 @@ export const appRouter = router({
       }),
     
     // List all diary entries
-    list: adminProcedure.query(async ({ ctx }) => {
+    list: protectedProcedure.query(async ({ ctx }) => {
       return await db.getDiaryEntriesByUserId(ctx.user.userId);
     }),
     
     // Search diary entries by keyword
-    search: adminProcedure
+    search: protectedProcedure
       .input(z.object({ query: z.string() }))
       .query(async ({ input, ctx }) => {
         return await db.searchDiaryEntries(ctx.user.userId, input.query);
       }),
     
     // Get entries by tag
-    byTag: adminProcedure
+    byTag: protectedProcedure
       .input(z.object({ tag: z.string() }))
       .query(async ({ input, ctx }) => {
         // Get all diary entries and filter by tag
@@ -970,7 +970,7 @@ export const appRouter = router({
       }),
     
     // Get all tags used
-    tags: adminProcedure.query(async ({ ctx }) => {
+    tags: protectedProcedure.query(async ({ ctx }) => {
       const entries = await db.getDiaryEntries(ctx.user.userId, '2026-01-01', '2026-12-31');
       const tags = new Set<string>();
       entries.forEach(e => {
@@ -982,7 +982,7 @@ export const appRouter = router({
     }),
     
     // Delete diary entry
-    delete: adminProcedure
+    delete: protectedProcedure
       .input(z.object({ date: z.string() }))
       .mutation(async ({ input, ctx }) => {
         // Find and delete diary entry for this date
@@ -993,7 +993,7 @@ export const appRouter = router({
         }
         return { success: false, message: 'Entry not found' };
       }),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -1152,7 +1152,7 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await db.deleteCategory(input.id);
       }),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -1443,7 +1443,7 @@ export const appRouter = router({
         return { success: !!result };
       }),
 
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;
@@ -1545,7 +1545,7 @@ export const appRouter = router({
     delete: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => await db.deleteUnlinkedRate(input.id, ctx.user.userId)),
-    monthlySummary: adminProcedure
+    monthlySummary: protectedProcedure
       .input(z.object({ month: z.number().min(1).max(12), year: z.number() }))
       .query(async ({ ctx, input }) => {
         let workedMonth = input.month - 1;

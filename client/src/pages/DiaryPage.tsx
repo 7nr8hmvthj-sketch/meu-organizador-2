@@ -318,6 +318,19 @@ export default function DiaryPage() {
             </div>
             <ScrollArea className="h-[400px]">
                 <div className="space-y-3">
+                  {displayEntries.length === 0 && (
+                    <div className="py-16 text-center space-y-3">
+                      <Book className="w-12 h-12 mx-auto text-muted-foreground/30" />
+                      <p className="text-muted-foreground font-medium">
+                        {searchQuery.length >= 2 ? 'Nenhuma entrada encontrada para esta busca.' : 'Seu diário está vazio.'}
+                      </p>
+                      {searchQuery.length < 2 && (
+                        <p className="text-sm text-muted-foreground/70">
+                          Comece escrevendo sua primeira entrada hoje. Feche este painel e escreva algo!
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {displayEntries.map((e) => (
                     <Card key={String(e.date)} className="cursor-pointer hover:bg-accent" onClick={() => goToDate(String(e.date))}>
                       <CardContent className="p-4">

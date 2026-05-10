@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, CheckCircle2, Circle, Trash2, Pencil, RefreshCw } from "lucide-react";
+import { Plus, DollarSign, CheckCircle2, Circle, Trash2, Pencil, RefreshCw, Briefcase, ArrowRight } from "lucide-react";
+import { useLocation } from "wouter";
 import { FinancialSummaryCard } from "@/components/FinancialSummaryCard";
 import { toast } from "sonner";
 
@@ -164,6 +165,8 @@ export default function FinancePage() {
       resetMutation.mutate();
     }
   };
+
+  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
@@ -346,8 +349,10 @@ function ExpenseList({ expenses, onToggle, onEdit, onDelete }: {
   if (expenses.length === 0) {
     return (
       <Card className="bg-muted/20 border-dashed">
-        <CardContent className="py-10 text-center text-muted-foreground">
-          Nenhuma despesa encontrada. Adicione uma nova clicando em "+ Nova Despesa".
+        <CardContent className="py-12 text-center space-y-3">
+          <DollarSign className="w-10 h-10 mx-auto text-muted-foreground/40" />
+          <p className="text-muted-foreground font-medium">Nenhuma despesa encontrada.</p>
+          <p className="text-sm text-muted-foreground/70">Clique em <span className="font-semibold text-primary">"+ Nova Despesa"</span> para começar a controlar seus gastos.</p>
         </CardContent>
       </Card>
     );
