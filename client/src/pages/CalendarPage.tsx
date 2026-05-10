@@ -627,7 +627,7 @@ export default function CalendarPage() {
                 ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR })
                 : "Selecione um dia"}
             </h3>
-            {isAdmin && selectedDate && (
+            {!isTrainer && selectedDate && (
               <Button size="sm" onClick={() => setShowAddEventModal(true)}>
                 <Plus className="w-4 h-4 mr-1" /> Novo Evento
               </Button>
@@ -663,7 +663,7 @@ export default function CalendarPage() {
                           {event.value && <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">R$ {Number(event.value).toFixed(2).replace('.', ',')}</span>}
                         </div>
                       </div>
-                      {isAdmin && (
+                      {!isTrainer && (
                         <div className="flex gap-2 shrink-0">
                           <Button variant="ghost" size="icon" className="h-8 w-8 bg-muted/50" onClick={() => handleEditEventClick(event)}>
                             <Pencil className="w-3.5 h-3.5" />
@@ -751,7 +751,7 @@ export default function CalendarPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>{selectedDate && format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}</span>
-              {isAdmin && <Button size="sm" onClick={() => { setShowDayModal(false); setShowAddEventModal(true); }} className="ml-4"><Plus className="w-4 h-4 mr-1" /> Novo Evento</Button>}
+              {!isTrainer && <Button size="sm" onClick={() => { setShowDayModal(false); setShowAddEventModal(true); }} className="ml-4"><Plus className="w-4 h-4 mr-1" /> Novo Evento</Button>}
             </DialogTitle>
           </DialogHeader>
 
