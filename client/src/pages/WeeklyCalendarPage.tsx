@@ -28,6 +28,17 @@ export default function WeeklyCalendarPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
+  // Estados do modal moderno (espelho do CalendarPage)
+  const [eventType, setEventType] = useState<string>("");
+  const [customEventType, setCustomEventType] = useState<string>("");
+  const [eventDescription, setEventDescription] = useState<string>("");
+  const [workplaceId, setWorkplaceId] = useState<number | "">("");
+  const [startTime, setStartTime] = useState<string>("");
+  const [endTime, setEndTime] = useState<string>("");
+  const [isPassed, setIsPassed] = useState(false);
+  const [eventColor, setEventColor] = useState<string>("default");
+  const [eventValue, setEventValue] = useState<string>("");
+  // Manter para compatibilidade com editableEvents (treinos da treinadora)
   const [trainingType, setTrainingType] = useState<string>("");
   const [trainingTime, setTrainingTime] = useState<string>("");
   const [trainingDescription, setTrainingDescription] = useState<string>("");
@@ -43,6 +54,8 @@ export default function WeeklyCalendarPage() {
 
   const { data: allEvents = [] } = trpc.events.list.useQuery();
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
+  const { data: dbCategories = [] } = trpc.categories.list.useQuery();
+  const { data: workplaces = [] } = trpc.workplaces.list.useQuery();
   const utils = trpc.useUtils();
 
   const currentUsername = authData?.user?.username;
@@ -87,7 +100,38 @@ export default function WeeklyCalendarPage() {
     onError: (error) => toast?.error?.(`Erro: ${error?.message}`),
   });
 
+  // Tipos globais fixos (sempre visíveis para todos)
+  const GLOBAL_EVENT_TYPES = [
+    { value: "Porta", label: "Porta" },
+    { value: "Observação", label: "Observação" },
+    { value: "Enfermaria", label: "Enfermaria" },
+    { value: "Sala de Emergência", label: "Sala de Emergência" },
+    { value: "Home Care", label: "Home Care" },
+    { value: "Personalizado", label: "Personalizado" },
+  ];
+
+  const EVENT_TYPES = useMemo(() => {
+    const types = [...GLOBAL_EVENT_TYPES];
+    const globalNames = GLOBAL_EVENT_TYPES.map(g => g.value.toLowerCase());
+    dbCategories.forEach((cat: any) => {
+      const catUserId = cat.userId ?? cat.userid;
+      if (catUserId && !globalNames.includes(cat.name.toLowerCase())) {
+        types.unshift({ value: cat.name, label: cat.name });
+      }
+    });
+    return types;
+  }, [dbCategories]);
+
   const resetForm = () => {
+    setEventType("");
+    setCustomEventType("");
+    setEventDescription("");
+    setWorkplaceId("");
+    setStartTime("");
+    setEndTime("");
+    setIsPassed(false);
+    setEventColor("default");
+    setEventValue("");
     setTrainingType("");
     setTrainingTime("");
     setTrainingDescription("");
@@ -183,31 +227,38 @@ export default function WeeklyCalendarPage() {
     setShowAddTrainingModal(true);
   };
 
-  const handleAddTraining = () => {
-    if (!selectedDate || !trainingType || !trainingTime) {
-      toast.error("Preencha tipo e horário.");
+  const handleAddEvent = () => {
+    if (!selectedDate || !eventType) {
+      toast.error("Selecione uma data e tipo de evento");
       return;
     }
-    if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(trainingTime)) {
-      toast.error("Horário inválido. Use formato HH:MM.");
+    const type = eventType === "Personalizado" ? customEventType : eventType;
+    if (!type.trim()) {
+      toast.error("Digite o tipo de evento personalizado");
       return;
     }
-
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
-    const description = trainingDescription 
-      ? `${trainingDescription} ${trainingTime}`
-      : `${trainingType} ${trainingTime}`;
-
+    setShowAddTrainingModal(false);
     createEventMutation.mutate({
       date: dateStr,
-      type: trainingType,
-      description: description,
+      type,
+      description: eventDescription || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+      color: eventColor !== "default" ? eventColor : undefined,
       isShift: false,
+      workplaceId: workplaceId ? Number(workplaceId) : undefined,
+      value: eventValue ? Number(eventValue) : undefined,
     });
+    resetForm();
   };
 
   const handleEditClick = (event: typeof editableEvents[0]) => {
     setEditingEvent(event);
+    // Preencher estados modernos
+    setEventType(event.type);
+    setEventDescription(event.description || "");
+    // Compatibilidade legada
     setTrainingType(event.type);
     const time = extractTimeFromDescription(event.description || "");
     setTrainingTime(time);
@@ -215,6 +266,25 @@ export default function WeeklyCalendarPage() {
     setTrainingDescription(desc);
     setShowAddTrainingModal(false);
     setShowEditModal(true);
+  };
+
+  const handleUpdateEvent = () => {
+    if (!editingEvent || !eventType) {
+      toast.error("Selecione o tipo de evento.");
+      return;
+    }
+    const type = eventType === "Personalizado" ? customEventType : eventType;
+    if (!type.trim()) {
+      toast.error("Digite o tipo de evento personalizado");
+      return;
+    }
+    updateEventMutation.mutate({
+      id: editingEvent.id,
+      type,
+      description: eventDescription || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
+    });
   };
 
   const handleUpdateTraining = () => {
@@ -507,42 +577,92 @@ export default function WeeklyCalendarPage() {
             </div>
           )}
           
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Modalidade *</Label>
-              <Select value={trainingType} onValueChange={setTrainingType}>
+          <div className="space-y-4">
+            <div>
+              <Label>Tipo de Evento</Label>
+              <Select value={eventType} onValueChange={setEventType}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Musculação">Musculação</SelectItem>
-                  <SelectItem value="Pilates">Pilates</SelectItem>
+                  {EVENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Horário *</Label>
-              <Input 
-                type="time" 
-                value={trainingTime} 
-                onChange={(e) => setTrainingTime(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Observação (opcional)</Label>
-              <Textarea 
-                value={trainingDescription} 
-                onChange={(e) => setTrainingDescription(e.target.value)}
-                placeholder="Ex: Treino de pernas, foco em core..."
+
+            {eventType === "Personalizado" && (
+              <div>
+                <Label>Nome Personalizado</Label>
+                <Input
+                  value={customEventType}
+                  onChange={(e) => setCustomEventType(e.target.value)}
+                  placeholder="Ex: Pilates"
+                />
+              </div>
+            )}
+
+            <div>
+              <Label>Descrição (opcional)</Label>
+              <Textarea
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+                placeholder="Adicione detalhes..."
                 rows={2}
               />
+            </div>
+
+            <div>
+              <Label>Local de Trabalho (opcional)</Label>
+              <Select
+                value={workplaceId ? String(workplaceId) : ""}
+                onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhum" />
+                </SelectTrigger>
+                <SelectContent>
+                  {workplaces.map((wp: any) => (
+                    <SelectItem key={wp.id} value={String(wp.id)}>
+                      {wp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Horário com botões rápidos */}
+            <div className="space-y-3 w-full">
+              <div className="w-full">
+                <label className="text-xs text-muted-foreground mb-2 block font-medium">Horários Rápidos (Plantões)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("07:00"); setEndTime("13:00"); }}>7-13</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("13:00"); setEndTime("19:00"); }}>13-19</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("01:00"); }}>19-01</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("07:00"); }}>19-07</Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setStartTime(""); setEndTime(""); }}>Limpar</Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full border-t pt-3">
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Início Manual</label>
+                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full" />
+                </div>
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Fim Manual</label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full" />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => { setShowAddTrainingModal(false); resetForm(); }}>
               Cancelar
             </Button>
-            <Button onClick={handleAddTraining} disabled={createEventMutation.isPending}>
+            <Button onClick={handleAddEvent} disabled={createEventMutation.isPending}>
               {createEventMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>
@@ -553,44 +673,74 @@ export default function WeeklyCalendarPage() {
       <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) { setEditingEvent(null); resetForm(); } }}>
         <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Editar Treino</DialogTitle>
+            <DialogTitle>Editar Evento</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Modalidade *</Label>
-              <Select value={trainingType} onValueChange={setTrainingType}>
+          <div className="space-y-4">
+            <div>
+              <Label>Tipo de Evento</Label>
+              <Select value={eventType} onValueChange={setEventType}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Musculação">Musculação</SelectItem>
-                  <SelectItem value="Pilates">Pilates</SelectItem>
+                  {EVENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Horário *</Label>
-              <Input 
-                type="time" 
-                value={trainingTime} 
-                onChange={(e) => setTrainingTime(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Observação (opcional)</Label>
-              <Textarea 
-                value={trainingDescription} 
-                onChange={(e) => setTrainingDescription(e.target.value)}
-                placeholder="Ex: Treino de pernas, foco em core..."
+
+            {eventType === "Personalizado" && (
+              <div>
+                <Label>Nome Personalizado</Label>
+                <Input
+                  value={customEventType}
+                  onChange={(e) => setCustomEventType(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div>
+              <Label>Descrição</Label>
+              <Textarea
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+                placeholder="Adicione detalhes..."
                 rows={2}
               />
+            </div>
+
+            {/* Horário com botões rápidos */}
+            <div className="space-y-3 w-full">
+              <div className="w-full">
+                <label className="text-xs text-muted-foreground mb-2 block font-medium">Horários Rápidos (Plantões)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("07:00"); setEndTime("13:00"); }}>7-13</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("13:00"); setEndTime("19:00"); }}>13-19</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("01:00"); }}>19-01</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("07:00"); }}>19-07</Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setStartTime(""); setEndTime(""); }}>Limpar</Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full border-t pt-3">
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Início Manual</label>
+                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full" />
+                </div>
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Fim Manual</label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full" />
+                </div>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => { setShowEditModal(false); setEditingEvent(null); resetForm(); }}>
               Cancelar
             </Button>
-            <Button onClick={handleUpdateTraining} disabled={updateEventMutation.isPending}>
+            <Button onClick={handleUpdateEvent} disabled={updateEventMutation.isPending}>
               {updateEventMutation.isPending ? "Salvando..." : "Atualizar"}
             </Button>
           </DialogFooter>
