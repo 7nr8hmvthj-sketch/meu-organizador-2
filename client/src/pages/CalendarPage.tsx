@@ -490,7 +490,10 @@ export default function CalendarPage() {
       const sm = (current % 60).toString().padStart(2, '0');
       const eh = Math.floor((next % (24 * 60)) / 60).toString().padStart(2, '0');
       const em = (next % 60).toString().padStart(2, '0');
-      result.push(`Médico ${i + 1}: ${sh}:${sm} às ${eh}:${em}`);
+      const durationH = Math.floor(slice / 60);
+      const durationM = slice % 60;
+      const durationStr = durationM > 0 ? `${durationH}h${durationM}m` : `${durationH}h`;
+      result.push(`Médico ${i + 1}: ${sh}:${sm} às ${eh}:${em} (${durationStr})`);
       current = next;
     }
     setDividedShifts(result);
@@ -580,7 +583,10 @@ export default function CalendarPage() {
             <Button variant={viewMode === "dots" ? "default" : "ghost"} size="sm" className="h-6 text-[10px] px-2" onClick={() => setViewMode("dots")}>Bolinhas</Button>
           </div>
           <div className="flex gap-2 items-center">
-            <Button variant="outline" size="sm" onClick={() => { setShowShiftDivider(true); setDividedShifts([]); }}>Dividir Plantão</Button>
+            <Button variant="outline" size="sm" onClick={() => { setShowShiftDivider(true); setDividedShifts([]); }} title="Divisor de Plantões">
+              <span className="hidden sm:inline">Dividir Plantão</span>
+              <span className="sm:hidden font-bold">÷ Horas</span>
+            </Button>
             <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="w-5 h-5" /></Button>
           </div>
         </div>
