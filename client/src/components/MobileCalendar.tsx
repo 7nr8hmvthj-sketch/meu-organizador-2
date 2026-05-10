@@ -12,6 +12,7 @@ interface MobileCalendarProps {
   eventsByDate: Map<string, any[]>;
   selectedDateEvents: any[];
   isAdmin: boolean;
+  isTrainer?: boolean;
   onDayClick: (day: Date) => void;
   onAddEvent: () => void;
   onEditEvent: (event: any) => void;
@@ -31,6 +32,7 @@ export function MobileCalendar({
   eventsByDate,
   selectedDateEvents,
   isAdmin,
+  isTrainer = false,
   onDayClick,
   onAddEvent,
   onEditEvent,
@@ -167,7 +169,7 @@ export function MobileCalendar({
                           {event.value && <span className="ml-2 text-emerald-600 dark:text-emerald-400 font-semibold">R$ {Number(event.value).toFixed(2).replace('.', ',')}</span>}
                         </div>
                       </div>
-                      {isAdmin && (
+                      {!isTrainer && (
                         <div className="flex flex-col gap-2 shrink-0">
                           <Button variant="ghost" size="icon" className="h-7 w-7 bg-muted/50" onClick={() => onEditEvent(event)}>
                             <Pencil className="w-3 h-3"/>

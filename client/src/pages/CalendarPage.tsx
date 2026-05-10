@@ -361,6 +361,9 @@ export default function CalendarPage() {
       value: eventValue ? Number(eventValue) : undefined,
     };
 
+    // Fechar modal imediatamente para evitar cliques duplicados
+    setShowAddEventModal(false);
+
     if (!isRecurring) {
       createEventMutation.mutate({ ...basePayload, date: dateStr });
     } else {
@@ -377,6 +380,9 @@ export default function CalendarPage() {
   const handleUpdateEvent = () => {
     if (!editingEvent) return;
 
+    // Fechar modal imediatamente para evitar cliques duplicados
+    setShowEditModal(false);
+
     updateEventMutation.mutate({
       id: editingEvent.id,
       type: eventType === "Personalizado" ? customEventType : eventType,
@@ -392,6 +398,9 @@ export default function CalendarPage() {
 
   const handleDeleteEvent = () => {
     if (!eventToDelete) return;
+
+    // Fechar modal imediatamente para evitar cliques duplicados
+    setShowDeleteConfirm(false);
 
     deleteEventMutation.mutate({
       id: eventToDelete.id,
@@ -505,6 +514,7 @@ export default function CalendarPage() {
           eventsByDate={new Map(Object.entries(eventsByDate))}
           selectedDateEvents={selectedDate ? (eventsByDate[normalizeDateKey(selectedDate)] || []) : []}
           isAdmin={isAdmin}
+          isTrainer={isTrainer}
           onDayClick={(day) => { setSelectedDate(day); }}
           onAddEvent={() => setShowAddEventModal(true)}
           onEditEvent={handleEditEventClick}
