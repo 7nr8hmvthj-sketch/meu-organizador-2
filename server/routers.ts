@@ -25,7 +25,11 @@ function verifyCookie(cookieValue: string) {
     if (!payload || !signature) return null;
     
     const expectedSignature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
-    if (signature !== expectedSignature) return null;
+    try {
+      if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expectedSignature, 'hex'))) return null;
+    } catch {
+      return null;
+    }
     
     return JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
   } catch {
@@ -328,6 +332,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -353,6 +358,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -374,7 +380,8 @@ export const appRouter = router({
     // Cada usuário vê seus eventos; trainers vêem agenda do admin (userId 1)
     list: protectedProcedure.query(async ({ ctx }) => {
       const effectiveUserId = await getEffectiveUserId(ctx.user);
-      const events = await db.getEventsByDateRange(effectiveUserId, '2026-01-01', '2026-12-31');
+      const currentYear = new Date().getFullYear();
+      const events = await db.getEventsByDateRange(effectiveUserId, `${currentYear}-01-01`, `${currentYear}-12-31`);
       return normalizeEvents(events);
     }),
     
@@ -604,6 +611,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -629,6 +637,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -739,6 +748,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -764,6 +774,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -880,6 +891,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -905,6 +917,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -965,13 +978,15 @@ export const appRouter = router({
       .input(z.object({ tag: z.string() }))
       .query(async ({ input, ctx }) => {
         // Get all diary entries and filter by tag
-        const entries = await db.getDiaryEntries(ctx.user.userId, '2026-01-01', '2026-12-31');
+        const currentYear = new Date().getFullYear();
+        const entries = await db.getDiaryEntries(ctx.user.userId, `${currentYear}-01-01`, `${currentYear}-12-31`);
         return entries.filter(e => e.tags?.includes(input.tag));
       }),
     
     // Get all tags used
     tags: protectedProcedure.query(async ({ ctx }) => {
-      const entries = await db.getDiaryEntries(ctx.user.userId, '2026-01-01', '2026-12-31');
+      const currentYear = new Date().getFullYear();
+      const entries = await db.getDiaryEntries(ctx.user.userId, `${currentYear}-01-01`, `${currentYear}-12-31`);
       const tags = new Set<string>();
       entries.forEach(e => {
         if (e.tags) {
@@ -1038,6 +1053,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -1063,6 +1079,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -1197,6 +1214,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -1222,6 +1240,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -1506,6 +1525,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < refStart || eventDate > refEnd) continue;
+            if (event.isPassed) continue;
             
             if (event.workplaceId === wp.id) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;
@@ -1531,6 +1551,7 @@ export const appRouter = router({
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
             if (eventDate < startAvulso || eventDate > endAvulso) continue;
+            if (event.isPassed) continue;
             
             if (!event.workplaceId && event.type === rateObj.name) { 
                const eventValue = event.value ? parseFloat(event.value) : 0;

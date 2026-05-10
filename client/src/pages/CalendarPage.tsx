@@ -460,7 +460,7 @@ export default function CalendarPage() {
     setCurrentMonth(direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1));
   };
 
-  const isRestrictedUser = isAdmin && currentUsername === "PAULA" || isTrainer;
+  const isRestrictedUser = (isAdmin && currentUsername === "PAULA") || isTrainer;
 
   return (
     <div className="w-full max-w-full bg-background">
