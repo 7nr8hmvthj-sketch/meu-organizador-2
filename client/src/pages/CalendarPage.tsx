@@ -466,38 +466,44 @@ export default function CalendarPage() {
     <div className="w-full max-w-full bg-background">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background border-b">
-        <div className="flex items-center justify-between px-4 py-3 gap-4">
-          <div className="flex items-center gap-2">
-            <CalendarIcon className="w-5 h-5" />
-            <h1 className="text-lg font-semibold">Agenda Mensal</h1>
+        <div className="flex items-center justify-between px-4 py-3 gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <CalendarIcon className="w-5 h-5 shrink-0" />
+            <h1 className="text-lg font-semibold truncate">Agenda Mensal</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 shrink-0">
             {!isRestrictedUser && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFinanceModal(true)}
+                className="px-2"
+                title="Faturamento"
               >
-                <DollarSign className="w-4 h-4 mr-1" />
-                Faturamento
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline ml-1">Faturamento</span>
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowCategoryManager(true)}
+              className="px-2"
+              title="Categorias"
             >
-              <Tags className="w-4 h-4 mr-1" />
-              Categorias
+              <Tags className="w-4 h-4" />
+              <span className="hidden sm:inline ml-1">Categorias</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowCsvManager(true)}
+              className="px-2"
+              title="CSV"
             >
-              <FileSpreadsheet className="w-4 h-4 mr-1" />
-              CSV
+              <FileSpreadsheet className="w-4 h-4" />
+              <span className="hidden sm:inline ml-1">CSV</span>
             </Button>
           </div>
         </div>
