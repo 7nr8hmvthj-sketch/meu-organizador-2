@@ -713,6 +713,25 @@ export async function searchDiaryEntries(userId: number, query: string): Promise
   }
 }
 
+// ============ DIARY DELETE FUNCTION ============
+
+export async function deleteDiaryEntry(userId: number, dateStr: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot delete diary entry: database not available");
+    return false;
+  }
+  try {
+    const result = await db
+      .delete(diaryEntries)
+      .where(sql`${diaryEntries.userId} = ${userId} AND DATE(${diaryEntries.date}) = DATE(${dateStr})`);
+    return true;
+  } catch (error) {
+    console.error("[Database] Delete diary entry failed:", error);
+    return false;
+  }
+}
+
 // ============ USER PREFERENCES FUNCTIONS ============
 
 export async function getUserPreferences(userId: number): Promise<UserPreference | null> {

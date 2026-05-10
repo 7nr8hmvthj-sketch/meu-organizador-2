@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Briefcase, AlertTriangle, TrendingUp, Clock, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import WorkplaceManager from "@/components/WorkplaceManager";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -24,6 +25,7 @@ export function FinancialSummaryCard() {
   const today = new Date();
   const [month, setMonth] = useState(today.getMonth() + 1); // 1-12
   const [year, setYear] = useState(today.getFullYear());
+  const [workplaceManagerOpen, setWorkplaceManagerOpen] = useState(false);
 
   // ─── Estado do Dialog de Override ────────────────────────────────────────
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
@@ -182,7 +184,7 @@ export function FinancialSummaryCard() {
                 variant="outline"
                 size="sm"
                 className="mt-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                onClick={() => window.location.href = '/workplaces'}
+                onClick={() => setWorkplaceManagerOpen(true)}
               >
                 <Briefcase className="w-3 h-3 mr-2" />
                 Cadastrar meu primeiro local
@@ -327,6 +329,9 @@ export function FinancialSummaryCard() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* WorkplaceManager modal — abre ao clicar em 'Cadastrar meu primeiro local' */}
+      <WorkplaceManager open={workplaceManagerOpen} onOpenChange={setWorkplaceManagerOpen} />
     </>
   );
 }
