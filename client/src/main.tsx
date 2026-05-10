@@ -52,7 +52,12 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-createRoot(document.getElementById("root")!).render(
+// Bloquear extensões de tradução (Google Translate, etc.) que causam erros de DOM no React
+const rootEl = document.getElementById("root")!;
+rootEl.classList.add("notranslate");
+rootEl.setAttribute("translate", "no");
+
+createRoot(rootEl).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
       <App />

@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, username, role, created_at FROM app_users WHERE LOWER(username) LIKE '%emanuela%' OR LOWER(username) LIKE '%diemer%' LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT id, username, role, created_at FROM app_users WHERE LOWER(username) LIKE '%emanuela%' OR LOWER(username) LIKE '%diemer%' LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 1: Table 'gpihjob3nkeoe8wp6b5f8y.app_users' doesn't exist"
+  ]
+}
