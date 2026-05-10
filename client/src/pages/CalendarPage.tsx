@@ -537,15 +537,15 @@ export default function CalendarPage() {
               <Tags className="w-4 h-4" />
               <span className="hidden sm:inline ml-1">Categorias</span>
             </Button>
+            {/* CSV button hidden for now */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowCsvManager(true)}
-              className="px-2"
-              title="CSV"
+              onClick={() => { setShowShiftDivider(true); setDividedShifts([]); }}
+              className="px-2 font-bold"
+              title="Divisor de Plantões"
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span className="hidden sm:inline ml-1">CSV</span>
+              ÷
             </Button>
           </div>
         </div>
