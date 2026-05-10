@@ -902,8 +902,10 @@ export async function getNextAppUserId(): Promise<number> {
       sql`SELECT COALESCE(MAX(user_id), 0) + 1 as next_id FROM app_users`
     );
     const rows = (result as any).rows || (result as any);
-    const nextId = rows[0]?.next_id;
-    if (!nextId || typeof nextId !== 'number') {
+    const rawId = rows[0]?.next_id;
+    // PostgreSQL pode retornar string para colunas numéricas em alguns drivers
+    const nextId = typeof rawId === 'string' ? parseInt(rawId, 10) : Number(rawId);
+    if (!nextId || isNaN(nextId) || nextId <= 0) {
       throw new Error('Falha ao gerar novo ID de usuário: resultado inválido do banco');
     }
     return nextId;

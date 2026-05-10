@@ -547,3 +547,9 @@
 - [ ] Fix: Implementar prioridade para value fixo nos eventos
 - [ ] Fix: Normalizar datas e case-insensitive workplaceId
 - [ ] Fix: Aplicar value fixo aos unlinkedRates
+
+## Correção Permissões Workplaces (10/05/2026)
+
+- [x] Corrigir getNextAppUserId no db.ts: retornava string em vez de número, bloqueando registro de novos usuários
+- [x] Confirmar que isRestrictedUser no CalendarPage.tsx está correto para novos admins (JORDANA, EMANUELA, etc.)
+- [x] Confirmar que workplaces.create funciona para qualquer admin registrado com sucesso
