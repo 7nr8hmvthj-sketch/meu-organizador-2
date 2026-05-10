@@ -604,6 +604,17 @@ export default function CalendarPage() {
                       )}
                     </div>
                   )}
+                  {/* Legenda de Horas ZN no dia 19 */}
+                  {dayNumber === 19 && (() => {
+                    const znH = calculateZNHours(allEvents.filter((e: any) => e.createdBy === currentUsername), day);
+                    return znH > 0 ? (
+                      <div className="absolute top-0.5 right-0.5">
+                        <span className="text-[7px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-0.5 py-0" title="Total de horas ZN do ciclo (dia 20 ao 19)">
+                          {znH}h ZN
+                        </span>
+                      </div>
+                    ) : null;
+                  })()}
                   {/* Badge de Fechamento de Ciclo */}
                   {closingWorkplaces.length > 0 && (
                     <div className="absolute bottom-0.5 left-0.5 right-0.5">
@@ -854,52 +865,25 @@ export default function CalendarPage() {
             </div>
 
             {/* Horário com botões rápidos */}
-            <div>
-              <Label>Horário (opcional)</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {[
-                  { label: "7-13", start: "07:00", end: "13:00" },
-                  { label: "13-19", start: "13:00", end: "19:00" },
-                  { label: "19-01", start: "19:00", end: "01:00" },
-                  { label: "19-07", start: "19:00", end: "07:00" },
-                ].map((slot) => (
-                  <Button
-                    key={slot.label}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setStartTime(slot.start); setEndTime(slot.end); }}
-                    className={startTime === slot.start && endTime === slot.end ? "border-primary text-primary" : ""}
-                  >
-                    {slot.label}
-                  </Button>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setStartTime(""); setEndTime(""); }}
-                  className="text-muted-foreground"
-                >
-                  Limpar
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">Início</Label>
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
+            <div className="space-y-3 w-full">
+              <div className="w-full">
+                <label className="text-xs text-muted-foreground mb-2 block font-medium">Horários Rápidos (Plantões)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("07:00"); setEndTime("13:00"); }}>7-13</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("13:00"); setEndTime("19:00"); }}>13-19</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("01:00"); }}>19-01</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("07:00"); }}>19-07</Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setStartTime(""); setEndTime(""); }}>Limpar</Button>
                 </div>
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">Fim</Label>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full border-t pt-3">
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Início Manual</label>
+                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full" />
+                </div>
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Fim Manual</label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full" />
                 </div>
               </div>
             </div>
@@ -1056,52 +1040,25 @@ export default function CalendarPage() {
             </div>
 
             {/* Horário com botões rápidos */}
-            <div>
-              <Label>Horário (opcional)</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {[
-                  { label: "7-13", start: "07:00", end: "13:00" },
-                  { label: "13-19", start: "13:00", end: "19:00" },
-                  { label: "19-01", start: "19:00", end: "01:00" },
-                  { label: "19-07", start: "19:00", end: "07:00" },
-                ].map((slot) => (
-                  <Button
-                    key={slot.label}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { setStartTime(slot.start); setEndTime(slot.end); }}
-                    className={startTime === slot.start && endTime === slot.end ? "border-primary text-primary" : ""}
-                  >
-                    {slot.label}
-                  </Button>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { setStartTime(""); setEndTime(""); }}
-                  className="text-muted-foreground"
-                >
-                  Limpar
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">Início</Label>
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
+            <div className="space-y-3 w-full">
+              <div className="w-full">
+                <label className="text-xs text-muted-foreground mb-2 block font-medium">Horários Rápidos (Plantões)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("07:00"); setEndTime("13:00"); }}>7-13</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("13:00"); setEndTime("19:00"); }}>13-19</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("01:00"); }}>19-01</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("07:00"); }}>19-07</Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setStartTime(""); setEndTime(""); }}>Limpar</Button>
                 </div>
-                <div className="flex-1">
-                  <Label className="text-xs text-muted-foreground">Fim</Label>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full border-t pt-3">
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Início Manual</label>
+                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full" />
+                </div>
+                <div className="w-full">
+                  <label className="text-xs text-muted-foreground mb-1 block">Fim Manual</label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full" />
                 </div>
               </div>
             </div>
