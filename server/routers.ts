@@ -699,13 +699,14 @@ export const appRouter = router({
         icon: z.string().optional(),
         sortOrder: z.number().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const cat = await db.createCategory({
           name: input.name,
           color: input.color,
           type: input.type,
           icon: input.icon || null,
           sortOrder: input.sortOrder || 0,
+          userId: ctx.user.userId,
         });
         return cat ? normalizeCategory(cat) : null;
       }),

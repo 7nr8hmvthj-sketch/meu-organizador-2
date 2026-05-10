@@ -1,0 +1,427 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema') ORDER BY table_name;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 1grUzB66oStVVFP.root --database gPiHJoB3NKeoE8WP6B5f8y --execute SELECT table_name FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema') ORDER BY table_name;",
+  "rows": [
+    {
+      "table_name": "ANALYZE_STATUS"
+    },
+    {
+      "table_name": "CHARACTER_SETS"
+    },
+    {
+      "table_name": "CHECK_CONSTRAINTS"
+    },
+    {
+      "table_name": "CLIENT_ERRORS_SUMMARY_BY_HOST"
+    },
+    {
+      "table_name": "CLIENT_ERRORS_SUMMARY_BY_USER"
+    },
+    {
+      "table_name": "CLIENT_ERRORS_SUMMARY_GLOBAL"
+    },
+    {
+      "table_name": "CLUSTER_DEADLOCKS"
+    },
+    {
+      "table_name": "CLUSTER_MEMORY_USAGE"
+    },
+    {
+      "table_name": "CLUSTER_MEMORY_USAGE_OPS_HISTORY"
+    },
+    {
+      "table_name": "CLUSTER_PROCESSLIST"
+    },
+    {
+      "table_name": "CLUSTER_STATEMENTS_SUMMARY_HISTORY"
+    },
+    {
+      "table_name": "CLUSTER_TIDB_INDEX_USAGE"
+    },
+    {
+      "table_name": "CLUSTER_TIDB_TRX"
+    },
+    {
+      "table_name": "CLUSTER_TRX_SUMMARY"
+    },
+    {
+      "table_name": "COLLATIONS"
+    },
+    {
+      "table_name": "COLLATION_CHARACTER_SET_APPLICABILITY"
+    },
+    {
+      "table_name": "COLUMNS"
+    },
+    {
+      "table_name": "COLUMN_PRIVILEGES"
+    },
+    {
+      "table_name": "COLUMN_STATISTICS"
+    },
+    {
+      "table_name": "DATA_LOCK_WAITS"
+    },
+    {
+      "table_name": "DDL_JOBS"
+    },
+    {
+      "table_name": "DEADLOCKS"
+    },
+    {
+      "table_name": "ENGINES"
+    },
+    {
+      "table_name": "EVENTS"
+    },
+    {
+      "table_name": "FILES"
+    },
+    {
+      "table_name": "GLOBAL_STATUS"
+    },
+    {
+      "table_name": "GLOBAL_VARIABLES"
+    },
+    {
+      "table_name": "KEYWORDS"
+    },
+    {
+      "table_name": "KEY_COLUMN_USAGE"
+    },
+    {
+      "table_name": "MEMORY_USAGE"
+    },
+    {
+      "table_name": "MEMORY_USAGE_OPS_HISTORY"
+    },
+    {
+      "table_name": "OPTIMIZER_TRACE"
+    },
+    {
+      "table_name": "PARAMETERS"
+    },
+    {
+      "table_name": "PARTITIONS"
+    },
+    {
+      "table_name": "PLUGINS"
+    },
+    {
+      "table_name": "PROCESSLIST"
+    },
+    {
+      "table_name": "PROFILING"
+    },
+    {
+      "table_name": "REFERENTIAL_CONSTRAINTS"
+    },
+    {
+      "table_name": "ROUTINES"
+    },
+    {
+      "table_name": "RUNAWAY_WATCHES"
+    },
+    {
+      "table_name": "SCHEMATA"
+    },
+    {
+      "table_name": "SCHEMA_PRIVILEGES"
+    },
+    {
+      "table_name": "SEQUENCES"
+    },
+    {
+      "table_name": "SESSION_STATUS"
+    },
+    {
+      "table_name": "SESSION_VARIABLES"
+    },
+    {
+      "table_name": "STATEMENTS_SUMMARY_HISTORY"
+    },
+    {
+      "table_name": "STATISTICS"
+    },
+    {
+      "table_name": "TABLES"
+    },
+    {
+      "table_name": "TABLESPACES"
+    },
+    {
+      "table_name": "TABLE_CONSTRAINTS"
+    },
+    {
+      "table_name": "TABLE_PRIVILEGES"
+    },
+    {
+      "table_name": "TABLE_STORAGE_STATS"
+    },
+    {
+      "table_name": "TIDB_CHECK_CONSTRAINTS"
+    },
+    {
+      "table_name": "TIDB_INDEXES"
+    },
+    {
+      "table_name": "TIDB_INDEX_USAGE"
+    },
+    {
+      "table_name": "TIDB_TRX"
+    },
+    {
+      "table_name": "TIFLASH_INDEXES"
+    },
+    {
+      "table_name": "TIFLASH_REPLICA"
+    },
+    {
+      "table_name": "TRIGGERS"
+    },
+    {
+      "table_name": "TRX_SUMMARY"
+    },
+    {
+      "table_name": "USER_ATTRIBUTES"
+    },
+    {
+      "table_name": "USER_PRIVILEGES"
+    },
+    {
+      "table_name": "VARIABLES_INFO"
+    },
+    {
+      "table_name": "VIEWS"
+    },
+    {
+      "table_name": "__drizzle_migrations"
+    },
+    {
+      "table_name": "advisory_locks"
+    },
+    {
+      "table_name": "analyze_jobs"
+    },
+    {
+      "table_name": "analyze_options"
+    },
+    {
+      "table_name": "auto_analyze_tasks"
+    },
+    {
+      "table_name": "auto_analyze_tasks_history"
+    },
+    {
+      "table_name": "bind_info"
+    },
+    {
+      "table_name": "capture_plan_baselines_blacklist"
+    },
+    {
+      "table_name": "column_stats_usage"
+    },
+    {
+      "table_name": "columns_priv"
+    },
+    {
+      "table_name": "db"
+    },
+    {
+      "table_name": "default_roles"
+    },
+    {
+      "table_name": "dist_framework_meta"
+    },
+    {
+      "table_name": "events_stages_current"
+    },
+    {
+      "table_name": "events_stages_history"
+    },
+    {
+      "table_name": "events_stages_history_long"
+    },
+    {
+      "table_name": "events_statements_current"
+    },
+    {
+      "table_name": "events_statements_history"
+    },
+    {
+      "table_name": "events_statements_history_long"
+    },
+    {
+      "table_name": "events_statements_summary_by_digest"
+    },
+    {
+      "table_name": "events_transactions_current"
+    },
+    {
+      "table_name": "events_transactions_history"
+    },
+    {
+      "table_name": "events_transactions_history_long"
+    },
+    {
+      "table_name": "global_grants"
+    },
+    {
+      "table_name": "global_priv"
+    },
+    {
+      "table_name": "global_status"
+    },
+    {
+      "table_name": "help_topic"
+    },
+    {
+      "table_name": "index_advisor_results"
+    },
+    {
+      "table_name": "password_history"
+    },
+    {
+      "table_name": "plan_replayer_status"
+    },
+    {
+      "table_name": "plan_replayer_task"
+    },
+    {
+      "table_name": "prepared_statements_instances"
+    },
+    {
+      "table_name": "request_unit_by_group"
+    },
+    {
+      "table_name": "role_edges"
+    },
+    {
+      "table_name": "session_account_connect_attrs"
+    },
+    {
+      "table_name": "session_connect_attrs"
+    },
+    {
+      "table_name": "session_status"
+    },
+    {
+      "table_name": "session_variables"
+    },
+    {
+      "table_name": "setup_actors"
+    },
+    {
+      "table_name": "setup_consumers"
+    },
+    {
+      "table_name": "setup_instruments"
+    },
+    {
+      "table_name": "setup_objects"
+    },
+    {
+      "table_name": "stats_buckets"
+    },
+    {
+      "table_name": "stats_extended"
+    },
+    {
+      "table_name": "stats_feedback"
+    },
+    {
+      "table_name": "stats_fm_sketch"
+    },
+    {
+      "table_name": "stats_histograms"
+    },
+    {
+      "table_name": "stats_history"
+    },
+    {
+      "table_name": "stats_meta"
+    },
+    {
+      "table_name": "stats_meta_history"
+    },
+    {
+      "table_name": "stats_table_locked"
+    },
+    {
+      "table_name": "stats_top_n"
+    },
+    {
+      "table_name": "table_cache_meta"
+    },
+    {
+      "table_name": "tables_priv"
+    },
+    {
+      "table_name": "tidb_background_subtask"
+    },
+    {
+      "table_name": "tidb_background_subtask_history"
+    },
+    {
+      "table_name": "tidb_ddl_history"
+    },
+    {
+      "table_name": "tidb_ddl_job"
+    },
+    {
+      "table_name": "tidb_ddl_notifier"
+    },
+    {
+      "table_name": "tidb_ddl_reorg"
+    },
+    {
+      "table_name": "tidb_global_task"
+    },
+    {
+      "table_name": "tidb_global_task_history"
+    },
+    {
+      "table_name": "tidb_import_jobs"
+    },
+    {
+      "table_name": "tidb_kernel_options"
+    },
+    {
+      "table_name": "tidb_mdl_info"
+    },
+    {
+      "table_name": "tidb_mdl_view"
+    },
+    {
+      "table_name": "tidb_pitr_id_map"
+    },
+    {
+      "table_name": "tidb_runaway_queries"
+    },
+    {
+      "table_name": "tidb_runaway_watch"
+    },
+    {
+      "table_name": "tidb_runaway_watch_done"
+    },
+    {
+      "table_name": "tidb_timers"
+    },
+    {
+      "table_name": "tidb_ttl_job_history"
+    },
+    {
+      "table_name": "tidb_ttl_table_status"
+    },
+    {
+      "table_name": "tidb_ttl_task"
+    },
+    {
+      "table_name": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\nANALYZE_STATUS\nCHARACTER_SETS\nCHECK_CONSTRAINTS\nCLIENT_ERRORS_SUMMARY_BY_HOST\nCLIENT_ERRORS_SUMMARY_BY_USER\nCLIENT_ERRORS_SUMMARY_GLOBAL\nCLUSTER_DEADLOCKS\nCLUSTER_MEMORY_USAGE\nCLUSTER_MEMORY_USAGE_OPS_HISTORY\nCLUSTER_PROCESSLIST\nCLUSTER_STATEMENTS_SUMMARY_HISTORY\nCLUSTER_TIDB_INDEX_USAGE\nCLUSTER_TIDB_TRX\nCLUSTER_TRX_SUMMARY\nCOLLATIONS\nCOLLATION_CHARACTER_SET_APPLICABILITY\nCOLUMNS\nCOLUMN_PRIVILEGES\nCOLUMN_STATISTICS\nDATA_LOCK_WAITS\nDDL_JOBS\nDEADLOCKS\nENGINES\nEVENTS\nFILES\nGLOBAL_STATUS\nGLOBAL_VARIABLES\nKEYWORDS\nKEY_COLUMN_USAGE\nMEMORY_USAGE\nMEMORY_USAGE_OPS_HISTORY\nOPTIMIZER_TRACE\nPARAMETERS\nPARTITIONS\nPLUGINS\nPROCESSLIST\nPROFILING\nREFERENTIAL_CONSTRAINTS\nROUTINES\nRUNAWAY_WATCHES\nSCHEMATA\nSCHEMA_PRIVILEGES\nSEQUENCES\nSESSION_STATUS\nSESSION_VARIABLES\nSTATEMENTS_SUMMARY_HISTORY\nSTATISTICS\nTABLES\nTABLESPACES\nTABLE_CONSTRAINTS\nTABLE_PRIVILEGES\nTABLE_STORAGE_STATS\nTIDB_CHECK_CONSTRAINTS\nTIDB_INDEXES\nTIDB_INDEX_USAGE\nTIDB_TRX\nTIFLASH_INDEXES\nTIFLASH_REPLICA\nTRIGGERS\nTRX_SUMMARY\nUSER_ATTRIBUTES\nUSER_PRIVILEGES\nVARIABLES_INFO\nVIEWS\n__drizzle_migrations\nadvisory_locks\nanalyze_jobs\nanalyze_options\nauto_analyze_tasks\nauto_analyze_tasks_history\nbind_info\ncapture_plan_baselines_blacklist\ncolumn_stats_usage\ncolumns_priv\ndb\ndefault_roles\ndist_framework_meta\nevents_stages_current\nevents_stages_history\nevents_stages_history_long\nevents_statements_current\nevents_statements_history\nevents_statements_history_long\nevents_statements_summary_by_digest\nevents_transactions_current\nevents_transactions_history\nevents_transactions_history_long\nglobal_grants\nglobal_priv\nglobal_status\nhelp_topic\nindex_advisor_results\npassword_history\nplan_replayer_status\nplan_replayer_task\nprepared_statements_instances\nrequest_unit_by_group\nrole_edges\nsession_account_connect_attrs\nsession_connect_attrs\nsession_status\nsession_variables\nsetup_actors\nsetup_consumers\nsetup_instruments\nsetup_objects\nstats_buckets\nstats_extended\nstats_feedback\nstats_fm_sketch\nstats_histograms\nstats_history\nstats_meta\nstats_meta_history\nstats_table_locked\nstats_top_n\ntable_cache_meta\ntables_priv\ntidb_background_subtask\ntidb_background_subtask_history\ntidb_ddl_history\ntidb_ddl_job\ntidb_ddl_notifier\ntidb_ddl_reorg\ntidb_global_task\ntidb_global_task_history\ntidb_import_jobs\ntidb_kernel_options\ntidb_mdl_info\ntidb_mdl_view\ntidb_pitr_id_map\ntidb_runaway_queries\ntidb_runaway_watch\ntidb_runaway_watch_done\ntidb_timers\ntidb_ttl_job_history\ntidb_ttl_table_status\ntidb_ttl_task\nuser\n",
+  "stderr": "",
+  "execution_time_ms": 388
+}

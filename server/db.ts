@@ -598,21 +598,16 @@ export async function getCategories(userId?: number): Promise<Category[]> {
   const db = await getDb();
   if (!db) return [];
   try {
-    // Return global categories (userid IS NULL) + user-specific categories
+    // Return ONLY user-specific categories (each user sees only their own)
     if (userId) {
       const result = await db
         .select()
         .from(categories)
-        .where(sql`${categories.userId} IS NULL OR ${categories.userId} = ${userId}`)
+        .where(sql`${categories.userId} = ${userId}`)
         .orderBy(sql`${categories.sortOrder} ASC`);
       return result;
     }
-    const result = await db
-      .select()
-      .from(categories)
-      .where(sql`${categories.userId} IS NULL`)
-      .orderBy(sql`${categories.sortOrder} ASC`);
-    return result;
+    return [];
   } catch (error) {
     console.error("[Database] Get categories failed:", error);
     return [];
