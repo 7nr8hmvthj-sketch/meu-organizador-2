@@ -994,7 +994,7 @@ export async function upsertWorkplaceAdjustment(
   workplaceId: number,
   month: number,
   year: number,
-  hoursAdjustment: number,
+  overrideHours: number,
   reason: string | null
 ) {
   const db = await getDb();
@@ -1008,7 +1008,7 @@ export async function upsertWorkplaceAdjustment(
     if (existing.length > 0) {
       const updated = await db.update(monthlyAdjustments)
         .set({
-          hoursAdjustment: String(hoursAdjustment),
+          overrideHours: String(overrideHours),
           reason,
           updatedAt: new Date(),
         })
@@ -1022,9 +1022,9 @@ export async function upsertWorkplaceAdjustment(
           workplaceId,
           month,
           year,
-          hoursAdjustment: String(hoursAdjustment),
+          overrideHours: String(overrideHours),
           reason,
-        })
+        } as any)
         .returning();
       return inserted[0];
     }

@@ -158,7 +158,7 @@ export const monthlyAdjustments = pgTable("monthly_adjustments", {
   workplaceId: integer("workplaceid"),
   month: integer("month").notNull(),
   year: integer("year").notNull(),
-  hoursAdjustment: numeric("hoursadjustment", { precision: 10, scale: 2 }),
+  overrideHours: numeric("overridehours", { precision: 10, scale: 2 }),
   reason: text("reason"),
   rhHoursZN: numeric("rhhourszn", { precision: 10, scale: 2 }),
   rhHoursHC: numeric("rhhourshc", { precision: 10, scale: 2 }),

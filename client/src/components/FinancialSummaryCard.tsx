@@ -25,10 +25,16 @@ export function FinancialSummaryCard() {
   const [month, setMonth] = useState(today.getMonth() + 1); // 1-12
   const [year, setYear] = useState(today.getFullYear());
 
-  // ─── Estado do Dialog de Ajuste ───────────────────────────────────────────
+  // ─── Estado do Dialog de Override ────────────────────────────────────────
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
-  const [adjustTarget, setAdjustTarget] = useState<{ workplaceId: number; workplaceName: string; currentAdj: number; currentReason: string } | null>(null);
-  const [adjHours, setAdjHours] = useState("");
+  const [adjustTarget, setAdjustTarget] = useState<{
+    workplaceId: number;
+    workplaceName: string;
+    calculatedHours: number;
+    currentOverride: number | null;
+    currentReason: string;
+  } | null>(null);
+  const [overrideHoursInput, setOverrideHoursInput] = useState("");
   const [adjReason, setAdjReason] = useState("");
 
   // ─── Query: resumo por workplace ──────────────────────────────────────────
@@ -46,26 +52,26 @@ export function FinancialSummaryCard() {
     endDate,
   });
 
-  // ─── Mutation: salvar ajuste ──────────────────────────────────────────────
+  // ─── Mutation: salvar override ────────────────────────────────────────────
   const saveAdjustmentMutation = trpc.workplaces.saveAdjustment.useMutation({
     onSuccess: () => {
       utils.workplaces.getMonthlySummary.invalidate({ month, year });
-      toast.success("Ajuste salvo com sucesso!");
+      toast.success("Total de horas atualizado com sucesso!");
       setAdjustDialogOpen(false);
     },
     onError: () => {
-      toast.error("Erro ao salvar ajuste.");
+      toast.error("Erro ao salvar. Tente novamente.");
     },
   });
 
   // Plantões sem workplaceId vinculado
-  const unlinkedShifts = monthEvents.filter(
-    (e: any) => e.isShift && !e.isCancelled && !e.workplaceId
+  const unlinkedShifts = (monthEvents as any[]).filter(
+    (e) => e.isShift && !e.isCancelled && !e.workplaceId
   );
 
   // ─── Totais consolidados ──────────────────────────────────────────────────
-  const totalHours = summary.reduce((acc: number, wp: any) => acc + (wp.totalHours ?? 0), 0);
-  const totalValue = summary.reduce((acc: number, wp: any) => acc + (wp.totalValue ?? 0), 0);
+  const totalHours = (summary as any[]).reduce((acc, wp) => acc + (wp.totalHours ?? 0), 0);
+  const totalValue = (summary as any[]).reduce((acc, wp) => acc + (wp.totalValue ?? 0), 0);
 
   // ─── Navegação de mês ─────────────────────────────────────────────────────
   const goToPrevMonth = () => {
@@ -80,26 +86,37 @@ export function FinancialSummaryCard() {
 
   const isCurrentMonth = month === today.getMonth() + 1 && year === today.getFullYear();
 
-  // ─── Abrir Dialog de Ajuste ───────────────────────────────────────────────
+  // ─── Abrir Dialog de Override ─────────────────────────────────────────────
   const openAdjustDialog = (wp: any) => {
     setAdjustTarget({
       workplaceId: wp.workplaceId,
       workplaceName: wp.workplaceName,
-      currentAdj: wp.hoursAdjustment ?? 0,
+      calculatedHours: wp.rawHours ?? 0,
+      currentOverride: wp.overrideHours ?? null,
       currentReason: wp.adjustmentReason ?? "",
     });
-    setAdjHours(String(wp.hoursAdjustment ?? 0));
+    // Pré-preenche com o valor atual (override se existir, senão calculado)
+    const initialValue = wp.overrideHours !== null && wp.overrideHours !== undefined
+      ? String(wp.overrideHours)
+      : String(wp.rawHours ?? 0);
+    setOverrideHoursInput(initialValue);
     setAdjReason(wp.adjustmentReason ?? "");
     setAdjustDialogOpen(true);
   };
 
+  // ─── Salvar Override ──────────────────────────────────────────────────────
   const handleSaveAdjustment = () => {
     if (!adjustTarget) return;
+    const parsed = parseFloat(overrideHoursInput);
+    if (isNaN(parsed) || parsed < 0) {
+      toast.error("Informe um número de horas válido (maior ou igual a 0).");
+      return;
+    }
     saveAdjustmentMutation.mutate({
       workplaceId: adjustTarget.workplaceId,
       month,
       year,
-      hoursAdjustment: parseFloat(adjHours) || 0,
+      overrideHours: parsed,
       reason: adjReason.trim() || null,
     });
   };
@@ -154,7 +171,7 @@ export function FinancialSummaryCard() {
             <div className="flex items-center justify-center py-8">
               <div className="w-6 h-6 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : summary.length === 0 ? (
+          ) : (summary as any[]).length === 0 ? (
             <div className="py-10 text-center space-y-3">
               <Briefcase className="w-10 h-10 mx-auto text-muted-foreground/30" />
               <p className="text-muted-foreground font-medium text-sm">Nenhum local de trabalho cadastrado.</p>
@@ -165,7 +182,7 @@ export function FinancialSummaryCard() {
                 variant="outline"
                 size="sm"
                 className="mt-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                onClick={() => window.location.href = '/locais'}
+                onClick={() => window.location.href = '/workplaces'}
               >
                 <Briefcase className="w-3 h-3 mr-2" />
                 Cadastrar meu primeiro local
@@ -192,7 +209,7 @@ export function FinancialSummaryCard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {summary.map((wp: any, idx: number) => (
+                    {(summary as any[]).map((wp, idx) => (
                       <tr
                         key={wp.workplaceId}
                         className={`border-b border-border last:border-0 transition-colors hover:bg-muted/20 ${
@@ -205,9 +222,10 @@ export function FinancialSummaryCard() {
                             {wp.totalHours > 0 || wp.rawHours > 0 ? (
                               <span className="inline-flex items-center gap-1">
                                 {wp.totalHours}h
-                                {wp.hoursAdjustment !== 0 && (
-                                  <span className={`text-xs font-medium ${wp.hoursAdjustment < 0 ? 'text-red-500' : 'text-blue-500'}`}>
-                                    ({wp.hoursAdjustment > 0 ? '+' : ''}{wp.hoursAdjustment}h RH)
+                                {/* Indica que há override ativo */}
+                                {wp.overrideHours !== null && wp.overrideHours !== undefined && (
+                                  <span className="text-xs font-medium text-blue-600 bg-blue-50 rounded px-1">
+                                    RH
                                   </span>
                                 )}
                               </span>
@@ -219,7 +237,7 @@ export function FinancialSummaryCard() {
                               size="icon"
                               className="h-5 w-5 ml-1 opacity-50 hover:opacity-100"
                               onClick={() => openAdjustDialog(wp)}
-                              title="Ajustar horas (RH)"
+                              title="Definir total de horas (RH)"
                             >
                               <Pencil className="w-3 h-3" />
                             </Button>
@@ -258,31 +276,38 @@ export function FinancialSummaryCard() {
         </CardContent>
       </Card>
 
-      {/* Dialog de Ajuste de Horas */}
+      {/* Dialog de Override de Horas (RH) */}
       <Dialog open={adjustDialogOpen} onOpenChange={setAdjustDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[420px]">
           <DialogHeader>
             <DialogTitle className="text-base">
-              Ajuste de Horas — {adjustTarget?.workplaceName}
+              Total de Horas — {adjustTarget?.workplaceName}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleSaveAdjustment(); }}
+            className="space-y-4 py-2"
+          >
             <p className="text-xs text-muted-foreground">
-              Insira um valor positivo para adicionar horas ou negativo para subtrair (ex: -12 para corte RH).
+              Informe o <strong>total de horas final</strong> informado pelo RH para este mês.
+              O sistema usará esse valor no lugar do cálculo automático (
+              <span className="font-medium">{adjustTarget?.calculatedHours}h calculadas</span>).
             </p>
             <div className="space-y-2">
-              <Label htmlFor="adj-hours">Ajuste de Horas</Label>
+              <Label htmlFor="override-hours">Total de Horas Final (RH)</Label>
               <Input
-                id="adj-hours"
+                id="override-hours"
                 type="number"
                 step="0.5"
-                placeholder="Ex: -12"
-                value={adjHours}
-                onChange={(e) => setAdjHours(e.target.value)}
+                min="0"
+                placeholder={`Ex: ${adjustTarget?.calculatedHours ?? 0}`}
+                value={overrideHoursInput}
+                onChange={(e) => setOverrideHoursInput(e.target.value)}
+                autoFocus
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="adj-reason">Motivo</Label>
+              <Label htmlFor="adj-reason">Motivo (opcional)</Label>
               <Input
                 id="adj-reason"
                 type="text"
@@ -291,15 +316,15 @@ export function FinancialSummaryCard() {
                 onChange={(e) => setAdjReason(e.target.value)}
               />
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAdjustDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSaveAdjustment} disabled={saveAdjustmentMutation.isPending}>
-              {saveAdjustmentMutation.isPending ? "Salvando..." : "Salvar Ajuste"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setAdjustDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saveAdjustmentMutation.isPending}>
+                {saveAdjustmentMutation.isPending ? "Salvando..." : "Salvar"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>

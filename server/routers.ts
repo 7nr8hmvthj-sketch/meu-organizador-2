@@ -1365,10 +1365,10 @@ export const appRouter = router({
         };
 
         // ─── Agrupar por workplace ────────────────────────────────────────────
-        const wpMap = new Map<number, { workplaceId: number; workplaceName: string; rawHours: number; hoursAdjustment: number; adjustmentReason: string | null; totalHours: number; totalValue: number; hourlyRate: number }>();
+        const wpMap = new Map<number, { workplaceId: number; workplaceName: string; rawHours: number; overrideHours: number | null; adjustmentReason: string | null; totalHours: number; totalValue: number; hourlyRate: number }>();
 
         for (const wp of userWorkplaces) {
-          wpMap.set(wp.id, { workplaceId: wp.id, workplaceName: wp.name, rawHours: 0, hoursAdjustment: 0, adjustmentReason: null, totalHours: 0, totalValue: 0, hourlyRate: parseFloat(String(wp.hourlyRate)) });
+          wpMap.set(wp.id, { workplaceId: wp.id, workplaceName: wp.name, rawHours: 0, overrideHours: null, adjustmentReason: null, totalHours: 0, totalValue: 0, hourlyRate: parseFloat(String(wp.hourlyRate)) });
         }
 
         let fixedValueTotal = 0;
@@ -1390,24 +1390,24 @@ export const appRouter = router({
           else entry.totalValue += value;
         }
 
-        // ─── Aplicar ajustes RH por workplace ───────────────────────────────
+        // ─── Buscar overrides RH por workplace ───────────────────────────────
         const adjustments = await db.getWorkplaceAdjustments(ctx.user.userId, month, year);
 
         for (const adj of adjustments) {
           if (!adj.workplaceId) continue;
           const entry = wpMap.get(adj.workplaceId);
           if (!entry) continue;
-          const adjHours = adj.hoursAdjustment ? parseFloat(String(adj.hoursAdjustment)) : 0;
-          entry.hoursAdjustment = adjHours;
+          // Override absoluto: se existir, substitui o rawHours calculado
+          entry.overrideHours = adj.overrideHours ? parseFloat(String(adj.overrideHours)) : null;
           entry.adjustmentReason = adj.reason ?? null;
         }
 
-        // Calcular totalHours e totalValue finais com ajustes
+        // Calcular totalHours e totalValue finais
         const wpEntries = Array.from(wpMap.values());
         for (const entry of wpEntries) {
-          entry.totalHours = entry.rawHours + entry.hoursAdjustment;
-          // Recalcular valor baseado nas horas ajustadas
-          entry.totalValue = (entry.totalHours * entry.hourlyRate);
+          // Se houver override, usa ele; caso contrário, usa o calculado dos plantões
+          entry.totalHours = entry.overrideHours !== null ? entry.overrideHours : entry.rawHours;
+          entry.totalValue = entry.totalHours * entry.hourlyRate;
         }
 
         // Retorna array consolidado por workplace
@@ -1415,7 +1415,7 @@ export const appRouter = router({
           workplaceId: e.workplaceId,
           workplaceName: e.workplaceName,
           rawHours: e.rawHours,
-          hoursAdjustment: e.hoursAdjustment,
+          overrideHours: e.overrideHours,
           adjustmentReason: e.adjustmentReason,
           totalHours: e.totalHours,
           totalValue: e.totalValue,
@@ -1428,8 +1428,8 @@ export const appRouter = router({
         workplaceId: z.number(),
         month: z.number().min(1).max(12),
         year: z.number(),
-        hoursAdjustment: z.number(),
-        reason: z.string().nullable(),
+        overrideHours: z.number(),
+        reason: z.string().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const result = await db.upsertWorkplaceAdjustment(
@@ -1437,8 +1437,8 @@ export const appRouter = router({
           input.workplaceId,
           input.month,
           input.year,
-          input.hoursAdjustment,
-          input.reason
+          input.overrideHours,
+          input.reason ?? null
         );
         return { success: !!result };
       }),
