@@ -35,9 +35,12 @@ interface NavigationProps {
   username?: string;
 }
 
-// Verifica se o usuário tem acesso restrito (trainer ou Paula)
+// Usuários com interface restrita à agenda (sem Financeiro, Configurações)
+const RESTRICTED_UI_USERS = ["PAULA", "JESSICA", "ISA"];
+
+// Verifica se o usuário tem acesso restrito (trainer ou usuários de agenda)
 function isRestrictedUser(userRole?: string, username?: string): boolean {
-  return userRole === "trainer" || username === "PAULA";
+  return userRole === "trainer" || RESTRICTED_UI_USERS.includes(username || "");
 }
 
 function Navigation({ userRole, username }: NavigationProps) {
@@ -55,13 +58,13 @@ function Navigation({ userRole, username }: NavigationProps) {
   // Define navigation items based on user role
   // excludeUsernames: lista de usernames que NÃO devem ver este item
   const allNavItems = [
-    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
+    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
     { path: "/agenda", label: "Semanal", icon: CalendarRange, roles: ["admin", "trainer", "user"] },
-    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: ["PAULA"] },
-    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: ["PAULA"] },
-    { path: "/diario", label: "Diário", icon: Book, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
-    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
-    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"], excludeUsernames: ["PAULA"] },
+    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/diario", label: "Diário", icon: Book, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
   ];
 
   const navItems = allNavItems.filter(item => {
@@ -212,11 +215,11 @@ interface AuthenticatedAppProps {
 function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
   const [location, setLocation] = useLocation();
 
-  // Redirecionar trainers e Paula para /agenda como home
+  // Redirecionar trainers, JESSICA, ISA e PAULA para /agenda em rotas sensíveis
   useEffect(() => {
     if (isRestrictedUser(userRole, username)) {
-      // Bloquear acesso a rotas sensíveis (exceto /)
-      const restrictedPaths = ["/eventos", "/dashboard"];
+      // Bloquear acesso a rotas sensíveis
+      const restrictedPaths = ["/eventos", "/dashboard", "/financeiro", "/workplaces", "/medicamentos", "/diario"];
       if (restrictedPaths.includes(location)) {
         setLocation("/agenda");
       }
@@ -238,8 +241,8 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
                 <Route path="/dashboard" component={Dashboard} />
               </>
             )}
-            {/* Rotas para todos os usuários logados (exceto trainers e Paula) */}
-            {(userRole === "admin" || userRole === "user") && username !== "PAULA" && (
+            {/* Rotas para todos os usuários logados (exceto trainers e usuários restritos) */}
+            {(userRole === "admin" || userRole === "user") && !RESTRICTED_UI_USERS.includes(username || "") && (
               <>
                 <Route path="/financeiro" component={Finance} />
                 <Route path="/medicamentos" component={Medications} />

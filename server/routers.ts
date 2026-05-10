@@ -221,7 +221,7 @@ export const appRouter = router({
         const expectedAdminCode = (process.env.ADMIN_INVITE_CODE || 'AGENDA2026').toUpperCase();
         const expectedTrainerCode = (process.env.TRAINER_INVITE_CODE || 'TRAINER2026').toUpperCase();
         const VALID_INVITE_CODES: Record<string, string> = {
-          [expectedAdminCode]: "user",
+          [expectedAdminCode]: "admin",
           [expectedTrainerCode]: "trainer",
         };
         

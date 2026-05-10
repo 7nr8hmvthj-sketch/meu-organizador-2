@@ -21,17 +21,21 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
+import { trpc } from "@/lib/trpc";
 import { LayoutDashboard, LogOut, PanelLeft, Users, CalendarDays, CalendarRange, Briefcase, FileText } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
-const menuItems = [
-  { icon: CalendarDays, label: "Mensal", path: "/" },
-  { icon: CalendarRange, label: "Semanal", path: "/semana" },
-  { icon: Briefcase, label: "Faturamento", path: "/workplaces" },
-  { icon: FileText, label: "Diário", path: "/diario" },
+// Usuários com acesso restrito à agenda (sem Faturamento, Locais, Categorias)
+const RESTRICTED_USERS = ["JESSICA", "ISA"];
+
+const ALL_MENU_ITEMS = [
+  { icon: CalendarDays, label: "Mensal", path: "/", restricted: false },
+  { icon: CalendarRange, label: "Semanal", path: "/semana", restricted: false },
+  { icon: Briefcase, label: "Faturamento", path: "/workplaces", restricted: true },
+  { icon: FileText, label: "Diário", path: "/diario", restricted: false },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -114,8 +118,16 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+
+  // Buscar username do usuário logado para aplicar restrições de UI
+  const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
+  const currentUsername = authData?.user?.username ?? "";
+  const isRestrictedUiUser = RESTRICTED_USERS.includes(currentUsername);
+
+  // Filtrar menu: usuários restritos não veem itens marcados como restricted
+  const menuItems = ALL_MENU_ITEMS.filter(item => !isRestrictedUiUser || !item.restricted);
+  const activeMenuItem = menuItems.find(item => item.path === location);
 
   useEffect(() => {
     if (isCollapsed) {
