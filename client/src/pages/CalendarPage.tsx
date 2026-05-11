@@ -248,6 +248,7 @@ export default function CalendarPage() {
   const createEventMutation = trpc.events.create.useMutation({
     onSuccess: () => {
       utils.events.list.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       toast.success("Evento criado com sucesso");
       resetForm();
       setShowAddEventModal(false);
@@ -260,6 +261,7 @@ export default function CalendarPage() {
   const updateEventMutation = trpc.events.update.useMutation({
     onSuccess: () => {
       utils.events.list.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       toast.success("Evento atualizado com sucesso");
       resetForm();
       setShowEditModal(false);
@@ -272,6 +274,7 @@ export default function CalendarPage() {
   const deleteEventMutation = trpc.events.delete.useMutation({
     onSuccess: (deletedEvents) => {
       utils.events.list.invalidate();
+      utils.workplaces.getMonthlySummary.invalidate();
       toast.success(`Plantão(ões) excluído(s).`, {
         action: {
           label: 'Desfazer',

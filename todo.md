@@ -562,3 +562,8 @@
 - [x] Remover bloqueios visuais no CalendarPage (isRestrictedUser corrigido para isTrainer || PAULA)
 - [x] Confirmar que dropdown de Local de Trabalho no CalendarPage e WeeklyCalendarPage já é visível para todos
 - [x] Confirmar que rota /financeiro já é acessível para role=user no App.tsx
+
+## Correção de Cálculo de Horas e Cache (10/05/2026)
+
+- [x] Corrigir cálculo de horas para plantões que cruzam meia-noite no getMonthlySummary
+- [x] Adicionar invalidação de cache workplaces.getMonthlySummary nas mutações events.create/update/delete

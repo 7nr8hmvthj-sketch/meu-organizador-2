@@ -848,12 +848,14 @@ export const appRouter = router({
         // ─── Função auxiliar: calcula horas via startTime/endTime ─────────────
         const parseHoursFromTimes = (startTime?: string | null, endTime?: string | null): number => {
           if (!startTime || !endTime) return 0;
-          const s = startTime.match(/(\d{1,2}):(\d{2})/);
-          const e = endTime.match(/(\d{1,2}):(\d{2})/);
-          if (!s || !e) return 0;
-          let diff = parseInt(e[1], 10) - parseInt(s[1], 10);
-          if (diff < 0) diff += 24;
-          return diff;
+          const [sh, sm] = startTime.split(':').map(Number);
+          const [eh, em] = endTime.split(':').map(Number);
+          if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
+          let start = sh * 60 + sm;
+          let end = eh * 60 + em;
+          // Plantão que cruza meia-noite (ex: 19:00 → 07:00)
+          if (end <= start) end += 1440;
+          return (end - start) / 60;
         };
 
         // ─── Função principal: valor e horas de um plantão ───────────────────
