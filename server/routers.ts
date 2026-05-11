@@ -836,11 +836,13 @@ export const appRouter = router({
           if (!text) return 0;
           if (/\b(7-19|07-19|19-7|19-07)\b/.test(text)) return 12;
           if (/\b(7-13|07-13|13-19|13-7)\b/.test(text)) return 6;
+          // Correção 3: usar lógica em minutos para intervalos genéricos (ex: "19-07")
           const m = text.match(/\b(\d{1,2})-(\d{1,2})\b/);
           if (m) {
-            let diff = parseInt(m[2], 10) - parseInt(m[1], 10);
-            if (diff < 0) diff += 24;
-            return diff;
+            let start = parseInt(m[1], 10) * 60;
+            let end = parseInt(m[2], 10) * 60;
+            if (end <= start) end += 1440; // cruza meia-noite
+            return (end - start) / 60;
           }
           return 0;
         };
@@ -877,29 +879,48 @@ export const appRouter = router({
 
         const adjustments = await db.getWorkplaceAdjustments(ctx.user.userId, month, year);
 
+        console.log(`[Finance] getMonthlySummary: month=${month} year=${year} | workedMonth=${workedMonth} workedYear=${workedYear}`);
+        console.log(`[Finance] queryStart=${queryStart} queryEnd=${queryEnd} | allEvents=${allEvents.length} | userWorkplaces=${userWorkplaces.length}`);
+        allEvents.forEach(ev => console.log(`[Finance] DB event: id=${ev.id} type=${ev.type} date=${ev.date} startTime=${ev.startTime} endTime=${ev.endTime} workplaceId=${ev.workplaceId} isPassed=${ev.isPassed}`));
+
         for (const wp of userWorkplaces) {
           const rate = parseFloat(String(wp.hourlyRate));
           const cutoffDay = wp.cycleEndDay;
           let prevM = workedMonth - 1; let prevY = workedYear;
           if (prevM < 1) { prevM = 12; prevY--; }
-          const refStart = `${prevY}-${String(prevM).padStart(2, '0')}-${String(cutoffDay + 1).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(cutoffDay).padStart(2, '0')}`;
+          // Correção 2: garantir dias válidos — cycleEndDay=31 em mês de 30 dias gera datas inválidas
+          const lastDayPrevM = new Date(prevY, prevM, 0).getDate(); // último dia real do mês anterior
+          const lastDayWorkedM = new Date(workedYear, workedMonth, 0).getDate(); // último dia real do mês trabalhado
+          const startDay = Math.min(cutoffDay + 1, lastDayPrevM);
+          const endDay = Math.min(cutoffDay, lastDayWorkedM);
+          const refStart = `${prevY}-${String(prevM).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
+          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
 
           let rawHours = 0;
           let wpFixedValues = 0;
 
           for (const event of allEvents) {
             const eventDate = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-            if (eventDate < refStart || eventDate > refEnd) continue;
-            if (!event.workplaceId || event.workplaceId !== wp.id) continue;
+            if (eventDate < refStart || eventDate > refEnd) {
+              console.log(`[Finance] FORA DO CICLO: ${event.type} em ${eventDate} (ciclo: ${refStart} a ${refEnd})`);
+              continue;
+            }
+            if (!event.workplaceId || event.workplaceId !== wp.id) {
+              console.log(`[Finance] SEM VÍNCULO: ${event.type} em ${eventDate} (workplaceId=${event.workplaceId}, wp.id=${wp.id})`);
+              continue;
+            }
             const { hours, value } = calcShift(event, rate);
+            console.log(`[Finance] EVENTO: ${event.type} em ${eventDate} | startTime=${event.startTime} endTime=${event.endTime} | horas=${hours} valor=${value} isPassed=${event.isPassed}`);
             if (hours === 0 && value > 0) wpFixedValues += value;
             else rawHours += hours;
           }
 
           // Override de horas
+          // Correção 1: overrideHours=0 não deve zerar horas reais — usar || null (falsy) em vez de !== null
           const adj = adjustments.find((a: any) => a.workplaceId === wp.id);
-          const overrideHours = adj?.overrideHours ? parseFloat(String(adj.overrideHours)) : null;
+          const overrideHours = (adj?.overrideHours !== null && adj?.overrideHours !== undefined)
+            ? parseFloat(String(adj.overrideHours)) || null  // 0 vira null → usa rawHours
+            : null;
           const adjustmentReason = adj?.reason ?? null;
           const totalHours = overrideHours !== null ? overrideHours : rawHours;
           const totalValue = (totalHours * rate) + wpFixedValues;

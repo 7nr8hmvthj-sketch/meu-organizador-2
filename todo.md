@@ -567,3 +567,9 @@
 
 - [x] Corrigir cálculo de horas para plantões que cruzam meia-noite no getMonthlySummary
 - [x] Adicionar invalidação de cache workplaces.getMonthlySummary nas mutações events.create/update/delete
+
+## 3 Correções do Motor Financeiro (11/05/2026)
+
+- [x] Correção 1: overrideHours=0 não deve zerar horas reais (usar || null em vez de truthy check)
+- [x] Correção 2: cycleEndDay=31 gerava datas inválidas (03-32, 04-31) — usar lastDay real do mês
+- [x] Correção 3: parseHoursFromText com lógica em minutos para intervalos genéricos
