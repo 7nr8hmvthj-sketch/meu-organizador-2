@@ -815,17 +815,22 @@ export const appRouter = router({
       .query(async ({ ctx, input }) => {
         const { month, year } = input;
 
-        // Mês de competência = mês trabalhado (recebimento é no mês seguinte)
+        // Mês de recebimento (input) → cada workplace tem seu próprio paymentDelayMonths
+        // A queryStart cobre até 12 meses atrás para suportar qualquer atraso
+        const maxDelay = 12;
+        const queryStartYear = month - maxDelay <= 0
+          ? year - Math.ceil((maxDelay - month + 1) / 12)
+          : year;
+        const queryStartMonth = ((month - maxDelay - 1 + 12 * 12) % 12) + 1;
+        const queryStart = `${queryStartYear}-${String(queryStartMonth).padStart(2, '0')}-01`;
+        // queryEnd = último dia do mês de recebimento (mês atual, pois ciclos podem terminar nele)
+        const queryLastDay = new Date(year, month, 0).getDate();
+        const queryEnd = `${year}-${String(month).padStart(2, '0')}-${String(queryLastDay).padStart(2, '0')}`;
+
+        // workedMonth global (para plantões avulsos e compatibilidade) = mês anterior ao recebimento
         let workedMonth = month - 1;
         let workedYear = year;
         if (workedMonth < 1) { workedMonth = 12; workedYear--; }
-
-        // Janela ampla para cobrir ciclos de pagamento que cruzam meses
-        const prevYear = workedMonth === 1 ? workedYear - 1 : workedYear;
-        const prevMonth = workedMonth === 1 ? 12 : workedMonth - 1;
-        const queryStart = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
-        const queryLastDay = new Date(workedYear, workedMonth, 0).getDate();
-        const queryEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(queryLastDay).padStart(2, '0')}`;
 
         const allEvents = await db.getEventsByDateRange(ctx.user.userId, queryStart, queryEnd);
         const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
@@ -886,15 +891,24 @@ export const appRouter = router({
         for (const wp of userWorkplaces) {
           const rate = parseFloat(String(wp.hourlyRate));
           const cutoffDay = wp.cycleEndDay;
-          let prevM = workedMonth - 1; let prevY = workedYear;
+
+          // Cada workplace tem seu próprio atraso de pagamento
+          // Ex: HC com paymentDelayMonths=3 e month=5 (maio) → workedMonth = 5-3 = 2 (fevereiro)
+          const delay = wp.paymentDelayMonths ?? 1;
+          let wpWorkedMonth = month - delay;
+          let wpWorkedYear = year;
+          while (wpWorkedMonth < 1) { wpWorkedMonth += 12; wpWorkedYear--; }
+
+          let prevM = wpWorkedMonth - 1; let prevY = wpWorkedYear;
           if (prevM < 1) { prevM = 12; prevY--; }
-          // Correção 2: garantir dias válidos — cycleEndDay=31 em mês de 30 dias gera datas inválidas
-          const lastDayPrevM = new Date(prevY, prevM, 0).getDate(); // último dia real do mês anterior
-          const lastDayWorkedM = new Date(workedYear, workedMonth, 0).getDate(); // último dia real do mês trabalhado
+
+          // Garantir dias válidos — cycleEndDay=31 em mês de 30 dias gera datas inválidas
+          const lastDayPrevM = new Date(prevY, prevM, 0).getDate();
+          const lastDayWorkedM = new Date(wpWorkedYear, wpWorkedMonth, 0).getDate();
           const startDay = Math.min(cutoffDay + 1, lastDayPrevM);
           const endDay = Math.min(cutoffDay, lastDayWorkedM);
           const refStart = `${prevY}-${String(prevM).padStart(2, '0')}-${String(startDay).padStart(2, '0')}`;
-          const refEnd = `${workedYear}-${String(workedMonth).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
+          const refEnd = `${wpWorkedYear}-${String(wpWorkedMonth).padStart(2, '0')}-${String(endDay).padStart(2, '0')}`;
 
           let rawHours = 0;
           let wpFixedValues = 0;
