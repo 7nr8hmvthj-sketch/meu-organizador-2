@@ -577,3 +577,9 @@
 ## Correção Ciclo Multimensal HC (11/05/2026)
 
 - [x] Corrigir workedMonth para workplaces com paymentDelayMonths > 1 (HC=3 meses: maio → fevereiro ✓)
+
+## Correções Críticas Calendário (11/05/2026)
+
+- [x] Confirmar que .map() já usa key={e.id} em ambos os calendários; adicionar deduplicacao por id em normalizeEvents
+- [x] Corrigir getEffectiveUserId: admins secundários (JESSICA userId=150023, ISA userId=150024) agora vêem agenda do admin principal (userId=1)
+- [x] Resultado validado: JESSICA retorna 587 eventos após correção

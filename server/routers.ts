@@ -75,8 +75,12 @@ let _managedUserIds: Map<number, number[]> = new Map();
 const getEffectiveUserId = async (user: { role: string; userId: number }): Promise<number> => {
   // Trainers always see admin's agenda (userId 1)
   if (user.role === 'trainer') return 1;
+
+  // Admins secários (JESSICA, ISA, etc.) também vêem a agenda compartilhada do admin principal
+  // A agenda é compartilhada: todos os admins operam sobre os mesmos eventos (userId=1)
+  if (user.role === 'admin' && user.userId !== 1) return 1;
   
-  // Check if this user manages other agendas
+  // Check if this user manages other agendas (para usuários com role=user)
   if (!_managedUserIds.has(user.userId)) {
     const managed = await db.getManagedUserIds(user.userId);
     _managedUserIds.set(user.userId, managed);
@@ -110,7 +114,13 @@ const normalizeEvent = (event: any) => ({
   updatedAt: event.updatedAt,
 });
 
-const normalizeEvents = (events: any[]) => events.map(normalizeEvent);
+const normalizeEvents = (events: any[]) => {
+  // Deduplicar por id para evitar erros de key duplicada no React
+  const seen = new Set<number>();
+  return events
+    .filter(e => { if (seen.has(e.id)) return false; seen.add(e.id); return true; })
+    .map(normalizeEvent);
+};
 
 // Normaliza categorias do PostgreSQL (lowercase) para camelCase
 const normalizeCategory = (cat: any) => ({
