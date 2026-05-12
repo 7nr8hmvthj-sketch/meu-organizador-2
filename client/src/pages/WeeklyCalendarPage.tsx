@@ -514,6 +514,7 @@ export default function WeeklyCalendarPage() {
                     <div key={e.id} className={`text-xs ${e.isPassed ? 'opacity-60' : ''}`}>
                       <div className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getIndicatorColor()}`}></div>
+                        {e.startTime && <span className="font-extrabold mr-0.5">{e.startTime}</span>}
                         <span className={`font-medium ${e.isPassed ? 'line-through text-gray-500' : ''}`}>{getEventLabel(e)}</span>
                         {isTraining && e.createdBy && (
                           <span className="text-muted-foreground">({e.createdBy})</span>
@@ -547,7 +548,10 @@ export default function WeeklyCalendarPage() {
                   return (
                     <div key={e.id} className="text-xs bg-white dark:bg-gray-800 rounded p-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{getEventLabel(e)}</span>
+                        <div className="flex items-center gap-2">
+                          {e.startTime && <span className="font-extrabold">{e.startTime}</span>}
+                          <span className="font-medium">{getEventLabel(e)}</span>
+                        </div>
                         <div className="flex gap-1">
                           <Button 
                             variant="ghost" 

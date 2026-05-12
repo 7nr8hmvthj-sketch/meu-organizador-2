@@ -584,3 +584,8 @@
 - [x] Confirmar que .map() já usa key={e.id} em ambos os calendários; adicionar deduplicacao por id em normalizeEvents
 - [x] Corrigir getEffectiveUserId: admins secundários (JESSICA userId=150023, ISA userId=150024) agora vêem agenda do admin principal (userId=1)
 - [x] Resultado validado: JESSICA retorna 587 eventos após correção
+
+## Correção de Horários na Agenda Semanal (12/05/2026)
+
+- [x] Lembretes e eventos personalizados agora exibem horários na WeeklyCalendarPage (startTime renderizado)
+- [x] Adicionado renderização de startTime em ambas as seções: "Eventos neste dia" e "Seus treinos"
