@@ -76,10 +76,11 @@ const getEffectiveUserId = async (user: { role: string; userId: number }): Promi
   // Trainers always see admin's agenda (userId 1)
   if (user.role === 'trainer') return 1;
 
-  // Admins secários (JESSICA, ISA, etc.) também vêem a agenda compartilhada do admin principal
-  // A agenda é compartilhada: todos os admins operam sobre os mesmos eventos (userId=1)
-  if (user.role === 'admin' && user.userId !== 1) return 1;
-  
+  // Lookup dinâmico: apenas JESSICA e ISA (por username no banco) vêem a agenda do USER (userId=1)
+  // Qualquer outro usuário novo vê apenas a própria agenda — sem hardcode de IDs
+  const sharedIds = await db.getSharedAgendaUserIds();
+  if (sharedIds.has(user.userId)) return 1;
+
   // Check if this user manages other agendas (para usuários com role=user)
   if (!_managedUserIds.has(user.userId)) {
     const managed = await db.getManagedUserIds(user.userId);

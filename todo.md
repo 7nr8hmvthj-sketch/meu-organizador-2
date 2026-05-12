@@ -576,6 +576,7 @@
 
 ## Correção Ciclo Multimensal HC (11/05/2026)
 
+- [x] Corrigir isolamento multi-tenant: getEffectiveUserId usa lookup dinâmico por username (JESSICA, ISA) em vez de regra genérica de role=admin. GIOVANA e outros admins novos vêem apenas a própria agenda.
 - [x] Corrigir workedMonth para workplaces com paymentDelayMonths > 1 (HC=3 meses: maio → fevereiro ✓)
 
 ## Correções Críticas Calendário (11/05/2026)

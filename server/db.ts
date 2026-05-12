@@ -1167,3 +1167,37 @@ export async function deleteUnlinkedRate(id: number, userId: number): Promise<bo
     return false;
   }
 }
+
+// ============ SHARED AGENDA FUNCTIONS ============
+// Retorna os userIds de usuários autorizados a ver a agenda compartilhada do admin principal
+// Apenas JESSICA e ISA têm acesso à agenda do USER (userId=1)
+const SHARED_AGENDA_USERNAMES = ['JESSICA', 'ISA'];
+let _sharedAgendaUserIds: Set<number> | null = null;
+let _sharedAgendaLoadedAt = 0;
+
+export async function getSharedAgendaUserIds(): Promise<Set<number>> {
+  const now = Date.now();
+  // Cache por 10 minutos
+  if (_sharedAgendaUserIds && now - _sharedAgendaLoadedAt < 10 * 60 * 1000) {
+    return _sharedAgendaUserIds;
+  }
+  const client = await getDb();
+  if (!client) return new Set();
+  try {
+    // Usar dois SELECTs individuais (compatível com postgres-js driver)
+    const r1 = await client.execute(sql`SELECT user_id FROM app_users WHERE username = ${'JESSICA'} LIMIT 1`);
+    const r2 = await client.execute(sql`SELECT user_id FROM app_users WHERE username = ${'ISA'} LIMIT 1`);
+    const rows1 = (r1 as any).rows || (r1 as any);
+    const rows2 = (r2 as any).rows || (r2 as any);
+    const ids = new Set<number>();
+    if (rows1.length > 0) ids.add(Number(rows1[0].user_id));
+    if (rows2.length > 0) ids.add(Number(rows2[0].user_id));
+    _sharedAgendaUserIds = ids;
+    _sharedAgendaLoadedAt = now;
+    console.log('[DB] sharedAgendaUserIds loaded:', Array.from(ids));
+    return ids;
+  } catch (e) {
+    console.error('[DB] getSharedAgendaUserIds failed:', e);
+    return new Set();
+  }
+}
