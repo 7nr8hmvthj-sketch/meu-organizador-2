@@ -36,7 +36,7 @@ interface NavigationProps {
 }
 
 // Usuários com interface restrita à agenda (sem Financeiro, Configurações)
-const RESTRICTED_UI_USERS = ["PAULA", "JESSICA", "ISA"];
+const RESTRICTED_UI_USERS = ["PAULA"];
 
 // Verifica se o usuário tem acesso restrito (trainer ou usuários de agenda)
 function isRestrictedUser(userRole?: string, username?: string): boolean {

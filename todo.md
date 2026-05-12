@@ -589,3 +589,7 @@
 
 - [x] Lembretes e eventos personalizados agora exibem horários na WeeklyCalendarPage (startTime renderizado)
 - [x] Adicionado renderização de startTime em ambas as seções: "Eventos neste dia" e "Seus treinos"
+
+## BLOQUEIO CRÍTICO: JESSICA não abre agenda mensal (12/05/2026)
+
+- [x] Corrigido: JESSICA e ISA removidas de RESTRICTED_UI_USERS no App.tsx (apenas PAULA agora). Ambas vão ver Mensal, Semanal, Financeiro. Diário/Medicamentos continuam bloqueados via DIARY_RESTRICTED_USERS.
