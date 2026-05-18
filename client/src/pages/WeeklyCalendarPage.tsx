@@ -581,7 +581,7 @@ export default function WeeklyCalendarPage() {
             </div>
           )}
           
-          <div className="space-y-4">
+          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
             <div>
               <Label>Tipo de Evento</Label>
               <Select value={eventType} onValueChange={setEventType}>
@@ -679,7 +679,7 @@ export default function WeeklyCalendarPage() {
           <DialogHeader>
             <DialogTitle>Editar Evento</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
             <div>
               <Label>Tipo de Evento</Label>
               <Select value={eventType} onValueChange={setEventType}>

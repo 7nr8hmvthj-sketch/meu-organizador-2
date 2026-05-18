@@ -599,3 +599,8 @@
 - [x] Corrigir handleUpdateEvent: description não deve usar type como fallback
 - [x] Corrigir handleAddTraining/handleUpdateTraining: description não deve usar trainingType como fallback
 - [x] Limpeza visual retroativa no Modal do Dia: não exibir description se igual ao type
+
+## Responsividade dos Modais (17/05/2026)
+
+- [x] CalendarPage: limitar largura dos modais (max-w-[95vw] sm:max-w-md) e adicionar scroll interno (max-h-[65vh] overflow-y-auto)
+- [x] WeeklyCalendarPage: adicionar scroll interno nos formulários dos modais (max-h-[65vh] overflow-y-auto)

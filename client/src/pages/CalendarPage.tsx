@@ -169,10 +169,12 @@ export default function CalendarPage() {
 
   const EVENT_TYPES = useMemo(() => {
     const types = [...GLOBAL_EVENT_TYPES];
-    const globalNames = GLOBAL_EVENT_TYPES.map(g => g.value.toLowerCase());
+    const seenValues = new Set(GLOBAL_EVENT_TYPES.map(g => g.value.toLowerCase()));
     dbCategories.forEach((cat: any) => {
       const catUserId = cat.userId ?? cat.userid;
-      if (catUserId && !globalNames.includes(cat.name.toLowerCase())) {
+      const nameLower = (cat.name || "").toLowerCase();
+      if (catUserId && !seenValues.has(nameLower)) {
+        seenValues.add(nameLower);
         const persoIdx = types.findIndex(t => t.value === "Personalizado");
         if (persoIdx >= 0) {
           types.splice(persoIdx, 0, { value: cat.name, label: cat.name });
@@ -865,12 +867,12 @@ export default function CalendarPage() {
 
       {/* Add Event Modal */}
       <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar Evento</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
             <div>
               <Label>Tipo de Evento</Label>
               <Select value={eventType} onValueChange={setEventType}>
@@ -1032,12 +1034,12 @@ export default function CalendarPage() {
 
       {/* Edit Event Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Editar Evento</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
             <div>
               <Label>Tipo</Label>
               <Select value={eventType} onValueChange={setEventType}>
@@ -1186,12 +1188,12 @@ export default function CalendarPage() {
 
       {/* Add Training Modal */}
       <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Adicionar Treinamento</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
             <div>
               <Label>Tipo de Treinamento</Label>
               <Input
