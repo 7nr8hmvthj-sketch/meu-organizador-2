@@ -299,7 +299,7 @@ export default function WeeklyCalendarPage() {
 
     const description = trainingDescription 
       ? `${trainingDescription} ${trainingTime}`
-      : `${trainingType} ${trainingTime}`;
+      : trainingTime;
 
     updateEventMutation.mutate({
       id: editingEvent.id,

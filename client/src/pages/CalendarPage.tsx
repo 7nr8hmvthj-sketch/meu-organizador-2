@@ -358,7 +358,7 @@ export default function CalendarPage() {
 
     const basePayload = {
       type,
-      description: eventDescription || undefined,
+      description: eventDescription ? eventDescription.trim() : undefined,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
       color: eventColor !== "default" ? eventColor : undefined,
@@ -392,7 +392,7 @@ export default function CalendarPage() {
     updateEventMutation.mutate({
       id: editingEvent.id,
       type: eventType === "Personalizado" ? customEventType : eventType,
-      description: eventDescription || undefined,
+      description: eventDescription ? eventDescription.trim() : undefined,
       startTime: startTime || undefined,
       endTime: endTime || undefined,
       color: eventColor !== "default" ? eventColor : undefined,
@@ -841,7 +841,11 @@ export default function CalendarPage() {
                   <CardContent className="pt-3 flex items-center justify-between">
                     <div className="flex-1">
                       <p className="font-semibold text-sm">{getEventLabel({ type: event.type, description: event.description })}</p>
-                      {event.description && <p className="text-xs text-muted-foreground mt-1">{event.description}</p>}
+                      {event.description && event.description.trim() !== event.type && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {event.description.replace(event.type, '').trim()}
+                        </p>
+                      )}
                       {event.value && <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">R$ {Number(event.value).toFixed(2).replace('.', ',')}</p>}
                       <p className="text-xs text-muted-foreground mt-1">Criado por: {event.createdBy || 'Sistema'}</p>
                     </div>

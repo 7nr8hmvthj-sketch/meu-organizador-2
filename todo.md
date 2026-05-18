@@ -593,3 +593,9 @@
 ## BLOQUEIO CRÍTICO: JESSICA não abre agenda mensal (12/05/2026)
 
 - [x] Corrigido: JESSICA e ISA removidas de RESTRICTED_UI_USERS no App.tsx (apenas PAULA agora). Ambas vão ver Mensal, Semanal, Financeiro. Diário/Medicamentos continuam bloqueados via DIARY_RESTRICTED_USERS.
+
+## Bug Nome Duplicado no Modal do Dia (17/05/2026)
+
+- [x] Corrigir handleUpdateEvent: description não deve usar type como fallback
+- [x] Corrigir handleAddTraining/handleUpdateTraining: description não deve usar trainingType como fallback
+- [x] Limpeza visual retroativa no Modal do Dia: não exibir description se igual ao type
