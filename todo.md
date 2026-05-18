@@ -604,3 +604,9 @@
 
 - [x] CalendarPage: limitar largura dos modais (max-w-[95vw] sm:max-w-md) e adicionar scroll interno (max-h-[65vh] overflow-y-auto)
 - [x] WeeklyCalendarPage: adicionar scroll interno nos formulários dos modais (max-h-[65vh] overflow-y-auto)
+
+## Layout Responsivo dos Botões de Horário nos Modais (17/05/2026)
+
+- [x] CalendarPage: botões rápidos de horário — substituir flex space-x-2 por flex flex-wrap gap-2
+- [x] CalendarPage: campos Início/Fim — substituir flex space-x-2 por grid grid-cols-2 gap-4 e remover flex-1
+- [x] CalendarPage: mesma correção na seção de Divisão de Horas (showShiftDivider)

@@ -932,7 +932,7 @@ export default function CalendarPage() {
             <div className="space-y-3 w-full">
               <div className="w-full">
                 <label className="text-xs text-muted-foreground mb-2 block font-medium">Horários Rápidos (Plantões)</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-wrap gap-2 mb-4">
                   <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("07:00"); setEndTime("13:00"); }}>7-13</Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("13:00"); setEndTime("19:00"); }}>13-19</Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("01:00"); }}>19-01</Button>
@@ -940,12 +940,12 @@ export default function CalendarPage() {
                   <Button type="button" variant="ghost" size="sm" onClick={() => { setStartTime(""); setEndTime(""); }}>Limpar</Button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 w-full border-t pt-3">
-                <div className="w-full">
+              <div className="grid grid-cols-2 gap-4 w-full border-t pt-3">
+                <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Início Manual</label>
                   <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full" />
                 </div>
-                <div className="w-full">
+                <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Fim Manual</label>
                   <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full" />
                 </div>
@@ -1107,7 +1107,7 @@ export default function CalendarPage() {
             <div className="space-y-3 w-full">
               <div className="w-full">
                 <label className="text-xs text-muted-foreground mb-2 block font-medium">Horários Rápidos (Plantões)</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-wrap gap-2 mb-4">
                   <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("07:00"); setEndTime("13:00"); }}>7-13</Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("13:00"); setEndTime("19:00"); }}>13-19</Button>
                   <Button type="button" variant="outline" size="sm" onClick={() => { setStartTime("19:00"); setEndTime("01:00"); }}>19-01</Button>
@@ -1115,12 +1115,12 @@ export default function CalendarPage() {
                   <Button type="button" variant="ghost" size="sm" onClick={() => { setStartTime(""); setEndTime(""); }}>Limpar</Button>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 w-full border-t pt-3">
-                <div className="w-full">
+              <div className="grid grid-cols-2 gap-4 w-full border-t pt-3">
+                <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Início Manual</label>
                   <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="w-full" />
                 </div>
-                <div className="w-full">
+                <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Fim Manual</label>
                   <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full" />
                 </div>
@@ -1240,12 +1240,12 @@ export default function CalendarPage() {
               <Label>Número de Médicos</Label>
               <Input type="number" min="2" max="10" value={doctorsCount} onChange={e => setDoctorsCount(Number(e.target.value))} />
             </div>
-            <div className="flex space-x-2">
-              <div className="flex-1">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label>Horário Início</Label>
                 <Input type="time" value={dividerStartTime} onChange={e => setDividerStartTime(e.target.value)} />
               </div>
-              <div className="flex-1">
+              <div>
                 <Label>Horário Fim</Label>
                 <Input type="time" value={dividerEndTime} onChange={e => setDividerEndTime(e.target.value)} />
               </div>
