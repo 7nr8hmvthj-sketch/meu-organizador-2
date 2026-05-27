@@ -281,8 +281,8 @@ export async function deleteEventSeries(
       whereCondition = sql`${whereCondition} AND ${events.startTime} IS NULL`;
     }
     
-    // Match day of week to avoid deleting events from different weekday series
-    whereCondition = sql`${whereCondition} AND DAYOFWEEK(${events.date}) = DAYOFWEEK(${referenceDate})`;
+    // Match day of week to avoid deleting events from different weekday series (PostgreSQL)
+    whereCondition = sql`${whereCondition} AND EXTRACT(DOW FROM ${events.date}) = EXTRACT(DOW FROM DATE(${referenceDate}))`;
     
     // Apply date filter based on mode
     if (mode === 'future') {
@@ -660,6 +660,7 @@ export async function deleteCategory(id: number): Promise<boolean> {
 export async function createManyEvents(eventsData: InsertEvent[]): Promise<Event[]> {
   const db = await getDb();
   if (!db) return [];
+  if (eventsData.length === 0) return [];
   try {
     return await db.insert(events).values(eventsData).returning();
   } catch (error) {
