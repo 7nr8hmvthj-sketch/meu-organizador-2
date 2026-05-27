@@ -610,3 +610,7 @@
 - [x] CalendarPage: botões rápidos de horário — substituir flex space-x-2 por flex flex-wrap gap-2
 - [x] CalendarPage: campos Início/Fim — substituir flex space-x-2 por grid grid-cols-2 gap-4 e remover flex-1
 - [x] CalendarPage: mesma correção na seção de Divisão de Horas (showShiftDivider)
+
+## Bug Exclusão em Série (27/05/2026)
+
+- [x] Corrigir deleteEventSeries: adicionar filtro DAYOFWEEK para não excluir eventos de outros dias da semana com mesmo type/startTime

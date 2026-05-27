@@ -281,6 +281,9 @@ export async function deleteEventSeries(
       whereCondition = sql`${whereCondition} AND ${events.startTime} IS NULL`;
     }
     
+    // Match day of week to avoid deleting events from different weekday series
+    whereCondition = sql`${whereCondition} AND DAYOFWEEK(${events.date}) = DAYOFWEEK(${referenceDate})`;
+    
     // Apply date filter based on mode
     if (mode === 'future') {
       whereCondition = sql`${whereCondition} AND DATE(${events.date}) >= DATE(${referenceDate})`;
