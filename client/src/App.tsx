@@ -58,7 +58,7 @@ function Navigation({ userRole, username }: NavigationProps) {
   // Define navigation items based on user role
   // excludeUsernames: lista de usernames que NÃO devem ver este item
   const allNavItems = [
-    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "trainer", "user"], excludeUsernames: RESTRICTED_UI_USERS },
     { path: "/agenda", label: "Semanal", icon: CalendarRange, roles: ["admin", "trainer", "user"] },
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
