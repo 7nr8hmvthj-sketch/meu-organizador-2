@@ -54,7 +54,13 @@ const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida ou forjada." });
   }
 
-  return next({ ctx: { ...ctx, user: user as { username: string; role: string; userId: number } } });
+  // Override de segurança: forçar role "trainer" para JESSICA e ISA
+  const FORCED_TRAINERS = ["JESSICA", "ISA"];
+  const effectiveUser = FORCED_TRAINERS.includes(user.username)
+    ? { ...user, role: "trainer" }
+    : user;
+
+  return next({ ctx: { ...ctx, user: effectiveUser as { username: string; role: string; userId: number } } });
 });
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -289,7 +295,11 @@ export const appRouter = router({
       
       const user = verifyCookie(authCookie.split('=')[1]);
       if (user) {
-        return { isAuthenticated: true, user: user };
+        // Override de segurança: forçar role "trainer" para JESSICA e ISA
+        // independente do que está no banco (corrige registro com role errado)
+        const FORCED_TRAINERS = ["JESSICA", "ISA"];
+        const effectiveRole = FORCED_TRAINERS.includes(user.username) ? "trainer" : user.role;
+        return { isAuthenticated: true, user: { ...user, role: effectiveRole } };
       }
       return { isAuthenticated: false, user: null };
     }),
