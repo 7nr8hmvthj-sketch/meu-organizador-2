@@ -376,24 +376,31 @@ export default function FinancePage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Receipt className="h-5 w-5" />
-                  Impostos e Obrigações
+                  Impostos e Contabilidade
                 </CardTitle>
-                <CardDescription>Obrigações da Pessoa Jurídica</CardDescription>
+                <CardDescription>Obrigações da Empresa</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">Guia DAS</p>
+                    <p className="font-medium">DAS (Atrasado)</p>
                     <p className="text-sm text-muted-foreground">Simples Nacional</p>
                   </div>
-                  <Button variant="ghost" size="sm">Registrar</Button>
+                  <p className="font-bold text-red-600">R$ 1.789,50</p>
                 </div>
                 <div className="flex items-center justify-between border-t pt-2">
                   <div>
-                    <p className="font-medium">DARF / Contabilidade</p>
-                    <p className="text-sm text-muted-foreground">Honorários e IR</p>
+                    <p className="font-medium">DARF (Atrasado)</p>
+                    <p className="text-sm text-muted-foreground">Imposto de Renda</p>
                   </div>
-                  <Button variant="ghost" size="sm">Registrar</Button>
+                  <p className="font-bold text-red-600">R$ 1.918,63</p>
+                </div>
+                <div className="flex items-center justify-between border-t pt-2">
+                  <div>
+                    <p className="font-medium">Contador</p>
+                    <p className="text-sm text-muted-foreground">Honorários Mensais</p>
+                  </div>
+                  <p className="font-bold">R$ 300,00</p>
                 </div>
               </CardContent>
             </Card>
@@ -414,57 +421,91 @@ export default function FinancePage() {
 
         {/* ─── ABA 3: PESSOAL (PF) ─── */}
         <TabsContent value="pf" className="space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2 mb-1">
-              <CreditCard className="w-5 h-5" /> Faturas Pessoais
-            </h2>
-            <p className="text-sm text-muted-foreground">Cartões de crédito pessoais com faturas em aberto.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* CARTÕES */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-orange-500" />
-                  Fatura Itaú Personnalité
+                  <CreditCard className="h-5 w-5" />
+                  Cartões de Crédito
                 </CardTitle>
-                <CardDescription>Fatura em aberto</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-red-600">R$ 12.257,76</p>
-                  </div>
-                  <Button variant="outline">Pagar</Button>
+              <CardContent className="space-y-4">
+                <div className="flex flex-col">
+                  <span className="text-sm text-muted-foreground">Itaú Personnalité</span>
+                  <span className="text-xl font-bold text-red-600">R$ 12.257,76</span>
+                </div>
+                <div className="flex flex-col border-t pt-2">
+                  <span className="text-sm text-muted-foreground">Passaí</span>
+                  <span className="text-xl font-bold text-red-600">R$ 5.638,82</span>
                 </div>
               </CardContent>
             </Card>
 
+            {/* MORADIA E CONSUMO */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-blue-500" />
-                  Fatura Passaí
+                  <Building2 className="h-5 w-5" />
+                  Moradia e Consumo
                 </CardTitle>
-                <CardDescription>Fatura em aberto</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-3xl font-bold text-red-600">R$ 5.638,82</p>
-                  </div>
-                  <Button variant="outline">Pagar</Button>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Luz</span>
+                  <span className="font-medium">R$ 276,63</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Água</span>
+                  <span className="font-medium">R$ 250,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Internet</span>
+                  <span className="font-medium">R$ 119,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Vivo (Atrasada)</span>
+                  <span className="font-medium text-red-600">R$ 118,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Tim</span>
+                  <span className="font-medium">R$ 60,00</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* SAÚDE, EDUCAÇÃO E OUTROS */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Saúde, Educação e Outros
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Pós-graduação</span>
+                  <span className="font-medium">R$ 2.000,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Terapia</span>
+                  <span className="font-medium">R$ 760,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Seguro de Vida</span>
+                  <span className="font-medium">R$ 432,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Barba</span>
+                  <span className="font-medium">R$ 120,00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Gasolina</span>
+                  <span className="font-medium">R$ 50,00</span>
                 </div>
               </CardContent>
             </Card>
           </div>
-
-          <Card className="border-dashed bg-muted/20">
-            <CardHeader>
-              <CardTitle className="text-base">Custo de Vida e Reserva Estratégica</CardTitle>
-              <CardDescription>Controle de despesas pessoais e reserva financeira — próxima fase.</CardDescription>
-            </CardHeader>
-          </Card>
         </TabsContent>
       </Tabs>
 
