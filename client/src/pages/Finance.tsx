@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, CheckCircle2, Circle, Trash2, Pencil, RefreshCw, Briefcase, ArrowRight } from "lucide-react";
+import { Plus, DollarSign, CheckCircle2, Circle, Trash2, Pencil, RefreshCw, Building2, User, CreditCard, Receipt, ArrowRightLeft, Wallet } from "lucide-react";
 import { useLocation } from "wouter";
 import { FinancialSummaryCard } from "@/components/FinancialSummaryCard";
 import { toast } from "sonner";
@@ -36,6 +36,16 @@ export default function FinancePage() {
   // Data Fetching
   const { data: expenses = [], isLoading, refetch } = trpc.expenses.list.useQuery();
   const utils = trpc.useUtils();
+
+  // Query para totalRecebimentos (usado na aba PJ)
+  const today = new Date();
+  const { data: monthlySummary } = trpc.workplaces.getMonthlySummary.useQuery({
+    month: today.getMonth() + 1,
+    year: today.getFullYear(),
+  });
+  const totalAReceber = monthlySummary?.totalRecebimentos ?? 0;
+  const receivingMonth = monthlySummary?.receivingMonth ?? today.getMonth() + 1;
+  const receivingYear = monthlySummary?.receivingYear ?? today.getFullYear();
 
   // Mutations
   const createMutation = trpc.expenses.create.useMutation({
@@ -114,7 +124,7 @@ export default function FinancePage() {
 
     const payload = {
       name,
-      amount: amount.replace(',', '.'), // Aceitar vírgula
+      amount: amount.replace(',', '.'),
       dueDay: parseInt(dueDay),
       category
     };
@@ -136,12 +146,12 @@ export default function FinancePage() {
   };
 
   const handleTogglePaid = (id: number, currentStatus: boolean) => {
-    const today = new Date();
+    const now = new Date();
     togglePaidMutation.mutate({
       id,
       isPaid: !currentStatus,
-      month: !currentStatus ? today.getMonth() + 1 : undefined,
-      year: !currentStatus ? today.getFullYear() : undefined
+      month: !currentStatus ? now.getMonth() + 1 : undefined,
+      year: !currentStatus ? now.getFullYear() : undefined
     });
   };
 
@@ -198,81 +208,224 @@ export default function FinancePage() {
         </div>
       </div>
 
-      {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Previsto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.total)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Fixas: {formatCurrency(summary.fixedTotal)} | Var: {formatCurrency(summary.variableTotal)}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-l-4 border-l-green-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pago</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.paid)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {summary.total > 0 ? Math.round((summary.paid / summary.total) * 100) : 0}% do total
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">A Pagar</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-600">{formatCurrency(summary.pending)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Faltam {expenses.length - expenses.filter(e => e.isPaid).length} contas
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recebimentos por Local de Trabalho */}
-      <FinancialSummaryCard />
-
-      {/* Listas de Despesas */}
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
-          <TabsTrigger value="all">Todas</TabsTrigger>
-          <TabsTrigger value="fixed">Fixas</TabsTrigger>
-          <TabsTrigger value="variable">Variáveis</TabsTrigger>
+      {/* ─── TABS PRINCIPAIS ─── */}
+      <Tabs defaultValue="plantoes" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsTrigger value="plantoes" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            🏥 Plantões
+          </TabsTrigger>
+          <TabsTrigger value="pj" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <Building2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Empresa (PJ)</span>
+            <span className="sm:hidden">PJ</span>
+          </TabsTrigger>
+          <TabsTrigger value="pf" className="flex items-center gap-1.5 text-xs sm:text-sm">
+            <User className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Pessoal (PF)</span>
+            <span className="sm:hidden">PF</span>
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="all" className="mt-4">
-          <ExpenseList 
-            expenses={sortedExpenses} 
-            onToggle={handleTogglePaid} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete}
-          />
+        {/* ─── ABA 1: PLANTÕES ─── */}
+        <TabsContent value="plantoes" className="space-y-6">
+          {/* Dashboard Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-l-4 border-l-blue-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Previsto</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(summary.total)}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Fixas: {formatCurrency(summary.fixedTotal)} | Var: {formatCurrency(summary.variableTotal)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Pago</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.paid)}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {summary.total > 0 ? Math.round((summary.paid / summary.total) * 100) : 0}% do total
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-amber-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">A Pagar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600">{formatCurrency(summary.pending)}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Faltam {expenses.length - expenses.filter(e => e.isPaid).length} contas
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recebimentos por Local de Trabalho */}
+          <FinancialSummaryCard />
+
+          {/* Listas de Despesas */}
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 md:w-[400px]">
+              <TabsTrigger value="all">Todas</TabsTrigger>
+              <TabsTrigger value="fixed">Fixas</TabsTrigger>
+              <TabsTrigger value="variable">Variáveis</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all" className="mt-4">
+              <ExpenseList
+                expenses={sortedExpenses}
+                onToggle={handleTogglePaid}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </TabsContent>
+
+            <TabsContent value="fixed" className="mt-4">
+              <ExpenseList
+                expenses={fixedExpenses}
+                onToggle={handleTogglePaid}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </TabsContent>
+
+            <TabsContent value="variable" className="mt-4">
+              <ExpenseList
+                expenses={variableExpenses}
+                onToggle={handleTogglePaid}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
-        
-        <TabsContent value="fixed" className="mt-4">
-          <ExpenseList 
-            expenses={fixedExpenses} 
-            onToggle={handleTogglePaid} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete}
-          />
+
+        {/* ─── ABA 2: EMPRESA (PJ) ─── */}
+        <TabsContent value="pj" className="space-y-4">
+          {/* Cards de resumo */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">R$ 31,40</div>
+                <p className="text-xs text-muted-foreground mt-1">Conta Empresa</p>
+              </CardContent>
+            </Card>
+
+            {/* "A Receber" usa o total real do motor de plantões */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">A Receber</CardTitle>
+                <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">
+                  {formatCurrency(totalAReceber)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Motor de plantões — {String(receivingMonth).padStart(2, "0")}/{receivingYear}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">A Pagar (Previsão)</CardTitle>
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">R$ ---</div>
+                <p className="text-xs text-muted-foreground mt-1">Custos PJ e Impostos</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Cartão corporativo e obrigações */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Cartão Corporativo
+                </CardTitle>
+                <CardDescription>Fatura em aberto</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold">R$ 696,22</p>
+                    <p className="text-sm text-red-500 font-medium">Vencimento: 01/06</p>
+                  </div>
+                  <Button variant="outline">Marcar Pago</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5" />
+                  Impostos e Obrigações
+                </CardTitle>
+                <CardDescription>Obrigações da Pessoa Jurídica</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Guia DAS</p>
+                    <p className="text-sm text-muted-foreground">Simples Nacional</p>
+                  </div>
+                  <Button variant="ghost" size="sm">Registrar</Button>
+                </div>
+                <div className="flex items-center justify-between border-t pt-2">
+                  <div>
+                    <p className="font-medium">DARF / Contabilidade</p>
+                    <p className="text-sm text-muted-foreground">Honorários e IR</p>
+                  </div>
+                  <Button variant="ghost" size="sm">Registrar</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Repasse para PF */}
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader>
+              <CardTitle>Repasse para Pessoa Física (Pró-labore)</CardTitle>
+              <CardDescription>Valor disponível para transferência após dedução dos custos da empresa.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="text-3xl font-bold text-primary">R$ ---</div>
+              <Button>Registrar Repasse para PF</Button>
+            </CardContent>
+          </Card>
         </TabsContent>
-        
-        <TabsContent value="variable" className="mt-4">
-          <ExpenseList 
-            expenses={variableExpenses} 
-            onToggle={handleTogglePaid} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete}
-          />
+
+        {/* ─── ABA 3: PESSOAL (PF) ─── */}
+        <TabsContent value="pf">
+          <Card>
+            <CardHeader>
+              <CardTitle>Visão Pessoa Física (Em construção)</CardTitle>
+              <CardDescription>
+                Aqui controlaremos o Custo de Vida, Dívidas PF e sua Reserva Estratégica.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Integração das contas pessoais acontecerá na próxima fase.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
@@ -285,22 +438,22 @@ export default function FinancePage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Nome da Despesa</Label>
-              <Input 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                placeholder="Ex: Aluguel, Academia..." 
+              <Input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Ex: Aluguel, Academia..."
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Valor (R$)</Label>
-                <Input 
-                  value={amount} 
-                  onChange={e => setAmount(e.target.value)} 
-                  type="number" 
-                  step="0.01" 
-                  placeholder="0.00" 
+                <Input
+                  value={amount}
+                  onChange={e => setAmount(e.target.value)}
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
                 />
               </div>
               <div className="space-y-2">
@@ -372,10 +525,10 @@ function ExpenseList({ expenses, onToggle, onEdit, onDelete }: {
       {expenses.map((expense) => (
         <Card key={expense.id} className={`transition-all hover:bg-accent/30 ${expense.isPaid ? 'opacity-60 bg-muted/20' : ''}`}>
           <div className="grid grid-cols-12 gap-2 md:gap-4 p-3 md:p-4 items-center">
-            
+
             {/* Checkbox Status */}
             <div className="col-span-2 md:col-span-1 flex justify-center">
-              <button 
+              <button
                 onClick={() => onToggle(expense.id, expense.isPaid)}
                 className={`rounded-full p-1 transition-colors ${expense.isPaid ? 'text-green-500 hover:text-green-600' : 'text-gray-300 hover:text-gray-400'}`}
               >

@@ -621,5 +621,7 @@
 - [x] Aba Plantões: motor de cálculo, locais de trabalho e plantões avulsos preservados
 - [x] Aba PJ: card "A Receber" exibe total real do getMonthlySummary
 - [x] Aba PF: placeholder para fase futura
-- [ ] Integrar botão "💰 Financeiro" no header do CalendarPage.tsx (já existe, verificar)
-- [ ] Integrar botão "💰 Financeiro" no header do WeeklyCalendarPage.tsx (já existe, verificar)
+- [x] Integrar botão "💰 Financeiro" no header do CalendarPage.tsx (já existe)
+- [x] Integrar botão "💰 Financeiro" no header do WeeklyCalendarPage.tsx (já existe)
+- [x] Refatorar Finance.tsx (página principal) com 3 abas: Plantões, Empresa PJ, Pessoal PF
+- [x] Aba PJ na página principal: card "A Receber" exibe total real do getMonthlySummary
