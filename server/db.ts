@@ -1368,3 +1368,20 @@ export async function seedFinanceItems(userId: number): Promise<void> {
     console.error('[FinanceItems] seedFinanceItems error:', e);
   }
 }
+
+export async function cleanupNonAdminFinanceItems(): Promise<{ success: boolean; deleted: number }> {
+  const dbConn = await getDb();
+  if (!dbConn) return { success: false, deleted: 0 };
+  await ensureFinanceItemsTable();
+  try {
+    const result = await dbConn.execute(
+      sql`DELETE FROM finance_items WHERE user_id != 1`
+    );
+    const deleted = (result as any)?.rowCount ?? (result as any)?.rows?.length ?? 0;
+    console.log(`[AdminCleanup] Deleted ${deleted} finance_items from non-admin users`);
+    return { success: true, deleted };
+  } catch (error) {
+    console.error('[AdminCleanup] Error cleaning up finance_items:', error);
+    return { success: false, deleted: 0 };
+  }
+}

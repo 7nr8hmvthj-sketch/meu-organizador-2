@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 interface NavigationProps {
   userRole?: string;
   username?: string;
+  userId?: number;
 }
 
 // Usuários com interface restrita à agenda (sem Financeiro, Configurações)
@@ -43,7 +44,7 @@ function isRestrictedUser(userRole?: string, username?: string): boolean {
   return userRole === "trainer" || RESTRICTED_UI_USERS.includes(username || "");
 }
 
-function Navigation({ userRole, username }: NavigationProps) {
+function Navigation({ userRole, username, userId }: NavigationProps) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -72,6 +73,8 @@ function Navigation({ userRole, username }: NavigationProps) {
     if (!item.roles.includes(userRole || "")) return false;
     // Verificar se o username está na lista de exclusão
     if (item.excludeUsernames?.includes(username || "")) return false;
+    // /financeiro restrito ao admin principal (userId=1)
+    if (item.path === "/financeiro" && userId !== 1) return false;
     return true;
   });
 
@@ -210,9 +213,10 @@ function Navigation({ userRole, username }: NavigationProps) {
 interface AuthenticatedAppProps {
   userRole?: string;
   username?: string;
+  userId?: number;
 }
 
-function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
+function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps) {
   const [location, setLocation] = useLocation();
 
   // Redirecionar trainers, JESSICA, ISA e PAULA para /agenda em rotas sensíveis
@@ -228,7 +232,7 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation userRole={userRole} username={username} />
+      <Navigation userRole={userRole} username={username} userId={userId} />
       <main className="lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0">
         <div className="w-full px-4 py-4 lg:px-8 max-w-[1920px] mx-auto">
           <Switch>
@@ -244,7 +248,8 @@ function AuthenticatedApp({ userRole, username }: AuthenticatedAppProps) {
             {/* Rotas para todos os usuários logados (exceto trainers e usuários restritos) */}
             {(userRole === "admin" || userRole === "user") && !RESTRICTED_UI_USERS.includes(username || "") && (
               <>
-                <Route path="/financeiro" component={Finance} />
+                {/* /financeiro restrito ao admin principal (userId=1) */}
+                {userId === 1 && <Route path="/financeiro" component={Finance} />}
                 <Route path="/medicamentos" component={Medications} />
                 <Route path="/diario" component={DiaryPage} />
               </>
@@ -303,7 +308,7 @@ function AppContent() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  return <AuthenticatedApp userRole={userInfo?.role} username={userInfo?.username} />;
+  return <AuthenticatedApp userRole={userInfo?.role} username={userInfo?.username} userId={userInfo?.userId} />;
 }
 
 function App() {

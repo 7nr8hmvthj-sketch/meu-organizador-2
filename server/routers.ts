@@ -1081,6 +1081,13 @@ export const appRouter = router({
       }),
   }),
 
+  // Admin cleanup: remove finance_items de usuários que não são o admin principal
+  adminCleanup: router({
+    cleanupFinanceItems: adminProcedure.mutation(async () => {
+      return await db.cleanupNonAdminFinanceItems();
+    }),
+  }),
+
   // User preferences router
   preferences: router({
     get: protectedProcedure.query(async ({ ctx }) => {

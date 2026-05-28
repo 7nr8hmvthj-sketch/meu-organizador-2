@@ -209,6 +209,7 @@ export default function CalendarPage() {
 
   const isTrainer = authData?.user?.role === "trainer";
   const isAdmin = authData?.user?.role === "admin";
+  const isMainAdmin = authData?.user?.userId === 1;
   const currentUsername = authData?.user?.username;
 
   const currentMonthNum = currentMonth.getMonth() + 1;
@@ -468,8 +469,8 @@ export default function CalendarPage() {
     setCurrentMonth(direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1));
   };
 
-  // Faturamento visível apenas para admin
-  const isRestrictedUser = !isAdmin;
+  // Faturamento visível apenas para o admin principal (userId=1)
+  const isRestrictedUser = !isMainAdmin;
 
   const calculateDivision = () => {
     if (!dividerStartTime || !dividerEndTime) {

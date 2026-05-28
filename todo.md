@@ -646,3 +646,14 @@
 - [x] Causa real identificada: seedFinanceItems clonava dados para qualquer userId
 - [x] Restringir seedFinanceItems para rodar apenas quando userId === 1
 - [x] Limpeza de dados vazados: tabela finance_items ainda não existe em produção (sem dados para limpar)
+
+## SEV1 - Restrição Módulo Financeiro a userId=1 (28/05/2026)
+
+- [x] Identificar que TESTE3 (role=admin, userId≠1) conseguia ver Painel Financeiro com dados hardcoded
+- [x] Finance.tsx: substituir guard `role === "admin"` por `userId === 1`
+- [x] CalendarPage.tsx: substituir `isRestrictedUser = !isAdmin` por `isRestrictedUser = !isMainAdmin` (userId=1)
+- [x] App.tsx: adicionar userId à NavigationProps e AuthenticatedAppProps
+- [x] App.tsx: filtrar item /financeiro no navItems para userId !== 1
+- [x] App.tsx: restringir rota /financeiro a userId === 1
+- [x] Confirmar que TESTE3 não vê mais botão Faturamento nem página /financeiro
+- [x] Confirmar que dados finance_items no banco estão isolados por userId (TESTE3 vê 0 itens)
