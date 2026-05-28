@@ -1322,6 +1322,10 @@ export async function deleteFinanceItem(userId: number, id: number): Promise<boo
 }
 
 export async function seedFinanceItems(userId: number): Promise<void> {
+  // Seed exclusivo para o admin principal (userId=1)
+  // Outros usuários não recebem dados financeiros por padrão
+  if (userId !== 1) return;
+
   const db = await getDb();
   if (!db) return;
   await ensureFinanceItemsTable();

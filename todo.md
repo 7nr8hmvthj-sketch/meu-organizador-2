@@ -639,3 +639,10 @@
 - [x] Criar router financeItems no tRPC com getItems, upsertItem, togglePaid, deleteItem (filtro por userId)
 - [x] Refatorar Finance.tsx para usar queries/mutations tRPC (pjItems/pfItems do banco)
 - [x] Seed automático de 17 itens reais ao primeiro acesso (Personnalté, Passaí, Aluguel, Luz, Água, DAS, DARF, etc.)
+
+## ALERTA SEV 1 - Bypass de Admin nas Queries Financeiras (28/05/2026)
+
+- [x] Inspecionar getMonthlySummary, getWorkplaces, getEventsByDateRange, financeItems — TODAS já filtram por userId corretamente
+- [x] Causa real identificada: seedFinanceItems clonava dados para qualquer userId
+- [x] Restringir seedFinanceItems para rodar apenas quando userId === 1
+- [x] Limpeza de dados vazados: tabela finance_items ainda não existe em produção (sem dados para limpar)
