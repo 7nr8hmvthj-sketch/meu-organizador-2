@@ -13,10 +13,11 @@ import {
   monthlyAdjustments, InsertMonthlyAdjustment, MonthlyAdjustment,
   agendaManagers, InsertAgendaManager, AgendaManager,
   workplaces, InsertWorkplace, Workplace,
-  unlinkedRates, InsertUnlinkedRate, UnlinkedRate
+  unlinkedRates, InsertUnlinkedRate, UnlinkedRate,
+  financeItems, InsertFinanceItem, FinanceItem
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { sql } from "drizzle-orm";
+import { sql, eq, and } from "drizzle-orm";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 let _client: ReturnType<typeof postgres> | null = null;
@@ -1203,5 +1204,163 @@ export async function getSharedAgendaUserIds(): Promise<Set<number>> {
   } catch (e) {
     console.error('[DB] getSharedAgendaUserIds failed:', e);
     return new Set();
+  }
+}
+
+// ============================================================
+// FINANCE ITEMS — Despesas PJ/PF persistidas
+// ============================================================
+
+export async function ensureFinanceItemsTable(): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS finance_items (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        tab VARCHAR(10) NOT NULL,
+        category VARCHAR(100) NOT NULL,
+        title VARCHAR(200) NOT NULL,
+        amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+        is_paid BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+  } catch (e) {
+    // Tabela já existe — ignorar
+  }
+}
+
+export async function getFinanceItems(userId: number): Promise<FinanceItem[]> {
+  const db = await getDb();
+  if (!db) return [];
+  await ensureFinanceItemsTable();
+  try {
+    const rows = await db.execute(
+      sql`SELECT id, user_id, tab, category, title, amount::text as amount, is_paid, created_at, updated_at
+          FROM finance_items WHERE user_id = ${userId} ORDER BY tab, category, id`
+    );
+    const data = (rows as any).rows || (rows as any);
+    return data.map((r: any) => ({
+      id: Number(r.id),
+      userId: Number(r.user_id),
+      tab: r.tab,
+      category: r.category,
+      title: r.title,
+      amount: r.amount,
+      isPaid: r.is_paid,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    })) as FinanceItem[];
+  } catch (e) {
+    console.error('[FinanceItems] getFinanceItems error:', e);
+    return [];
+  }
+}
+
+export async function upsertFinanceItem(
+  userId: number,
+  data: { id?: number; tab: string; category: string; title: string; amount: string }
+): Promise<FinanceItem | null> {
+  const db = await getDb();
+  if (!db) return null;
+  await ensureFinanceItemsTable();
+  try {
+    if (data.id) {
+      // UPDATE
+      await db.execute(
+        sql`UPDATE finance_items SET title = ${data.title}, category = ${data.category}, amount = ${data.amount}::numeric, updated_at = NOW()
+            WHERE id = ${data.id} AND user_id = ${userId}`
+      );
+      const rows = await db.execute(
+        sql`SELECT id, user_id, tab, category, title, amount::text as amount, is_paid, created_at, updated_at FROM finance_items WHERE id = ${data.id} AND user_id = ${userId}`
+      );
+      const r = ((rows as any).rows || (rows as any))[0];
+      return r ? { id: Number(r.id), userId: Number(r.user_id), tab: r.tab, category: r.category, title: r.title, amount: r.amount, isPaid: r.is_paid, createdAt: r.created_at, updatedAt: r.updated_at } as FinanceItem : null;
+    } else {
+      // INSERT
+      const rows = await db.execute(
+        sql`INSERT INTO finance_items (user_id, tab, category, title, amount) VALUES (${userId}, ${data.tab}, ${data.category}, ${data.title}, ${data.amount}::numeric) RETURNING id, user_id, tab, category, title, amount::text as amount, is_paid, created_at, updated_at`
+      );
+      const r = ((rows as any).rows || (rows as any))[0];
+      return r ? { id: Number(r.id), userId: Number(r.user_id), tab: r.tab, category: r.category, title: r.title, amount: r.amount, isPaid: r.is_paid, createdAt: r.created_at, updatedAt: r.updated_at } as FinanceItem : null;
+    }
+  } catch (e) {
+    console.error('[FinanceItems] upsertFinanceItem error:', e);
+    return null;
+  }
+}
+
+export async function toggleFinanceItemPaid(userId: number, id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.execute(
+      sql`UPDATE finance_items SET is_paid = NOT is_paid, updated_at = NOW() WHERE id = ${id} AND user_id = ${userId}`
+    );
+    return true;
+  } catch (e) {
+    console.error('[FinanceItems] toggleFinanceItemPaid error:', e);
+    return false;
+  }
+}
+
+export async function deleteFinanceItem(userId: number, id: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  try {
+    await db.execute(
+      sql`DELETE FROM finance_items WHERE id = ${id} AND user_id = ${userId}`
+    );
+    return true;
+  } catch (e) {
+    console.error('[FinanceItems] deleteFinanceItem error:', e);
+    return false;
+  }
+}
+
+export async function seedFinanceItems(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await ensureFinanceItemsTable();
+  try {
+    const existing = await db.execute(
+      sql`SELECT COUNT(*) as cnt FROM finance_items WHERE user_id = ${userId}`
+    );
+    const rows = (existing as any).rows || (existing as any);
+    const count = Number(rows[0]?.cnt ?? rows[0]?.count ?? 0);
+    if (count > 0) return; // Já tem dados, não fazer seed
+
+    const items = [
+      // PJ
+      { tab: 'PJ', category: 'Cartao', title: 'Fatura Corporativa', amount: '696.22' },
+      { tab: 'PJ', category: 'Impostos', title: 'DAS (Atrasado)', amount: '1789.50' },
+      { tab: 'PJ', category: 'Impostos', title: 'DARF (Atrasado)', amount: '1918.63' },
+      { tab: 'PJ', category: 'Impostos', title: 'Contador', amount: '300.00' },
+      // PF
+      { tab: 'PF', category: 'Cartoes', title: 'Itaú Personnalité', amount: '12257.76' },
+      { tab: 'PF', category: 'Cartoes', title: 'Passaí', amount: '5638.82' },
+      { tab: 'PF', category: 'Moradia', title: 'Aluguel', amount: '1800.00' },
+      { tab: 'PF', category: 'Moradia', title: 'Luz', amount: '250.00' },
+      { tab: 'PF', category: 'Moradia', title: 'Água', amount: '80.00' },
+      { tab: 'PF', category: 'Moradia', title: 'Internet', amount: '120.00' },
+      { tab: 'PF', category: 'Moradia', title: 'Vivo (Atrasada)', amount: '180.00' },
+      { tab: 'PF', category: 'Moradia', title: 'Tim', amount: '60.00' },
+      { tab: 'PF', category: 'Saude', title: 'Pós-graduação', amount: '900.00' },
+      { tab: 'PF', category: 'Saude', title: 'Terapia', amount: '400.00' },
+      { tab: 'PF', category: 'Saude', title: 'Seguro de Vida', amount: '150.00' },
+      { tab: 'PF', category: 'Outros', title: 'Barba', amount: '80.00' },
+      { tab: 'PF', category: 'Outros', title: 'Gasolina', amount: '300.00' },
+    ];
+    for (const item of items) {
+      await db.execute(
+        sql`INSERT INTO finance_items (user_id, tab, category, title, amount) VALUES (${userId}, ${item.tab}, ${item.category}, ${item.title}, ${item.amount}::numeric)`
+      );
+    }
+    console.log('[FinanceItems] Seed concluído para userId:', userId);
+  } catch (e) {
+    console.error('[FinanceItems] seedFinanceItems error:', e);
   }
 }

@@ -631,3 +631,11 @@
 - [x] SEGURANÇA: Corrigir vazamento de dados financeiros entre usuários (restringir abas PJ/PF a admin)
 - [x] Remover "Aluguel" da aba Plantões e mover para aba PF (Moradia e Consumo)
 - [x] Tornar botões "Pagar" e "Editar" funcionais nas abas PJ e PF (estado local + modal edição)
+
+## Persistência de Despesas PJ/PF (28/05/2026)
+
+- [x] Criar tabela finance_items via SQL (CREATE TABLE IF NOT EXISTS) com id, user_id, tab, category, title, amount, is_paid, timestamps
+- [x] Criar helpers getFinanceItems, upsertFinanceItem, toggleFinanceItemPaid, deleteFinanceItem, seedFinanceItems em db.ts
+- [x] Criar router financeItems no tRPC com getItems, upsertItem, togglePaid, deleteItem (filtro por userId)
+- [x] Refatorar Finance.tsx para usar queries/mutations tRPC (pjItems/pfItems do banco)
+- [x] Seed automático de 17 itens reais ao primeiro acesso (Personnalté, Passaí, Aluguel, Luz, Água, DAS, DARF, etc.)

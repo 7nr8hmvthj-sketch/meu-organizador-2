@@ -219,3 +219,23 @@ export const unlinkedRates = pgTable("unlinked_rates", {
 
 export type UnlinkedRate = typeof unlinkedRates.$inferSelect;
 export type InsertUnlinkedRate = typeof unlinkedRates.$inferInsert;
+
+
+// --- FINANÇAS PJ/PF ---
+/**
+ * Finance Items - despesas e obrigações financeiras PJ e PF
+ * Persistência das abas Empresa (PJ) e Pessoal (PF) do painel financeiro
+ */
+export const financeItems = pgTable("finance_items", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  tab: varchar("tab", { length: 10 }).notNull(), // 'PJ' ou 'PF'
+  category: varchar("category", { length: 100 }).notNull(), // ex: 'Impostos', 'Moradia', 'Cartoes'
+  title: varchar("title", { length: 200 }).notNull(), // ex: 'DAS', 'Luz', 'Itaú Personnalité'
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  isPaid: boolean("is_paid").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+export type FinanceItem = typeof financeItems.$inferSelect;
+export type InsertFinanceItem = typeof financeItems.$inferInsert;

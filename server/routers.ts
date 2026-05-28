@@ -1038,6 +1038,49 @@ export const appRouter = router({
        .mutation(async ({ ctx, input }) => await db.deleteUnlinkedRate(input.id, ctx.user.userId)),
   }),
 
+  // Finance Items router — Despesas PJ/PF persistidas
+  financeItems: router({
+    // Retorna todos os itens do usuário (com seed automático se vazio)
+    getItems: protectedProcedure
+      .input(z.object({ tab: z.enum(['PJ', 'PF']).optional() }))
+      .query(async ({ ctx, input }) => {
+        await db.seedFinanceItems(ctx.user.userId);
+        const items = await db.getFinanceItems(ctx.user.userId);
+        if (input.tab) return items.filter(i => i.tab === input.tab);
+        return items;
+      }),
+    // Cria ou atualiza um item (upsert por id)
+    upsertItem: protectedProcedure
+      .input(z.object({
+        id: z.number().optional(),
+        tab: z.enum(['PJ', 'PF']),
+        category: z.string().min(1),
+        title: z.string().min(1),
+        amount: z.number().nonnegative(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.upsertFinanceItem(ctx.user.userId, {
+          id: input.id,
+          tab: input.tab,
+          category: input.category,
+          title: input.title,
+          amount: String(input.amount),
+        });
+      }),
+    // Alterna isPaid do item
+    togglePaid: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.toggleFinanceItemPaid(ctx.user.userId, input.id);
+      }),
+    // Remove um item
+    deleteItem: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await db.deleteFinanceItem(ctx.user.userId, input.id);
+      }),
+  }),
+
   // User preferences router
   preferences: router({
     get: protectedProcedure.query(async ({ ctx }) => {

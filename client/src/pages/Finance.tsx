@@ -52,61 +52,47 @@ export default function FinancePage() {
   const [dueDay, setDueDay] = useState("");
   const [category, setCategory] = useState<"fixed" | "variable">("fixed");
 
-  // Estado local para itens PJ/PF (mockup funcional)
-  type FinanceItem = { id: string; name: string; value: number; isPaid: boolean; category: string };
-  const [pjItems, setPjItems] = useState<FinanceItem[]>([
-    { id: "pj-cartao", name: "Fatura Corporativa", value: 696.22, isPaid: false, category: "cartao" },
-    { id: "pj-das", name: "DAS (Atrasado)", value: 1789.50, isPaid: false, category: "imposto" },
-    { id: "pj-darf", name: "DARF (Atrasado)", value: 1918.63, isPaid: false, category: "imposto" },
-    { id: "pj-contador", name: "Contador", value: 300.00, isPaid: false, category: "imposto" },
-  ]);
-  const [pfItems, setPfItems] = useState<FinanceItem[]>([
-    { id: "pf-itau", name: "Itau\u0301 Personnalite\u0301", value: 12257.76, isPaid: false, category: "cartao" },
-    { id: "pf-passai", name: "Passai\u0301", value: 5638.82, isPaid: false, category: "cartao" },
-    { id: "pf-aluguel", name: "Aluguel", value: 1800.00, isPaid: false, category: "moradia" },
-    { id: "pf-luz", name: "Luz", value: 276.63, isPaid: false, category: "moradia" },
-    { id: "pf-agua", name: "\u00c1gua", value: 250.00, isPaid: false, category: "moradia" },
-    { id: "pf-internet", name: "Internet", value: 119.00, isPaid: false, category: "moradia" },
-    { id: "pf-vivo", name: "Vivo (Atrasada)", value: 118.00, isPaid: false, category: "moradia" },
-    { id: "pf-tim", name: "Tim", value: 60.00, isPaid: false, category: "moradia" },
-    { id: "pf-pos", name: "Po\u0301s-graduac\u0327a\u0303o", value: 2000.00, isPaid: false, category: "saude" },
-    { id: "pf-terapia", name: "Terapia", value: 760.00, isPaid: false, category: "saude" },
-    { id: "pf-seguro", name: "Seguro de Vida", value: 432.00, isPaid: false, category: "saude" },
-    { id: "pf-barba", name: "Barba", value: 120.00, isPaid: false, category: "saude" },
-    { id: "pf-gasolina", name: "Gasolina", value: 50.00, isPaid: false, category: "saude" },
-  ]);
+  // ─── FINANCE ITEMS (PJ/PF) — persistidos no banco ───
+  type DbFinanceItem = { id: number; userId: number; tab: string; category: string; title: string; amount: string; isPaid: boolean; createdAt: unknown; updatedAt: unknown };
 
-  // Modal de edi\u00e7\u00e3o PJ/PF
-  const [editingItem, setEditingItem] = useState<FinanceItem | null>(null);
-  const [editItemValue, setEditItemValue] = useState("");
-  const [editItemSource, setEditItemSource] = useState<"pj" | "pf">("pj");
+  const { data: allFinanceItems = [], refetch: refetchFinanceItems } = trpc.financeItems.getItems.useQuery({});
+  const pjItems: DbFinanceItem[] = allFinanceItems.filter((i: DbFinanceItem) => i.tab === 'PJ');
+  const pfItems: DbFinanceItem[] = allFinanceItems.filter((i: DbFinanceItem) => i.tab === 'PF');
 
-  const handleTogglePaidItem = (id: string, source: "pj" | "pf") => {
-    if (source === "pj") {
-      setPjItems(prev => prev.map(i => i.id === id ? { ...i, isPaid: !i.isPaid } : i));
-    } else {
-      setPfItems(prev => prev.map(i => i.id === id ? { ...i, isPaid: !i.isPaid } : i));
-    }
-    toast.success("Status atualizado!");
+  const togglePaidFinanceMutation = trpc.financeItems.togglePaid.useMutation({
+    onSuccess: () => { refetchFinanceItems(); toast.success("Status atualizado!"); },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const upsertFinanceMutation = trpc.financeItems.upsertItem.useMutation({
+    onSuccess: () => { refetchFinanceItems(); setEditingFinanceItem(null); toast.success("Valor atualizado!"); },
+    onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  // Modal de edição PJ/PF
+  const [editingFinanceItem, setEditingFinanceItem] = useState<DbFinanceItem | null>(null);
+  const [editFinanceValue, setEditFinanceValue] = useState("");
+
+  const handleTogglePaidItem = (id: number) => {
+    togglePaidFinanceMutation.mutate({ id });
   };
 
-  const handleEditItem = (item: FinanceItem, source: "pj" | "pf") => {
-    setEditingItem(item);
-    setEditItemValue(item.value.toString());
-    setEditItemSource(source);
+  const handleEditFinanceItem = (item: DbFinanceItem) => {
+    setEditingFinanceItem(item);
+    setEditFinanceValue(parseFloat(item.amount).toFixed(2));
   };
 
-  const handleSaveItem = () => {
-    if (!editingItem || !editItemValue) return;
-    const newValue = parseFloat(editItemValue.replace(",", "."));
-    if (isNaN(newValue)) { toast.error("Valor inv\u00e1lido"); return; }
-    if (editItemSource === "pj") {
-      setPjItems(prev => prev.map(i => i.id === editingItem.id ? { ...i, value: newValue } : i));
-    } else {
-      setPfItems(prev => prev.map(i => i.id === editingItem.id ? { ...i, value: newValue } : i));
-    }
-    setEditingItem(null);
-    toast.success("Valor atualizado!");
+  const handleSaveFinanceItem = () => {
+    if (!editingFinanceItem || !editFinanceValue) return;
+    const newValue = parseFloat(editFinanceValue.replace(",", "."));
+    if (isNaN(newValue) || newValue < 0) { toast.error("Valor inválido"); return; }
+    upsertFinanceMutation.mutate({
+      id: editingFinanceItem.id,
+      tab: editingFinanceItem.tab as 'PJ' | 'PF',
+      category: editingFinanceItem.category,
+      title: editingFinanceItem.title,
+      amount: newValue,
+    });
   };
 
   // Data Fetching
@@ -420,7 +406,7 @@ export default function FinancePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(pjItems.filter(i => !i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+                  {formatCurrency(pjItems.filter(i => !i.isPaid).reduce((sum, i) => sum + parseFloat(i.amount), 0))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Custos PJ e Impostos</p>
               </CardContent>
@@ -433,19 +419,19 @@ export default function FinancePage() {
               <Card key={item.id} className={`transition-all ${item.isPaid ? 'opacity-50 bg-muted/20' : ''}`}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
-                    <button onClick={() => handleTogglePaidItem(item.id, "pj")} className={`rounded-full p-1 transition-colors ${item.isPaid ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}>
+                    <button onClick={() => handleTogglePaidItem(item.id)} className={`rounded-full p-1 transition-colors ${item.isPaid ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}>
                       {item.isPaid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                     </button>
                     <div>
-                      <p className={`font-medium ${item.isPaid ? 'line-through text-muted-foreground' : ''}`}>{item.name}</p>
+                      <p className={`font-medium ${item.isPaid ? 'line-through text-muted-foreground' : ''}`}>{item.title}</p>
                       <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`font-bold ${item.isPaid ? 'text-muted-foreground line-through' : 'text-red-600'}`}>
-                      {formatCurrency(item.value)}
+                      {formatCurrency(item.amount)}
                     </span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditItem(item, "pj")}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditFinanceItem(item)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
                   </div>
@@ -462,7 +448,7 @@ export default function FinancePage() {
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="text-3xl font-bold text-primary">
-                {formatCurrency(totalAReceber - pjItems.filter(i => !i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+                {formatCurrency(totalAReceber - pjItems.filter(i => !i.isPaid).reduce((sum, i) => sum + parseFloat(i.amount), 0))}
               </div>
               <Button onClick={() => toast.success("Repasse registrado (mockup)")}>Registrar Repasse</Button>
             </CardContent>
@@ -479,10 +465,10 @@ export default function FinancePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(pfItems.reduce((sum, i) => sum + i.value, 0))}
+                  {formatCurrency(pfItems.reduce((sum, i) => sum + parseFloat(i.amount), 0))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Pagas: {formatCurrency(pfItems.filter(i => i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+                  Pagas: {formatCurrency(pfItems.filter(i => i.isPaid).reduce((sum, i) => sum + parseFloat(i.amount), 0))}
                 </p>
               </CardContent>
             </Card>
@@ -492,7 +478,7 @@ export default function FinancePage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-600">
-                  {formatCurrency(pfItems.filter(i => !i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+                  {formatCurrency(pfItems.filter(i => !i.isPaid).reduce((sum, i) => sum + parseFloat(i.amount), 0))}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {pfItems.filter(i => !i.isPaid).length} contas em aberto
@@ -507,19 +493,19 @@ export default function FinancePage() {
               <Card key={item.id} className={`transition-all ${item.isPaid ? 'opacity-50 bg-muted/20' : ''}`}>
                 <div className="flex items-center justify-between p-3 sm:p-4">
                   <div className="flex items-center gap-3">
-                    <button onClick={() => handleTogglePaidItem(item.id, "pf")} className={`rounded-full p-1 transition-colors ${item.isPaid ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}>
+                    <button onClick={() => handleTogglePaidItem(item.id)} className={`rounded-full p-1 transition-colors ${item.isPaid ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}>
                       {item.isPaid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                     </button>
                     <div>
-                      <p className={`font-medium text-sm ${item.isPaid ? 'line-through text-muted-foreground' : ''}`}>{item.name}</p>
+                      <p className={`font-medium text-sm ${item.isPaid ? 'line-through text-muted-foreground' : ''}`}>{item.title}</p>
                       <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`font-bold text-sm ${item.isPaid ? 'text-muted-foreground line-through' : 'text-red-600'}`}>
-                      {formatCurrency(item.value)}
+                      {formatCurrency(item.amount)}
                     </span>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditItem(item, "pf")}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditFinanceItem(item)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
                   </div>
@@ -531,7 +517,7 @@ export default function FinancePage() {
       </Tabs>
 
       {/* Modal Editar Item PJ/PF */}
-      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
+      <Dialog open={!!editingFinanceItem} onOpenChange={(open) => !open && setEditingFinanceItem(null)}>
         <DialogContent className="max-w-[95vw] sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Editar Valor</DialogTitle>
@@ -539,13 +525,13 @@ export default function FinancePage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Despesa</Label>
-              <Input value={editingItem?.name || ""} disabled />
+              <Input value={editingFinanceItem?.title || ""} disabled />
             </div>
             <div className="space-y-2">
               <Label>Novo Valor (R$)</Label>
               <Input
-                value={editItemValue}
-                onChange={e => setEditItemValue(e.target.value)}
+                value={editFinanceValue}
+                onChange={e => setEditFinanceValue(e.target.value)}
                 type="number"
                 step="0.01"
                 placeholder="0.00"
@@ -553,8 +539,8 @@ export default function FinancePage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingItem(null)}>Cancelar</Button>
-            <Button onClick={handleSaveItem}>Salvar</Button>
+            <Button variant="outline" onClick={() => setEditingFinanceItem(null)}>Cancelar</Button>
+            <Button onClick={handleSaveFinanceItem} disabled={upsertFinanceMutation.isPending}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
