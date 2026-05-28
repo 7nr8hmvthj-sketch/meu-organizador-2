@@ -614,3 +614,12 @@
 ## Bug Exclusão em Série (27/05/2026)
 
 - [x] Corrigir deleteEventSeries: adicionar filtro DAYOFWEEK para não excluir eventos de outros dias da semana com mesmo type/startTime
+
+## Módulo Financeiro - Mockup Visual (28/05/2026)
+
+- [x] Refatorar FinancialDashboard.tsx com 3 abas: Plantões (funcional), Empresa PJ (mockup + total real), Pessoal PF (placeholder)
+- [x] Aba Plantões: motor de cálculo, locais de trabalho e plantões avulsos preservados
+- [x] Aba PJ: card "A Receber" exibe total real do getMonthlySummary
+- [x] Aba PF: placeholder para fase futura
+- [ ] Integrar botão "💰 Financeiro" no header do CalendarPage.tsx (já existe, verificar)
+- [ ] Integrar botão "💰 Financeiro" no header do WeeklyCalendarPage.tsx (já existe, verificar)
