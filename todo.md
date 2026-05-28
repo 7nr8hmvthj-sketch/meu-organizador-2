@@ -625,3 +625,9 @@
 - [x] Integrar botão "💰 Financeiro" no header do WeeklyCalendarPage.tsx (já existe)
 - [x] Refatorar Finance.tsx (página principal) com 3 abas: Plantões, Empresa PJ, Pessoal PF
 - [x] Aba PJ na página principal: card "A Receber" exibe total real do getMonthlySummary
+
+## ALERTA SEV 1 - Vazamento de Dados (28/05/2026)
+
+- [x] SEGURANÇA: Corrigir vazamento de dados financeiros entre usuários (restringir abas PJ/PF a admin)
+- [x] Remover "Aluguel" da aba Plantões e mover para aba PF (Moradia e Consumo)
+- [x] Tornar botões "Pagar" e "Editar" funcionais nas abas PJ e PF (estado local + modal edição)

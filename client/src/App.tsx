@@ -63,7 +63,7 @@ function Navigation({ userRole, username }: NavigationProps) {
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
     { path: "/diario", label: "Diário", icon: Book, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
-    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
     // { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS }, // OCULTO
   ];
 

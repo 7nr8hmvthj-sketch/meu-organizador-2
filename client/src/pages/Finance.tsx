@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,87 @@ export default function FinancePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
+  // Guard: apenas admin pode acessar esta página
+  const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
+  const [, navigate] = useLocation();
+  const isAdmin = authData?.user?.role === "admin";
+
+  useEffect(() => {
+    if (authData && !isAdmin) {
+      navigate("/agenda");
+    }
+  }, [authData, isAdmin, navigate]);
+
+  if (!authData || !isAdmin) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   // Form States
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [dueDay, setDueDay] = useState("");
   const [category, setCategory] = useState<"fixed" | "variable">("fixed");
+
+  // Estado local para itens PJ/PF (mockup funcional)
+  type FinanceItem = { id: string; name: string; value: number; isPaid: boolean; category: string };
+  const [pjItems, setPjItems] = useState<FinanceItem[]>([
+    { id: "pj-cartao", name: "Fatura Corporativa", value: 696.22, isPaid: false, category: "cartao" },
+    { id: "pj-das", name: "DAS (Atrasado)", value: 1789.50, isPaid: false, category: "imposto" },
+    { id: "pj-darf", name: "DARF (Atrasado)", value: 1918.63, isPaid: false, category: "imposto" },
+    { id: "pj-contador", name: "Contador", value: 300.00, isPaid: false, category: "imposto" },
+  ]);
+  const [pfItems, setPfItems] = useState<FinanceItem[]>([
+    { id: "pf-itau", name: "Itau\u0301 Personnalite\u0301", value: 12257.76, isPaid: false, category: "cartao" },
+    { id: "pf-passai", name: "Passai\u0301", value: 5638.82, isPaid: false, category: "cartao" },
+    { id: "pf-aluguel", name: "Aluguel", value: 1800.00, isPaid: false, category: "moradia" },
+    { id: "pf-luz", name: "Luz", value: 276.63, isPaid: false, category: "moradia" },
+    { id: "pf-agua", name: "\u00c1gua", value: 250.00, isPaid: false, category: "moradia" },
+    { id: "pf-internet", name: "Internet", value: 119.00, isPaid: false, category: "moradia" },
+    { id: "pf-vivo", name: "Vivo (Atrasada)", value: 118.00, isPaid: false, category: "moradia" },
+    { id: "pf-tim", name: "Tim", value: 60.00, isPaid: false, category: "moradia" },
+    { id: "pf-pos", name: "Po\u0301s-graduac\u0327a\u0303o", value: 2000.00, isPaid: false, category: "saude" },
+    { id: "pf-terapia", name: "Terapia", value: 760.00, isPaid: false, category: "saude" },
+    { id: "pf-seguro", name: "Seguro de Vida", value: 432.00, isPaid: false, category: "saude" },
+    { id: "pf-barba", name: "Barba", value: 120.00, isPaid: false, category: "saude" },
+    { id: "pf-gasolina", name: "Gasolina", value: 50.00, isPaid: false, category: "saude" },
+  ]);
+
+  // Modal de edi\u00e7\u00e3o PJ/PF
+  const [editingItem, setEditingItem] = useState<FinanceItem | null>(null);
+  const [editItemValue, setEditItemValue] = useState("");
+  const [editItemSource, setEditItemSource] = useState<"pj" | "pf">("pj");
+
+  const handleTogglePaidItem = (id: string, source: "pj" | "pf") => {
+    if (source === "pj") {
+      setPjItems(prev => prev.map(i => i.id === id ? { ...i, isPaid: !i.isPaid } : i));
+    } else {
+      setPfItems(prev => prev.map(i => i.id === id ? { ...i, isPaid: !i.isPaid } : i));
+    }
+    toast.success("Status atualizado!");
+  };
+
+  const handleEditItem = (item: FinanceItem, source: "pj" | "pf") => {
+    setEditingItem(item);
+    setEditItemValue(item.value.toString());
+    setEditItemSource(source);
+  };
+
+  const handleSaveItem = () => {
+    if (!editingItem || !editItemValue) return;
+    const newValue = parseFloat(editItemValue.replace(",", "."));
+    if (isNaN(newValue)) { toast.error("Valor inv\u00e1lido"); return; }
+    if (editItemSource === "pj") {
+      setPjItems(prev => prev.map(i => i.id === editingItem.id ? { ...i, value: newValue } : i));
+    } else {
+      setPfItems(prev => prev.map(i => i.id === editingItem.id ? { ...i, value: newValue } : i));
+    }
+    setEditingItem(null);
+    toast.success("Valor atualizado!");
+  };
 
   // Data Fetching
   const { data: expenses = [], isLoading, refetch } = trpc.expenses.list.useQuery();
@@ -322,7 +398,6 @@ export default function FinancePage() {
               </CardContent>
             </Card>
 
-            {/* "A Receber" usa o total real do motor de plantões */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">A Receber</CardTitle>
@@ -344,170 +419,145 @@ export default function FinancePage() {
                 <Receipt className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">R$ ---</div>
+                <div className="text-2xl font-bold text-red-600">
+                  {formatCurrency(pjItems.filter(i => !i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">Custos PJ e Impostos</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Cartão corporativo e obrigações */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Cartão Corporativo
-                </CardTitle>
-                <CardDescription>Faturas PJ em aberto</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm">Fatura Corporativa</p>
-                    <p className="text-2xl font-bold">R$ 696,22</p>
-                    <p className="text-xs text-red-500 font-medium">Vencimento: 01/06</p>
+          {/* Lista de obrigações PJ */}
+          <div className="space-y-2">
+            {pjItems.map(item => (
+              <Card key={item.id} className={`transition-all ${item.isPaid ? 'opacity-50 bg-muted/20' : ''}`}>
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleTogglePaidItem(item.id, "pj")} className={`rounded-full p-1 transition-colors ${item.isPaid ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}>
+                      {item.isPaid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                    </button>
+                    <div>
+                      <p className={`font-medium ${item.isPaid ? 'line-through text-muted-foreground' : ''}`}>{item.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                    </div>
                   </div>
-                  <Button variant="outline" size="sm">Marcar Pago</Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5" />
-                  Impostos e Contabilidade
-                </CardTitle>
-                <CardDescription>Obrigações da Empresa</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">DAS (Atrasado)</p>
-                    <p className="text-sm text-muted-foreground">Simples Nacional</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-bold ${item.isPaid ? 'text-muted-foreground line-through' : 'text-red-600'}`}>
+                      {formatCurrency(item.value)}
+                    </span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditItem(item, "pj")}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
                   </div>
-                  <p className="font-bold text-red-600">R$ 1.789,50</p>
                 </div>
-                <div className="flex items-center justify-between border-t pt-2">
-                  <div>
-                    <p className="font-medium">DARF (Atrasado)</p>
-                    <p className="text-sm text-muted-foreground">Imposto de Renda</p>
-                  </div>
-                  <p className="font-bold text-red-600">R$ 1.918,63</p>
-                </div>
-                <div className="flex items-center justify-between border-t pt-2">
-                  <div>
-                    <p className="font-medium">Contador</p>
-                    <p className="text-sm text-muted-foreground">Honorários Mensais</p>
-                  </div>
-                  <p className="font-bold">R$ 300,00</p>
-                </div>
-              </CardContent>
-            </Card>
+              </Card>
+            ))}
           </div>
 
           {/* Repasse para PF */}
           <Card className="border-primary/30 bg-primary/5">
             <CardHeader>
               <CardTitle>Repasse para Pessoa Física (Pró-labore)</CardTitle>
-              <CardDescription>Valor disponível para transferência após dedução dos custos da empresa.</CardDescription>
+              <CardDescription>Valor disponível após dedução dos custos da empresa.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="text-3xl font-bold text-primary">R$ ---</div>
-              <Button>Registrar Repasse para PF</Button>
+              <div className="text-3xl font-bold text-primary">
+                {formatCurrency(totalAReceber - pjItems.filter(i => !i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+              </div>
+              <Button onClick={() => toast.success("Repasse registrado (mockup)")}>Registrar Repasse</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* ─── ABA 3: PESSOAL (PF) ─── */}
         <TabsContent value="pf" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* CARTÕES */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Cartões de Crédito
-                </CardTitle>
+          {/* Resumo PF */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="border-l-4 border-l-red-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Despesas PF</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col">
-                  <span className="text-sm text-muted-foreground">Itaú Personnalité</span>
-                  <span className="text-xl font-bold text-red-600">R$ 12.257,76</span>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">
+                  {formatCurrency(pfItems.reduce((sum, i) => sum + i.value, 0))}
                 </div>
-                <div className="flex flex-col border-t pt-2">
-                  <span className="text-sm text-muted-foreground">Passaí</span>
-                  <span className="text-xl font-bold text-red-600">R$ 5.638,82</span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pagas: {formatCurrency(pfItems.filter(i => i.isPaid).reduce((sum, i) => sum + i.value, 0))}
+                </p>
               </CardContent>
             </Card>
-
-            {/* MORADIA E CONSUMO */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Moradia e Consumo
-                </CardTitle>
+            <Card className="border-l-4 border-l-amber-500">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Pendente PF</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Luz</span>
-                  <span className="font-medium">R$ 276,63</span>
+              <CardContent>
+                <div className="text-2xl font-bold text-amber-600">
+                  {formatCurrency(pfItems.filter(i => !i.isPaid).reduce((sum, i) => sum + i.value, 0))}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Água</span>
-                  <span className="font-medium">R$ 250,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Internet</span>
-                  <span className="font-medium">R$ 119,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Vivo (Atrasada)</span>
-                  <span className="font-medium text-red-600">R$ 118,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Tim</span>
-                  <span className="font-medium">R$ 60,00</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SAÚDE, EDUCAÇÃO E OUTROS */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Saúde, Educação e Outros
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Pós-graduação</span>
-                  <span className="font-medium">R$ 2.000,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Terapia</span>
-                  <span className="font-medium">R$ 760,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Seguro de Vida</span>
-                  <span className="font-medium">R$ 432,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Barba</span>
-                  <span className="font-medium">R$ 120,00</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Gasolina</span>
-                  <span className="font-medium">R$ 50,00</span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {pfItems.filter(i => !i.isPaid).length} contas em aberto
+                </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Lista de despesas PF */}
+          <div className="space-y-2">
+            {pfItems.map(item => (
+              <Card key={item.id} className={`transition-all ${item.isPaid ? 'opacity-50 bg-muted/20' : ''}`}>
+                <div className="flex items-center justify-between p-3 sm:p-4">
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleTogglePaidItem(item.id, "pf")} className={`rounded-full p-1 transition-colors ${item.isPaid ? 'text-green-500' : 'text-gray-300 hover:text-gray-400'}`}>
+                      {item.isPaid ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                    </button>
+                    <div>
+                      <p className={`font-medium text-sm ${item.isPaid ? 'line-through text-muted-foreground' : ''}`}>{item.name}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{item.category}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-bold text-sm ${item.isPaid ? 'text-muted-foreground line-through' : 'text-red-600'}`}>
+                      {formatCurrency(item.value)}
+                    </span>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditItem(item, "pf")}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
+
+      {/* Modal Editar Item PJ/PF */}
+      <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
+        <DialogContent className="max-w-[95vw] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Editar Valor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Despesa</Label>
+              <Input value={editingItem?.name || ""} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>Novo Valor (R$)</Label>
+              <Input
+                value={editItemValue}
+                onChange={e => setEditItemValue(e.target.value)}
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingItem(null)}>Cancelar</Button>
+            <Button onClick={handleSaveItem}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Adicionar/Editar */}
       <Dialog open={showAddModal} onOpenChange={(open) => !open && closeModal()}>
