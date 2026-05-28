@@ -358,15 +358,16 @@ export default function FinancePage() {
                   <CreditCard className="h-5 w-5" />
                   Cartão Corporativo
                 </CardTitle>
-                <CardDescription>Fatura em aberto</CardDescription>
+                <CardDescription>Faturas PJ em aberto</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-3xl font-bold">R$ 696,22</p>
-                    <p className="text-sm text-red-500 font-medium">Vencimento: 01/06</p>
+                    <p className="font-medium text-sm">Fatura Corporativa</p>
+                    <p className="text-2xl font-bold">R$ 696,22</p>
+                    <p className="text-xs text-red-500 font-medium">Vencimento: 01/06</p>
                   </div>
-                  <Button variant="outline">Marcar Pago</Button>
+                  <Button variant="outline" size="sm">Marcar Pago</Button>
                 </div>
               </CardContent>
             </Card>
@@ -412,19 +413,57 @@ export default function FinancePage() {
         </TabsContent>
 
         {/* ─── ABA 3: PESSOAL (PF) ─── */}
-        <TabsContent value="pf">
-          <Card>
+        <TabsContent value="pf" className="space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2 mb-1">
+              <CreditCard className="w-5 h-5" /> Faturas Pessoais
+            </h2>
+            <p className="text-sm text-muted-foreground">Cartões de crédito pessoais com faturas em aberto.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-orange-500" />
+                  Fatura Itaú Personnalité
+                </CardTitle>
+                <CardDescription>Fatura em aberto</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-red-600">R$ 12.257,76</p>
+                  </div>
+                  <Button variant="outline">Pagar</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-blue-500" />
+                  Fatura Passaí
+                </CardTitle>
+                <CardDescription>Fatura em aberto</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-3xl font-bold text-red-600">R$ 5.638,82</p>
+                  </div>
+                  <Button variant="outline">Pagar</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-dashed bg-muted/20">
             <CardHeader>
-              <CardTitle>Visão Pessoa Física (Em construção)</CardTitle>
-              <CardDescription>
-                Aqui controlaremos o Custo de Vida, Dívidas PF e sua Reserva Estratégica.
-              </CardDescription>
+              <CardTitle className="text-base">Custo de Vida e Reserva Estratégica</CardTitle>
+              <CardDescription>Controle de despesas pessoais e reserva financeira — próxima fase.</CardDescription>
             </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Integração das contas pessoais acontecerá na próxima fase.
-              </p>
-            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
