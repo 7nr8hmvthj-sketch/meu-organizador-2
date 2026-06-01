@@ -139,6 +139,7 @@ export default function CalendarPage() {
   const [showUnlinkedManager, setShowUnlinkedManager] = useState(false);
   const [showCsvManager, setShowCsvManager] = useState(false);
   const [showFinanceModal, setShowFinanceModal] = useState(false);
+  const [financialDate, setFinancialDate] = useState<Date>(() => new Date());
 
   type CalendarFilter = "todos" | "plantoes" | "pessoal";
   const [calendarFilter, setCalendarFilter] = useState<CalendarFilter>("todos");
@@ -771,7 +772,27 @@ export default function CalendarPage() {
             <DialogTitle>Painel Financeiro</DialogTitle>
           </DialogHeader>
           
-          <FinancialDashboard targetDate={currentMonth} />
+          {/* Navegação de mês do painel financeiro */}
+          <div className="flex items-center justify-between mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFinancialDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+            >
+              &#8249; Mês anterior
+            </Button>
+            <span className="text-sm font-semibold text-muted-foreground">
+              {String(financialDate.getMonth() + 1).padStart(2, '0')}/{financialDate.getFullYear()}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFinancialDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+            >
+              Próximo mês &#8250;
+            </Button>
+          </div>
+          <FinancialDashboard targetDate={financialDate} />
 
           <DialogFooter className="flex gap-2 justify-end">
             <Button
