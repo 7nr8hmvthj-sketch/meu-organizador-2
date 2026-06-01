@@ -889,12 +889,12 @@ export default function CalendarPage() {
 
       {/* Add Event Modal */}
       <Dialog open={showAddEventModal} onOpenChange={setShowAddEventModal}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Adicionar Evento</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto px-2 flex-1">
             <div>
               <Label>Tipo de Evento</Label>
               <Select value={eventType} onValueChange={setEventType}>
@@ -931,24 +931,27 @@ export default function CalendarPage() {
               />
             </div>
 
-            <div>
-              <Label>Local de Trabalho (opcional)</Label>
-              <Select
-                value={workplaceId ? String(workplaceId) : ""}
-                onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Nenhum" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workplaces.map((wp: any) => (
-                    <SelectItem key={wp.id} value={String(wp.id)}>
-                      {wp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Local de Trabalho — oculto para trainers (eventos delas são treinos, não plantões) */}
+            {!isTrainer && (
+              <div>
+                <Label>Local de Trabalho (opcional)</Label>
+                <Select
+                  value={workplaceId ? String(workplaceId) : ""}
+                  onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workplaces.map((wp: any) => (
+                      <SelectItem key={wp.id} value={String(wp.id)}>
+                        {wp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Horário com botões rápidos */}
             <div className="space-y-3 w-full">
@@ -1056,12 +1059,12 @@ export default function CalendarPage() {
 
       {/* Edit Event Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Editar Evento</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto px-2 flex-1">
             <div>
               <Label>Tipo</Label>
               <Select value={eventType} onValueChange={setEventType}>
@@ -1106,24 +1109,27 @@ export default function CalendarPage() {
               <Label htmlFor="isPassed">Marcar como Passado/Repassado</Label>
             </div>
 
-            <div>
-              <Label>Local de Trabalho</Label>
-              <Select
-                value={workplaceId ? String(workplaceId) : ""}
-                onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Nenhum" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workplaces.map((wp: any) => (
-                    <SelectItem key={wp.id} value={String(wp.id)}>
-                      {wp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Local de Trabalho — oculto para trainers */}
+            {!isTrainer && (
+              <div>
+                <Label>Local de Trabalho</Label>
+                <Select
+                  value={workplaceId ? String(workplaceId) : ""}
+                  onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workplaces.map((wp: any) => (
+                      <SelectItem key={wp.id} value={String(wp.id)}>
+                        {wp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Horário com botões rápidos */}
             <div className="space-y-3 w-full">

@@ -672,3 +672,8 @@
 - [x] Buscar financeItems no FinancialDashboard.tsx via trpc.financeItems.getItems
 - [x] Substituir R$31,40 hardcoded por valorSaldoPJ dinâmico (FinancialDashboard.tsx)
 - [x] Substituir R$696,22 hardcoded por valorCartaoPJ dinâmico (FinancialDashboard.tsx)
+
+## Responsividade Modal Novo Evento em Celulares (01/06/2026)
+
+- [x] Ocultar campo "Local de Trabalho" no modal para trainers (não é trabalho para elas)
+- [x] Melhorar scroll/tamanho do modal em telas pequenas para garantir acesso ao botão Salvar
