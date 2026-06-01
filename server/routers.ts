@@ -1052,6 +1052,8 @@ export const appRouter = router({
         if (existingItems.length === 0) {
           if (userId === 1) {
             // Se for o Admin Principal, injeta os dados reais de produção
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Saldos', title: 'Saldo Conta Empresa', amount: '31.40' });
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Cartões', title: 'Cartão Corporativo', amount: '696.22' });
             await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Impostos', title: 'DAS (Atrasado)', amount: '1789.50' });
             await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Impostos', title: 'DARF (Atrasado)', amount: '1918.63' });
             await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Contabilidade', title: 'Contador', amount: '300.00' });
@@ -1069,10 +1071,12 @@ export const appRouter = router({
             await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Barba', amount: '120.00' });
             await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Gasolina', amount: '50.00' });
           } else {
-            // Se for qualquer outro usuário da plataforma, gera um Starter Pack limpo e genérico
+            // Se for qualquer outro usuário da plataforma, gera o Starter Pack com saldos zerados
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Saldos', title: 'Saldo Conta Empresa', amount: '0.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Cartões', title: 'Cartão Corporativo', amount: '0.00' });
             await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Impostos', title: 'DAS / Simples Nacional', amount: '0.00' });
             await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Contabilidade', title: 'Honorários Contador', amount: '0.00' });
-            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Cartões', title: 'Cartão de Crédito Principal', amount: '0.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Cartões', title: 'Fatura de Cartão de Crédito', amount: '0.00' });
             await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Despesas de Consumo (Luz/Água)', amount: '0.00' });
             await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Internet e Telefone', amount: '0.00' });
           }

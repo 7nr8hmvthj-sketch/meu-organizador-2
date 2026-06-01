@@ -664,3 +664,11 @@
 - [x] Liberar rota /financeiro para todos os admins no App.tsx (remover guard userId===1)
 - [x] Remover guard estático userId=1 do Finance.tsx
 - [x] Remover guard estático userId=1 do CalendarPage.tsx (botão Faturamento visível para todos os não-trainers)
+
+## Cards PJ Dinâmicos — Saldo e Cartão Corporativo (01/06/2026)
+
+- [x] Adicionar 'Saldo Conta Empresa' e 'Cartão Corporativo' ao seed do userId=1 (routers.ts)
+- [x] Adicionar os mesmos itens zerados ao Starter Pack de novos usuários (routers.ts)
+- [x] Buscar financeItems no FinancialDashboard.tsx via trpc.financeItems.getItems
+- [x] Substituir R$31,40 hardcoded por valorSaldoPJ dinâmico (FinancialDashboard.tsx)
+- [x] Substituir R$696,22 hardcoded por valorCartaoPJ dinâmico (FinancialDashboard.tsx)
