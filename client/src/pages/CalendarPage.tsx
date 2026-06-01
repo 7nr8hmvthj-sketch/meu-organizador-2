@@ -470,8 +470,8 @@ export default function CalendarPage() {
     setCurrentMonth(direction === "prev" ? subMonths(currentMonth, 1) : addMonths(currentMonth, 1));
   };
 
-  // Faturamento visível apenas para o admin principal (userId=1)
-  const isRestrictedUser = !isMainAdmin;
+  // Faturamento visível para todos os admins e users (não trainers)
+  const isRestrictedUser = isTrainer;
 
   const calculateDivision = () => {
     if (!dividerStartTime || !dividerEndTime) {

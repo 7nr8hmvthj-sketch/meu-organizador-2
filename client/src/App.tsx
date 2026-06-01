@@ -73,8 +73,6 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
     if (!item.roles.includes(userRole || "")) return false;
     // Verificar se o username está na lista de exclusão
     if (item.excludeUsernames?.includes(username || "")) return false;
-    // /financeiro restrito ao admin principal (userId=1)
-    if (item.path === "/financeiro" && userId !== 1) return false;
     return true;
   });
 
@@ -248,8 +246,7 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
             {/* Rotas para todos os usuários logados (exceto trainers e usuários restritos) */}
             {(userRole === "admin" || userRole === "user") && !RESTRICTED_UI_USERS.includes(username || "") && (
               <>
-                {/* /financeiro restrito ao admin principal (userId=1) */}
-                {userId === 1 && <Route path="/financeiro" component={Finance} />}
+                <Route path="/financeiro" component={Finance} />
                 <Route path="/medicamentos" component={Medications} />
                 <Route path="/diario" component={DiaryPage} />
               </>

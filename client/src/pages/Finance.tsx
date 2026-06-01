@@ -27,25 +27,6 @@ export default function FinancePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  // Guard: apenas o admin principal (userId=1) pode acessar esta página
-  const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
-  const [, navigate] = useLocation();
-  const isMainAdmin = authData?.user?.userId === 1;
-
-  useEffect(() => {
-    if (authData && !isMainAdmin) {
-      navigate("/agenda");
-    }
-  }, [authData, isMainAdmin, navigate]);
-
-  if (!authData || !isMainAdmin) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   // Form States
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");

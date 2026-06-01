@@ -657,3 +657,10 @@
 - [x] App.tsx: restringir rota /financeiro a userId === 1
 - [x] Confirmar que TESTE3 não vê mais botão Faturamento nem página /financeiro
 - [x] Confirmar que dados finance_items no banco estão isolados por userId (TESTE3 vê 0 itens)
+
+## Migração Multi-Tenant Módulo Financeiro (01/06/2026)
+
+- [x] Atualizar getItems no routers.ts com seed dinâmico por userId (dados reais para userId=1, starter pack genérico para outros)
+- [x] Liberar rota /financeiro para todos os admins no App.tsx (remover guard userId===1)
+- [x] Remover guard estático userId=1 do Finance.tsx
+- [x] Remover guard estático userId=1 do CalendarPage.tsx (botão Faturamento visível para todos os não-trainers)

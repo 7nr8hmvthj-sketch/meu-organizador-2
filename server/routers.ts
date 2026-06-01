@@ -1040,12 +1040,45 @@ export const appRouter = router({
 
   // Finance Items router — Despesas PJ/PF persistidas
   financeItems: router({
-    // Retorna todos os itens do usuário (com seed automático se vazio)
+    // Retorna os itens financeiros isolados por usuário com seed dinâmico
     getItems: protectedProcedure
       .input(z.object({ tab: z.enum(['PJ', 'PF']).optional() }))
       .query(async ({ ctx, input }) => {
-        await db.seedFinanceItems(ctx.user.userId);
-        const items = await db.getFinanceItems(ctx.user.userId);
+        const userId = ctx.user.userId;
+
+        // Verificar se o usuário já possui itens cadastrados
+        const existingItems = await db.getFinanceItems(userId);
+
+        if (existingItems.length === 0) {
+          if (userId === 1) {
+            // Se for o Admin Principal, injeta os dados reais de produção
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Impostos', title: 'DAS (Atrasado)', amount: '1789.50' });
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Impostos', title: 'DARF (Atrasado)', amount: '1918.63' });
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Contabilidade', title: 'Contador', amount: '300.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Cartões', title: 'Itaú Personnalité', amount: '12257.76' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Cartões', title: 'Passaí', amount: '5638.82' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Aluguel', amount: '1800.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Luz', amount: '276.63' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Água', amount: '250.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Internet', amount: '119.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Vivo (Atrasada)', amount: '118.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Tim', amount: '60.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Pós-graduação', amount: '2000.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Terapia', amount: '760.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Seguro de Vida', amount: '432.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Barba', amount: '120.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Desenvolvimento', title: 'Gasolina', amount: '50.00' });
+          } else {
+            // Se for qualquer outro usuário da plataforma, gera um Starter Pack limpo e genérico
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Impostos', title: 'DAS / Simples Nacional', amount: '0.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PJ', category: 'Contabilidade', title: 'Honorários Contador', amount: '0.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Cartões', title: 'Cartão de Crédito Principal', amount: '0.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Despesas de Consumo (Luz/Água)', amount: '0.00' });
+            await db.upsertFinanceItem(userId, { tab: 'PF', category: 'Moradia', title: 'Internet e Telefone', amount: '0.00' });
+          }
+        }
+
+        const items = await db.getFinanceItems(userId);
         if (input.tab) return items.filter(i => i.tab === input.tab);
         return items;
       }),
