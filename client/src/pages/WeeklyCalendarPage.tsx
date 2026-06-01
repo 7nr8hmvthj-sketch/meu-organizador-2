@@ -60,6 +60,7 @@ export default function WeeklyCalendarPage() {
 
   const currentUsername = authData?.user?.username;
   const isAdmin = authData?.user?.role === "admin";
+  const isTrainer = currentUsername === "JESSICA" || currentUsername === "ISA";
 
   // Filtro de privacidade: oculta Lembretes de trainers
   const events = useMemo(() => {
@@ -470,7 +471,7 @@ export default function WeeklyCalendarPage() {
 
       {/* Modal para adicionar treino */}
       <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="w-5 h-5 text-primary" />
@@ -581,7 +582,7 @@ export default function WeeklyCalendarPage() {
             </div>
           )}
           
-          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto px-2 flex-1">
             <div>
               <Label>Tipo de Evento</Label>
               <Select value={eventType} onValueChange={setEventType}>
@@ -619,24 +620,27 @@ export default function WeeklyCalendarPage() {
               />
             </div>
 
-            <div>
-              <Label>Local de Trabalho (opcional)</Label>
-              <Select
-                value={workplaceId ? String(workplaceId) : ""}
-                onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Nenhum" />
-                </SelectTrigger>
-                <SelectContent>
-                  {workplaces.map((wp: any) => (
-                    <SelectItem key={wp.id} value={String(wp.id)}>
-                      {wp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Local de Trabalho — oculto para trainers (eventos delas são treinos, não plantões) */}
+            {!isTrainer && (
+              <div>
+                <Label>Local de Trabalho (opcional)</Label>
+                <Select
+                  value={workplaceId ? String(workplaceId) : ""}
+                  onValueChange={(val) => setWorkplaceId(val ? Number(val) : "")}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Nenhum" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {workplaces.map((wp: any) => (
+                      <SelectItem key={wp.id} value={String(wp.id)}>
+                        {wp.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Horário com botões rápidos */}
             <div className="space-y-3 w-full">
@@ -675,11 +679,11 @@ export default function WeeklyCalendarPage() {
 
       {/* Modal de edição */}
       <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) { setEditingEvent(null); resetForm(); } }}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Editar Evento</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4 max-h-[65vh] overflow-y-auto px-2">
+          <div className="space-y-4 py-2 max-h-[70vh] overflow-y-auto px-2 flex-1">
             <div>
               <Label>Tipo de Evento</Label>
               <Select value={eventType} onValueChange={setEventType}>
