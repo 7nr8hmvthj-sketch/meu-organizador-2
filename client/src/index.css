@@ -119,6 +119,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

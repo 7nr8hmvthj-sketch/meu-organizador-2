@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { SplashScreen } from "@capacitor/splash-screen";
+import { StatusBar, Style } from "@capacitor/status-bar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, useLocation, Link } from "wouter";
@@ -309,6 +312,13 @@ function AppContent() {
 }
 
 function App() {
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      SplashScreen.hide().catch(console.error);
+      StatusBar.setStyle({ style: Style.Default }).catch(console.error);
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
