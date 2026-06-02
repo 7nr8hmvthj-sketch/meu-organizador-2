@@ -8,6 +8,32 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
+const CAPACITOR_ORIGIN = "capacitor://localhost";
+
+function allowCapacitorCors(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  const origin = req.headers.origin;
+
+  if (origin === CAPACITOR_ORIGIN) {
+    res.setHeader("Access-Control-Allow-Origin", CAPACITOR_ORIGIN);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", req.headers["access-control-request-headers"] || "Content-Type, Authorization");
+    res.setHeader("Access-Control-Max-Age", "86400");
+    res.setHeader("Vary", "Origin, Access-Control-Request-Headers");
+  }
+
+  if (req.method === "OPTIONS" && origin === CAPACITOR_ORIGIN) {
+    res.sendStatus(204);
+    return;
+  }
+
+  next();
+}
+
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
@@ -30,6 +56,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  app.use(allowCapacitorCors);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
