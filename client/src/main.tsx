@@ -10,6 +10,9 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const trpcUrl = apiBaseUrl ? `${apiBaseUrl}/api/trpc` : "/api/trpc";
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -40,7 +43,7 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: trpcUrl,
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
