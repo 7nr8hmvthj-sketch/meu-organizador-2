@@ -5,8 +5,18 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Meu Organizador Pessoal 2026</title>    
+      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Meu Organizador Pessoal 2026</title>
+    <script>
+      // Redirect para o novo endereço no Render
+      (function() {
+        var renderUrl = 'https://meu-organizador-api-q9fc.onrender.com';
+        var currentHost = window.location.hostname;
+        if (currentHost === 'agendaintegrada.xyz' || currentHost === 'www.agendaintegrada.xyz' || currentHost === 'meuorganizer-gpihjob3.manus.space') {
+          window.location.replace(renderUrl + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
     <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
