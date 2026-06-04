@@ -140,7 +140,7 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b z-50 flex items-center justify-between px-4">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-top))] bg-card border-b z-50 flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
         <div>
           <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
             Meu Organizador
@@ -161,7 +161,7 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-16 bg-background z-40">
+        <div className="lg:hidden fixed inset-x-0 bottom-0 top-[calc(4rem+env(safe-area-inset-top))] bg-background z-40">
           <nav className="p-4 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -195,7 +195,7 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
       )}
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t z-50 flex items-center justify-around px-2">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] bg-card border-t z-50 flex items-start justify-around px-2 pt-2 pb-[env(safe-area-inset-bottom)]">
         {navItems.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const isActive = location === item.path;
@@ -240,7 +240,7 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
   return (
     <div className="min-h-screen bg-background">
       <Navigation userRole={userRole} username={username} userId={userId} />
-      <main className="lg:ml-64 pt-16 lg:pt-0 pb-20 lg:pb-0">
+      <main className="lg:ml-64 pt-[calc(4rem+env(safe-area-inset-top))] lg:pt-0 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-0">
         <div className="w-full px-4 py-4 lg:px-8 max-w-[1920px] mx-auto">
           <Switch>
             {/* Rota do calendário mensal - acessível a todos */}
