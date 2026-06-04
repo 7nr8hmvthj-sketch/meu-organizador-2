@@ -39,19 +39,48 @@ function verifyCookie(cookieValue: string) {
 
 // --- MIDDLEWARES ---
 
-const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  const cookies = ctx.req.headers.cookie || "";
-  const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
-  
-  if (!authCookie) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Login necessário." });
-  }
+const SIMPLE_AUTH_COOKIE_NAME = "simple_auth";
 
-  const cookieValue = authCookie.split('=')[1];
-  const user = verifyCookie(cookieValue);
+function getCookieValue(cookieHeader: string, name: string) {
+  const prefix = `${name}=`;
+  const cookie = cookieHeader
+    .split(';')
+    .map(part => part.trim())
+    .find(part => part.startsWith(prefix));
+
+  return cookie ? cookie.slice(prefix.length) : null;
+}
+
+function getBearerToken(authorizationHeader: string | string[] | undefined) {
+  const header = Array.isArray(authorizationHeader)
+    ? authorizationHeader[0]
+    : authorizationHeader;
+
+  if (!header) return null;
+
+  const [scheme, token] = header.split(/\s+/, 2);
+  if (scheme?.toLowerCase() !== "bearer" || !token) return null;
+
+  return token;
+}
+
+function getSimpleAuthToken(req: { headers: { cookie?: string; authorization?: string | string[] } }) {
+  const cookieToken = getCookieValue(req.headers.cookie || "", SIMPLE_AUTH_COOKIE_NAME);
+  if (cookieToken) return cookieToken;
+
+  return getBearerToken(req.headers.authorization);
+}
+
+function getVerifiedSimpleUser(req: { headers: { cookie?: string; authorization?: string | string[] } }) {
+  const token = getSimpleAuthToken(req);
+  return token ? verifyCookie(token) : null;
+}
+
+const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  const user = getVerifiedSimpleUser(ctx.req);
 
   if (!user) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida ou forjada." });
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Login necessário." });
   }
 
   // Override de segurança: forçar role "trainer" para JESSICA e ISA
@@ -153,10 +182,7 @@ export const appRouter = router({
   
   auth: router({
     me: publicProcedure.query(({ ctx }) => {
-      const cookies = ctx.req.headers.cookie || "";
-      const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
-      if (!authCookie) return null;
-      return verifyCookie(authCookie.split('=')[1]);
+      return getVerifiedSimpleUser(ctx.req);
     }),
     
     simpleLogin: publicProcedure
@@ -173,7 +199,7 @@ export const appRouter = router({
               const userInfoSigned = signCookie({ username: dbUser.username, role: dbUser.role, userId: dbUser.user_id });
               
               ctx.res.cookie("simple_auth", userInfoSigned, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
-              return { success: true, role: dbUser.role, username: dbUser.username };
+              return { success: true, role: dbUser.role, username: dbUser.username, token: userInfoSigned };
             }
             return { success: false, error: "Credenciais inválidas" };
           }
@@ -285,15 +311,11 @@ export const appRouter = router({
         const userInfoSigned = signCookie({ username: upperUsername, role: assignedRole, userId: newUserId });
         ctx.res.cookie("simple_auth", userInfoSigned, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
         
-        return { success: true, username: upperUsername, userId: newUserId, role: assignedRole };
+        return { success: true, username: upperUsername, userId: newUserId, role: assignedRole, token: userInfoSigned };
       }),
     
     checkSimpleAuth: publicProcedure.query(({ ctx }) => {
-      const cookies = ctx.req.headers.cookie || "";
-      const authCookie = cookies.split(';').find(c => c.trim().startsWith('simple_auth='));
-      if (!authCookie) return { isAuthenticated: false, user: null };
-      
-      const user = verifyCookie(authCookie.split('=')[1]);
+      const user = getVerifiedSimpleUser(ctx.req);
       if (user) {
         // Override de segurança: forçar role "trainer" para JESSICA e ISA
         // independente do que está no banco (corrige registro com role errado)

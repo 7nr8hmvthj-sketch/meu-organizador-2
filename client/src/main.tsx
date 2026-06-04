@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
+import { clearStoredSimpleAuthToken, getStoredSimpleAuthToken } from "./lib/authSession";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
+  clearStoredSimpleAuthToken();
   window.location.href = getLoginUrl();
 };
 
@@ -46,8 +48,16 @@ const trpcClient = trpc.createClient({
       url: trpcUrl,
       transformer: superjson,
       fetch(input, init) {
+        const headers = new Headers(init?.headers);
+        const token = getStoredSimpleAuthToken();
+
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
+
         return globalThis.fetch(input, {
           ...(init ?? {}),
+          headers,
           credentials: "include",
         });
       },

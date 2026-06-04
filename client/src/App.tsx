@@ -8,6 +8,7 @@ import { Route, Switch, useLocation, Link } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import { trpc } from "@/lib/trpc";
+import { clearStoredSimpleAuthToken } from "@/lib/authSession";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
@@ -55,6 +56,11 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
+      clearStoredSimpleAuthToken();
+      window.location.reload();
+    },
+    onError: () => {
+      clearStoredSimpleAuthToken();
       window.location.reload();
     },
   });

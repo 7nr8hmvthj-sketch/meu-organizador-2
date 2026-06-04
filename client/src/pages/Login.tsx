@@ -6,9 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Calendar, Lock, User, UserPlus, KeyRound } from "lucide-react";
 import { toast } from "sonner";
+import { setStoredSimpleAuthToken } from "@/lib/authSession";
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: () => void | Promise<void>;
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
@@ -21,9 +22,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const loginMutation = trpc.auth.simpleLogin.useMutation({
     onSuccess: async (data) => {
       if (data.success) {
+        setStoredSimpleAuthToken(data.token);
         toast.success("Login realizado com sucesso!");
         await new Promise(resolve => setTimeout(resolve, 150));
-        onLoginSuccess();
+        await onLoginSuccess();
+        setIsLoading(false);
       } else {
         toast.error(data.error || "Credenciais inválidas");
         setIsLoading(false);
@@ -38,9 +41,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const registerMutation = trpc.auth.registerWithCode.useMutation({
     onSuccess: async (data) => {
       if (data.success) {
+        setStoredSimpleAuthToken(data.token);
         toast.success(`Conta criada com sucesso! Bem-vindo, ${data.username}`);
         await new Promise(resolve => setTimeout(resolve, 150));
-        onLoginSuccess();
+        await onLoginSuccess();
+        setIsLoading(false);
       }
     },
     onError: (error) => {
