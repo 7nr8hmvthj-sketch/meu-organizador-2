@@ -8,8 +8,14 @@ import { Calendar, Lock, User, UserPlus, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { setStoredSimpleAuthToken } from "@/lib/authSession";
 
+interface AuthenticatedUserInfo {
+  username?: string;
+  role?: string;
+  userId?: number;
+}
+
 interface LoginProps {
-  onLoginSuccess: () => void | Promise<void>;
+  onLoginSuccess: (userInfo: AuthenticatedUserInfo) => void | Promise<void>;
 }
 
 export default function Login({ onLoginSuccess }: LoginProps) {
@@ -25,7 +31,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         setStoredSimpleAuthToken(data.token);
         toast.success("Login realizado com sucesso!");
         await new Promise(resolve => setTimeout(resolve, 150));
-        await onLoginSuccess();
+        await onLoginSuccess({ username: data.username, role: data.role, userId: data.userId });
         setIsLoading(false);
       } else {
         toast.error(data.error || "Credenciais inválidas");
@@ -44,7 +50,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         setStoredSimpleAuthToken(data.token);
         toast.success(`Conta criada com sucesso! Bem-vindo, ${data.username}`);
         await new Promise(resolve => setTimeout(resolve, 150));
-        await onLoginSuccess();
+        await onLoginSuccess({ username: data.username, role: data.role, userId: data.userId });
         setIsLoading(false);
       }
     },

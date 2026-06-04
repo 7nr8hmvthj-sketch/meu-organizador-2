@@ -199,7 +199,7 @@ export const appRouter = router({
               const userInfoSigned = signCookie({ username: dbUser.username, role: dbUser.role, userId: dbUser.user_id });
               
               ctx.res.cookie("simple_auth", userInfoSigned, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
-              return { success: true, role: dbUser.role, username: dbUser.username, token: userInfoSigned };
+              return { success: true, role: dbUser.role, username: dbUser.username, userId: dbUser.user_id, token: userInfoSigned };
             }
             return { success: false, error: "Credenciais inválidas" };
           }

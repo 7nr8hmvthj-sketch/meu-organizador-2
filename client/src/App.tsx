@@ -281,25 +281,50 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
   );
 }
 
+interface AuthenticatedUserInfo {
+  username?: string;
+  role?: string;
+  userId?: number;
+}
+
 function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
   const { data: authData, isLoading, refetch } = trpc.auth.checkSimpleAuth.useQuery();
 
   useEffect(() => {
-    if (!isLoading && authData) {
-      setIsAuthenticated(authData.isAuthenticated);
-      setUserInfo(authData.user);
-    }
-  }, [authData, isLoading]);
+    if (isLoading || !authData) return;
 
-  const handleLoginSuccess = async () => {
-    // Refetch para obter os dados atualizados do usuário
-    const result = await refetch();
-    if (result.data) {
-      setIsAuthenticated(result.data.isAuthenticated);
-      setUserInfo(result.data.user);
+    if (authData.isAuthenticated) {
+      setIsAuthenticated(true);
+      setUserInfo(authData.user);
+      return;
     }
+
+    // Evita que uma checagem tardia/pós-login com cookie ausente derrube a entrada
+    // que acabou de ser confirmada pela mutação de login.
+    if (isAuthenticated !== true) {
+      setIsAuthenticated(false);
+      setUserInfo(null);
+    }
+  }, [authData, isAuthenticated, isLoading]);
+
+  const handleLoginSuccess = (loginUserInfo: AuthenticatedUserInfo) => {
+    // No iOS/TestFlight, a checagem imediatamente após o login pode ficar pendente.
+    // Como o login já foi validado pelo backend, entramos no app com os dados retornados
+    // pela própria mutação e apenas atualizamos a sessão em segundo plano.
+    setIsAuthenticated(true);
+    setUserInfo(loginUserInfo);
+
+    refetch()
+      .then(result => {
+        if (result.data?.isAuthenticated) {
+          setUserInfo(result.data.user);
+        }
+      })
+      .catch(error => {
+        console.warn("[Auth] Background session refresh failed after login:", error);
+      });
   };
 
   if (isLoading || isAuthenticated === null) {
