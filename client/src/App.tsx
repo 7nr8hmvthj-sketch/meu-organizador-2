@@ -17,6 +17,7 @@ import WeeklyCalendarPage from "./pages/WeeklyCalendarPage";
 import Finance from "./pages/Finance";
 import Medications from "./pages/Medications";
 import DiaryPage from "./pages/DiaryPage";
+import { PrivacyPolicyPage, SupportPage } from "./pages/PublicLegalPages";
 
 import { 
   LayoutDashboard, 
@@ -91,7 +92,7 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
       <aside className="hidden lg:flex flex-col w-64 bg-card border-r h-screen fixed left-0 top-0">
         <div className="p-6 border-b">
           <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-            Meu Organizador
+            Meus Plantões
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
             {username ? `Olá, ${username}` : "2026"}
@@ -143,7 +144,7 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
       <header className="lg:hidden fixed top-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-top))] bg-card border-b z-50 flex items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
         <div>
           <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">
-            Meu Organizador
+            Meus Plantões
           </h1>
           {username && (
             <p className="text-[10px] text-muted-foreground">Olá, {username}</p>
@@ -288,6 +289,7 @@ interface AuthenticatedUserInfo {
 }
 
 function AppContent() {
+  const [location] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [userInfo, setUserInfo] = useState<any>(null);
   const { data: authData, isLoading, refetch } = trpc.auth.checkSimpleAuth.useQuery();
@@ -308,6 +310,14 @@ function AppContent() {
       setUserInfo(null);
     }
   }, [authData, isAuthenticated, isLoading]);
+
+  if (location === "/privacy") {
+    return <PrivacyPolicyPage />;
+  }
+
+  if (location === "/support") {
+    return <SupportPage />;
+  }
 
   const handleLoginSuccess = (loginUserInfo: AuthenticatedUserInfo) => {
     // No iOS/TestFlight, a checagem imediatamente após o login pode ficar pendente.

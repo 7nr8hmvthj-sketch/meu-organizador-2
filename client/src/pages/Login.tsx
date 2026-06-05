@@ -91,8 +91,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-4">
             <Calendar className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Meu Organizador</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">Organize sua vida pessoal e profissional</p>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Meus Plantões</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">Organize seus plantões, agenda e rotina profissional</p>
         </div>
 
         {/* Tab Switcher */}
@@ -221,7 +221,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
         {/* Footer */}
         <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-          2026 • Organizador Pessoal
+          2026 • Meus Plantões
         </p>
       </div>
     </div>
