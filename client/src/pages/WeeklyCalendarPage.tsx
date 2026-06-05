@@ -442,32 +442,7 @@ export default function WeeklyCalendarPage() {
       </div>
 
       {/* Legenda compacta */}
-      <Card>
-        <CardContent className="py-2 px-3">
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] justify-center">
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              <span>Natação</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span>Musculação</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-              <span>Pilates</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-red-500"></div>
-              <span>HC</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-              <span>ZN</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
 
       {/* Modal para adicionar treino */}
       <Dialog open={showAddTrainingModal} onOpenChange={setShowAddTrainingModal}>

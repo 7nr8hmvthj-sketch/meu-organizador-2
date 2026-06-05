@@ -692,14 +692,7 @@ export default function CalendarPage() {
             })}
           </div>
 
-          {/* Legenda Desktop */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs justify-center pt-3 border-t">
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div><span>Natação</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"></div><span>Musculação</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-purple-500"></div><span>Pilates</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div><span>HC</span></div>
-            <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div><span>ZN</span></div>
-          </div>
+
         </div>
 
         {/* Eventos do Dia Selecionado - Inline (Desktop) */}
