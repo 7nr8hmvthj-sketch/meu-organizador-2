@@ -41,12 +41,9 @@ interface NavigationProps {
   userId?: number;
 }
 
-// Usuários com interface restrita à agenda (sem Financeiro, Configurações)
-const RESTRICTED_UI_USERS = ["PAULA"];
-
-// Verifica se o usuário tem acesso restrito (trainer ou usuários de agenda)
-function isRestrictedUser(userRole?: string, username?: string): boolean {
-  return userRole === "trainer" || RESTRICTED_UI_USERS.includes(username || "");
+// Verifica se o usuário tem acesso restrito (role "trainer" vinda do banco)
+function isRestrictedUser(userRole?: string, _username?: string): boolean {
+  return userRole === "trainer";
 }
 
 function Navigation({ userRole, username, userId }: NavigationProps) {
@@ -69,20 +66,18 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
   // Define navigation items based on user role
   // excludeUsernames: lista de usernames que NÃO devem ver este item
   const allNavItems = [
-    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "trainer", "user"], excludeUsernames: RESTRICTED_UI_USERS },
+    { path: "/", label: "Mensal", icon: CalendarDays, roles: ["admin", "trainer", "user"] },
     { path: "/agenda", label: "Semanal", icon: CalendarRange, roles: ["admin", "trainer", "user"] },
-    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
-    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
-    { path: "/diario", label: "Diário", icon: Book, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS },
-    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"], excludeUsernames: RESTRICTED_UI_USERS },
-    // { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"], excludeUsernames: RESTRICTED_UI_USERS }, // OCULTO
+    { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
+    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
+    { path: "/diario", label: "Di\u00e1rio", icon: Book, roles: ["admin", "user"] },
+    { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
+    // { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"] }, // OCULTO
   ];
 
   const navItems = allNavItems.filter(item => {
-    // Verificar se o role do usuário está na lista de roles permitidos
+    // Filtrar por role — sem hardcode de usernames
     if (!item.roles.includes(userRole || "")) return false;
-    // Verificar se o username está na lista de exclusão
-    if (item.excludeUsernames?.includes(username || "")) return false;
     return true;
   });
 
@@ -227,7 +222,7 @@ interface AuthenticatedAppProps {
 function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps) {
   const [location, setLocation] = useLocation();
 
-  // Redirecionar trainers, JESSICA, ISA e PAULA para /agenda em rotas sensíveis
+  // Redirecionar trainers para /agenda em rotas sensíveis
   useEffect(() => {
     if (isRestrictedUser(userRole, username)) {
       // Bloquear acesso a rotas sensíveis
@@ -247,14 +242,14 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
             {/* Rota do calendário mensal - acessível a todos */}
             <Route path="/" component={CalendarPage} />
             {/* Rotas exclusivas para admin */}
-            {userRole === "admin" && username !== "PAULA" && (
+            {userRole === "admin" && (
               <>
                 <Route path="/eventos" component={Events} />
                 <Route path="/dashboard" component={Dashboard} />
               </>
             )}
             {/* Rotas para todos os usuários logados (exceto trainers e usuários restritos) */}
-            {(userRole === "admin" || userRole === "user") && !RESTRICTED_UI_USERS.includes(username || "") && (
+            {(userRole === "admin" || userRole === "user") && (
               <>
                 <Route path="/financeiro" component={Finance} />
                 <Route path="/medicamentos" component={Medications} />

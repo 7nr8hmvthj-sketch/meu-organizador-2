@@ -682,3 +682,17 @@
 
 - [x] Remover ping manual SELECT 1 do getDb() em server/db.ts — confiar no pool nativo do postgres.js
 - [x] Adicionar guard clause de length antes do crypto.timingSafeEqual em verifyCookie (server/routers.ts)
+
+## Refatoração de Lógica de Negócio (09/06/2026)
+
+- [x] Remover FORCED_TRAINERS hardcoded do protectedProcedure (server/routers.ts)
+- [x] Remover FORCED_TRAINERS hardcoded do checkSimpleAuth (server/routers.ts)
+- [x] Refatorar getEffectiveUserId para usar exclusivamente agenda_managers (sem hardcodes)
+- [x] Deprecar getSharedAgendaUserIds (stub vazio, delegação via agenda_managers)
+- [x] Remover RESTRICTED_UI_USERS do DashboardLayout.tsx — usar role "trainer"
+- [x] Remover isTrainer hardcoded no WeeklyCalendarPage.tsx — usar role "trainer"
+- [x] Remover RESTRICTED_UI_USERS e PAULA hardcoded do App.tsx — usar role-based checks
+- [x] Corrigir bug 24h em parseHoursFromTimes (server/routers.ts) — guard clause start===end → 24
+- [x] Corrigir bug 24h em parseHoursFromText (server/routers.ts) — guard clause start===end → 24
+- [x] Corrigir bug 24h em calculateShiftHours (shared/zn-hours-calculator.ts) — guard clause start===end → 24
+- [x] Build TypeScript compila sem erros (0 errors)

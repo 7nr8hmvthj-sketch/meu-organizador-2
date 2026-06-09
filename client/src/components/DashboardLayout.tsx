@@ -29,7 +29,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 // Usuários com acesso restrito à agenda (sem Faturamento, Locais, Categorias)
-const RESTRICTED_USERS = ["JESSICA", "ISA"];
+// Determinado pela role "trainer" vinda do banco — sem hardcode de nomes
 
 const ALL_MENU_ITEMS = [
   { icon: CalendarDays, label: "Mensal", path: "/", restricted: false },
@@ -123,7 +123,8 @@ function DashboardLayoutContent({
   // Buscar username do usuário logado para aplicar restrições de UI
   const { data: authData } = trpc.auth.checkSimpleAuth.useQuery();
   const currentUsername = authData?.user?.username ?? "";
-  const isRestrictedUiUser = RESTRICTED_USERS.includes(currentUsername);
+  const currentRole = authData?.user?.role ?? "";
+  const isRestrictedUiUser = currentRole === "trainer";
 
   // Filtrar menu: usuários restritos não veem itens marcados como restricted
   const menuItems = ALL_MENU_ITEMS.filter(item => !isRestrictedUiUser || !item.restricted);

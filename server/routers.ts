@@ -82,16 +82,11 @@ const protectedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   const user = getVerifiedSimpleUser(ctx.req);
 
   if (!user) {
-    throw new TRPCError({ code: "UNAUTHORIZED", message: "Login necessário." });
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Login necess\u00e1rio." });
   }
 
-  // Override de segurança: forçar role "trainer" para JESSICA e ISA
-  const FORCED_TRAINERS = ["JESSICA", "ISA"];
-  const effectiveUser = FORCED_TRAINERS.includes(user.username)
-    ? { ...user, role: "trainer" }
-    : user;
-
-  return next({ ctx: { ...ctx, user: effectiveUser as { username: string; role: string; userId: number } } });
+  // Role vem do banco (app_users.role) via cookie assinado — sem overrides hardcoded
+  return next({ ctx: { ...ctx, user: user as { username: string; role: string; userId: number } } });
 });
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
@@ -104,38 +99,33 @@ const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 // Auth is now fully handled via database (app_users table with bcrypt hashes)
 // VALID_CREDENTIALS removed - all auth goes through DB
 
-// Delegação de acesso: trainers acessam agenda do admin (userId 1)
-// Agenda managers acessam agenda do owner
-// Admins e users normais acessam sua própria agenda
+// Delegação de acesso baseada exclusivamente em relações do banco (agenda_managers)
+// Trainers e managers acessam a agenda do owner; demais acessam a própria
 let _managedUserIds: Map<number, number[]> = new Map();
+let _managedCacheAt = 0;
 
 const getEffectiveUserId = async (user: { role: string; userId: number }): Promise<number> => {
-  // Trainers always see admin's agenda (userId 1)
-  if (user.role === 'trainer') return 1;
+  // Invalidar cache a cada 5 minutos
+  const now = Date.now();
+  if (now - _managedCacheAt > 5 * 60 * 1000) {
+    _managedUserIds.clear();
+    _managedCacheAt = now;
+  }
 
-  // Lookup dinâmico: apenas JESSICA e ISA (por username no banco) vêem a agenda do USER (userId=1)
-  // Qualquer outro usuário novo vê apenas a própria agenda — sem hardcode de IDs
-  const sharedIds = await db.getSharedAgendaUserIds();
-  if (sharedIds.has(user.userId)) return 1;
-
-  // Check if this user manages other agendas (para usuários com role=user)
+  // Consultar agenda_managers: se este usuário gerencia a agenda de outro, retorna o ownerId
   if (!_managedUserIds.has(user.userId)) {
     const managed = await db.getManagedUserIds(user.userId);
     _managedUserIds.set(user.userId, managed);
   }
-  
+
   const managed = _managedUserIds.get(user.userId) || [];
   if (managed.length > 0) {
-    return managed[0]; // Return first managed user's ID
+    return managed[0]; // Retorna o primeiro owner gerenciado
   }
-  
+
+  // Sem delegação: usuário acessa sua própria agenda
   return user.userId;
 };
-
-// Clear cache every 5 minutes
-setInterval(() => {
-  _managedUserIds.clear();
-}, 5 * 60 * 1000);
 
 // Normaliza eventos do PostgreSQL garantindo o workplaceId explícito
 const normalizeEvent = (event: any) => ({
@@ -319,11 +309,8 @@ export const appRouter = router({
     checkSimpleAuth: publicProcedure.query(({ ctx }) => {
       const user = getVerifiedSimpleUser(ctx.req);
       if (user) {
-        // Override de segurança: forçar role "trainer" para JESSICA e ISA
-        // independente do que está no banco (corrige registro com role errado)
-        const FORCED_TRAINERS = ["JESSICA", "ISA"];
-        const effectiveRole = FORCED_TRAINERS.includes(user.username) ? "trainer" : user.role;
-        return { isAuthenticated: true, user: { ...user, role: effectiveRole } };
+        // Role vem do banco (app_users.role) via cookie assinado — sem overrides hardcoded
+        return { isAuthenticated: true, user };
       }
       return { isAuthenticated: false, user: null };
     }),
@@ -881,17 +868,19 @@ export const appRouter = router({
         const userWorkplaces = await db.getWorkplaces(ctx.user.userId);
         const unlinked = await db.getUnlinkedRates(ctx.user.userId);
 
-        // ─── Função auxiliar: detecta horas via regex no texto ───────────────
+        // ─── Função auxiliar: detecta horas via regex no texto ───────────
         const parseHoursFromText = (text: string): number => {
           if (!text) return 0;
           if (/\b(7-19|07-19|19-7|19-07)\b/.test(text)) return 12;
           if (/\b(7-13|07-13|13-19|13-7)\b/.test(text)) return 6;
-          // Correção 3: usar lógica em minutos para intervalos genéricos (ex: "19-07")
+          // Lógica em minutos para intervalos genéricos (ex: "19-07")
           const m = text.match(/\b(\d{1,2})-(\d{1,2})\b/);
           if (m) {
             let start = parseInt(m[1], 10) * 60;
             let end = parseInt(m[2], 10) * 60;
-            if (end <= start) end += 1440; // cruza meia-noite
+            // Guard clause: plantão de 24h (ex: 7-7 = 24h)
+            if (start === end) return 24;
+            if (end < start) end += 1440; // cruza meia-noite
             return (end - start) / 60;
           }
           return 0;
@@ -905,8 +894,10 @@ export const appRouter = router({
           if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return 0;
           let start = sh * 60 + sm;
           let end = eh * 60 + em;
+          // Guard clause: plantão de 24h (ex: 07:00 → 07:00 do dia seguinte)
+          if (start === end) return 24;
           // Plantão que cruza meia-noite (ex: 19:00 → 07:00)
-          if (end <= start) end += 1440;
+          if (end < start) end += 1440;
           return (end - start) / 60;
         };
 

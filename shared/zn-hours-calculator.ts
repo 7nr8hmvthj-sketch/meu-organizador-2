@@ -13,6 +13,11 @@ export function calculateShiftHours(eventType: string): number {
     return 0;
   }
 
+  // Guard clause: plantão de 24h (ex: 07-07 do dia seguinte)
+  if (start === end) {
+    return 24;
+  }
+
   if (end < start) {
     // Overnight shift
     return (24 - start) + end;

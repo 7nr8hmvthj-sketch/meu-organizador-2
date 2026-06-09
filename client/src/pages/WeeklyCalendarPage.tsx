@@ -60,7 +60,7 @@ export default function WeeklyCalendarPage() {
 
   const currentUsername = authData?.user?.username;
   const isAdmin = authData?.user?.role === "admin";
-  const isTrainer = currentUsername === "JESSICA" || currentUsername === "ISA";
+  const isTrainer = authData?.user?.role === "trainer";
 
   // Filtro de privacidade: oculta Lembretes de trainers
   const events = useMemo(() => {
