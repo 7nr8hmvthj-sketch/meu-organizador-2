@@ -23,19 +23,9 @@ let _db: ReturnType<typeof drizzle> | null = null;
 let _client: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
-  // Se já tem conexão, testa se ainda está viva
+  // Retorna instância existente — o driver postgres.js gerencia o pool internamente
   if (_db && _client) {
-    try {
-      console.log('[Database] Testing existing connection...');
-      await _client`SELECT 1`;
-      console.log('[Database] Existing connection is healthy');
-      return _db;
-    } catch (e) {
-      console.warn('[Database] Existing connection is dead, creating new one...');
-      try { _client.end(); } catch (err) { /* ignore */ }
-      _db = null;
-      _client = null;
-    }
+    return _db;
   }
 
   // Se não tem URL, não pode conectar
@@ -49,16 +39,15 @@ export async function getDb() {
       ssl: { rejectUnauthorized: false },
       prepare: false,
       connect_timeout: 30,
-      idle_timeout: 20
+      idle_timeout: 20,
+      max: 10
     });
 
-    // Testa a conexão
-    await _client`SELECT 1`;
     _db = drizzle(_client, { schema });
+    console.log('[Database] Connection pool initialized');
     return _db;
   } catch (error) {
     console.error('[Database] Connection failed:', error instanceof Error ? error.message : error);
-    console.error('[Database] Full error:', error);
     try { _client?.end(); } catch (e) { /* ignore */ }
     _db = null;
     _client = null;

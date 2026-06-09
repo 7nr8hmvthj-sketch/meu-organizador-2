@@ -677,3 +677,8 @@
 
 - [x] Ocultar campo "Local de Trabalho" no modal para trainers (não é trabalho para elas)
 - [x] Melhorar scroll/tamanho do modal em telas pequenas para garantir acesso ao botão Salvar
+
+## Refatoração Cirúrgica de Backend (09/06/2026)
+
+- [x] Remover ping manual SELECT 1 do getDb() em server/db.ts — confiar no pool nativo do postgres.js
+- [x] Adicionar guard clause de length antes do crypto.timingSafeEqual em verifyCookie (server/routers.ts)

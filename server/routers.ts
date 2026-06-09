@@ -25,11 +25,13 @@ function verifyCookie(cookieValue: string) {
     if (!payload || !signature) return null;
     
     const expectedSignature = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');
-    try {
-      if (!crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expectedSignature, 'hex'))) return null;
-    } catch {
-      return null;
-    }
+    
+    // Guard clause: buffers devem ter o mesmo length para timingSafeEqual não lançar erro
+    const sigBuffer = Buffer.from(signature, 'hex');
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    if (sigBuffer.length !== expectedBuffer.length) return null;
+    
+    if (!crypto.timingSafeEqual(sigBuffer, expectedBuffer)) return null;
     
     return JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
   } catch {
