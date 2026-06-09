@@ -74,6 +74,17 @@ function getSimpleAuthToken(req: { headers: { cookie?: string; authorization?: s
 }
 
 function getVerifiedSimpleUser(req: { headers: { cookie?: string; authorization?: string | string[] } }) {
+  // Bypass exclusivo para ambiente de desenvolvimento local (sandbox)
+  // Em produção (NODE_ENV !== 'development') este bloco é completamente ignorado
+  if (process.env.NODE_ENV === 'development') {
+    const token = getSimpleAuthToken(req);
+    if (!token) {
+      // Nenhum cookie presente: injetar usuário de testes para permitir renderização local
+      return { username: 'USER', role: 'admin', userId: 1 };
+    }
+    return verifyCookie(token);
+  }
+
   const token = getSimpleAuthToken(req);
   return token ? verifyCookie(token) : null;
 }
