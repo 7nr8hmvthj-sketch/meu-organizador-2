@@ -360,7 +360,9 @@ export default function FinancePage() {
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">R$ 31,40</div>
+                <div className="text-2xl font-bold">
+                  {formatCurrency(allFinanceItems.find((i: DbFinanceItem) => i.tab === 'PJ' && i.title.toLowerCase().includes('saldo conta'))?.amount ?? 0)}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">Conta Empresa</p>
               </CardContent>
             </Card>
