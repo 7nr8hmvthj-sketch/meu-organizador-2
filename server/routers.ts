@@ -1136,10 +1136,27 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         return await db.toggleFinanceItemPaid(ctx.user.userId, input.id);
       }),
-    // Remove um item
+    // Remove um item (com proteção para itens críticos)
     deleteItem: protectedProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const allItems = await db.getFinanceItems(ctx.user.userId);
+        const itemToDelete = allItems.find(i => i.id === input.id);
+        
+        if (!itemToDelete) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Item não encontrado' });
+        }
+        
+        const criticalTitles = ['Saldo Conta', 'Cartão Corporativo', 'Saldo Conta Empresa'];
+        const isCritical = criticalTitles.some(t => itemToDelete.title.toLowerCase().includes(t.toLowerCase()));
+        
+        if (isCritical) {
+          throw new TRPCError({ 
+            code: 'FORBIDDEN', 
+            message: `Não é permitido apagar \"${itemToDelete.title}\" — este é um item crítico de controle financeiro.` 
+          });
+        }
+        
         return await db.deleteFinanceItem(ctx.user.userId, input.id);
       }),
   }),

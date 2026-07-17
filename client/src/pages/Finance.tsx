@@ -45,9 +45,25 @@ export default function FinancePage() {
     onError: (e) => toast.error(`Erro: ${e.message}`),
   });
 
+  const isCriticalItem = (title: string): boolean => {
+    const criticalTitles = ['Saldo Conta', 'Cartão Corporativo', 'Saldo Conta Empresa'];
+    return criticalTitles.some(t => title.toLowerCase().includes(t.toLowerCase()));
+  };
+
+  const handleDeleteFinanceItem = (item: DbFinanceItem) => {
+    if (confirm(`Tem a certeza que quer apagar "${item.title}"?`)) {
+      deleteFinanceMutation.mutate({ id: item.id });
+    }
+  };
+
   const upsertFinanceMutation = trpc.financeItems.upsertItem.useMutation({
     onSuccess: () => { refetchFinanceItems(); setEditingFinanceItem(null); toast.success("Valor atualizado!"); },
     onError: (e) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const deleteFinanceMutation = trpc.financeItems.deleteItem.useMutation({
+    onSuccess: () => { refetchFinanceItems(); toast.success("Item removido com sucesso!"); },
+    onError: (e) => toast.error(`Erro ao remover: ${e.message}`),
   });
 
   // Modal de edição PJ/PF
@@ -417,6 +433,17 @@ export default function FinancePage() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditFinanceItem(item)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
+                    {!isCriticalItem(item.title) && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" 
+                        onClick={() => handleDeleteFinanceItem(item)}
+                        disabled={deleteFinanceMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -491,6 +518,17 @@ export default function FinancePage() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditFinanceItem(item)}>
                       <Pencil className="w-4 h-4" />
                     </Button>
+                    {!isCriticalItem(item.title) && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" 
+                        onClick={() => handleDeleteFinanceItem(item)}
+                        disabled={deleteFinanceMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
