@@ -32,7 +32,7 @@ const GLOBAL_EVENT_TYPES = [
   { value: "Personalizado", label: "Personalizado" },
 ];
 
-// --- CALCULADOR DE HORAS ZN (Dia 20 ao 19) - Apenas para exibição no dia 19 ---
+// --- CALCULADOR DE HORAS ZN (Dia 20 ao 19) BASEADO EXCLUSIVAMENTE NO LOCAL DE TRABALHO ---
 function calculateZNHours(events: any[], targetDate: Date, workplacesSummary?: any[]): number {
   const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 20);
   const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 19, 23, 59, 59);
@@ -643,7 +643,7 @@ export default function CalendarPage() {
                   )}
                   {/* Legenda de Horas ZN no dia 19 */}
                   {dayNumber === 19 && (() => {
-                    const znH = calculateZNHours(allEvents.filter((e: any) => e.createdBy === currentUsername), day);
+                    const znH = calculateZNHours(allEvents.filter((e: any) => e.createdBy === currentUsername), day, workplaces);
                     return znH > 0 ? (
                       <div className="absolute top-0.5 right-0.5">
                         <span className="text-[7px] font-bold text-amber-700 bg-amber-100 border border-amber-300 rounded px-0.5 py-0" title="Total de horas ZN do ciclo (dia 20 ao 19)">
