@@ -33,55 +33,30 @@ const GLOBAL_EVENT_TYPES = [
 ];
 
 // --- CALCULADOR DE HORAS ZN (Dia 20 ao 19) - Apenas para exibição no dia 19 ---
-function calculateZNHours(events: any[], targetDate: Date): number {
-  const targetYear = targetDate.getFullYear();
-  const targetMonth = targetDate.getMonth();
+function calculateZNHours(events: any[], targetDate: Date, workplacesSummary?: any[]): number {
+  const startDate = new Date(targetDate.getFullYear(), targetDate.getMonth() - 1, 20);
+  const endDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), 19, 23, 59, 59);
   
-  // O ciclo vai do dia 20 do mês ANTERIOR até o dia 19 do mês ATUAL
-  let startYear = targetYear;
-  let startMonth = targetMonth - 1;
-  if (startMonth < 0) {
-    startMonth = 11;
-    startYear--;
-  }
+  // Localiza o ID da Zona Norte pelo workplace cadastrado
+  const znWorkplaceId = workplacesSummary?.find((w: any) => w.name.toLowerCase().includes("zona norte"))?.id || -1;
 
-  const startDateStr = `${startYear}-${String(startMonth + 1).padStart(2, '0')}-20`;
-  const endDateStr = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-19`;
-  
   let totalHours = 0;
   
   events.forEach(event => {
-    if (event.isPassed) return; 
+    if (event.isCancelled) return; 
+    if (event.workplaceId !== znWorkplaceId) return;
+
+    const eventDate = new Date(event.date + 'T12:00:00Z');
     
-    // Normalizando a string do evento de forma segura (YYYY-MM-DD)
-    const eventDateStr = typeof event.date === 'string' ? event.date.substring(0, 10) : new Date(event.date).toISOString().substring(0, 10);
-    
-    if (eventDateStr >= startDateStr && eventDateStr <= endDateStr) {
-      const type = (event.type || "").toLowerCase();
-      const desc = (event.description || "").toLowerCase();
-      const fullText = `${type} ${desc}`;
-      
-      if (fullText.includes("hc") || fullText.includes("home care") || fullText.includes("lembrete")) return;
-      
-      if (
-        fullText.includes("zn") || 
-        fullText.includes("zona norte") || 
-        fullText.includes("noturno") || 
-        fullText.includes("apoio") || 
-        fullText.includes("observação") || 
-        fullText.includes("observacao")
-      ) {
-        let timeMatch = fullText.match(/(\d{1,2})-(\d{1,2})/);
-        if (!timeMatch && SHIFT_HOURS[type]) {
-          timeMatch = SHIFT_HOURS[type].match(/(\d{1,2})-(\d{1,2})/);
-        }
-        if (timeMatch) {
-          const startHour = parseInt(timeMatch[1], 10);
-          const endHour = parseInt(timeMatch[2], 10);
-          let diff = endHour - startHour;
-          if (diff < 0) diff += 24; 
-          totalHours += diff;
-        }
+    if (eventDate >= startDate && eventDate <= endDate) {
+      if (event.startTime && event.endTime) {
+        const [startH, startM] = event.startTime.split(':').map(Number);
+        const [endH, endM] = event.endTime.split(':').map(Number);
+        let startMins = startH * 60 + startM;
+        let endMins = endH * 60 + endM;
+        
+        if (endMins <= startMins) endMins += 1440; 
+        totalHours += (endMins - startMins) / 60;
       }
     }
   });
