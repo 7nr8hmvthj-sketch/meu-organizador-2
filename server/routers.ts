@@ -914,7 +914,7 @@ export const appRouter = router({
 
         // ─── Função principal: valor e horas de um plantão ───────────────────
         const calcShift = (event: any, hourlyRate: number): { hours: number; value: number } => {
-          if (event.isCancelled || event.isPassed) return { hours: 0, value: 0 };
+          if (event.isCancelled) return { hours: 0, value: 0 }; // Agora ele SOMA os plantões Passados
           const savedValue = event.value ? parseFloat(String(event.value)) : 0;
           if (savedValue > 0) return { hours: 0, value: savedValue };
           const hoursFromTime = parseHoursFromTimes(event.startTime, event.endTime);
