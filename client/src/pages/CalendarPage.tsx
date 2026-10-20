@@ -488,7 +488,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="w-full max-w-full -mt-4 lg:-mt-6 space-y-4 animate-in fade-in duration-500 pb-10">
+    <div className="w-full max-w-full -mt-6 lg:-mt-12 space-y-4 animate-in fade-in duration-500 pb-10">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-2 min-w-0 flex-1">
