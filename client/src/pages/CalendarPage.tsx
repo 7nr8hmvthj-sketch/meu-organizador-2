@@ -536,7 +536,6 @@ export default function CalendarPage() {
       <div>
         {/* Mobile Calendar */}
         <div className="block md:hidden">
-        {/* Mobile Calendar */}
         <MobileCalendar
           currentMonth={currentMonth}
           days={calendarDays}
