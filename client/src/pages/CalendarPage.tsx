@@ -588,7 +588,7 @@ export default function CalendarPage() {
           {/* Day Grid */}
           <div className="grid grid-cols-7 gap-1.5 mb-4">
             {Array.from({ length: getDay(startOfMonth(currentMonth)) }).map((_, i) => (
-              <div key={`empty-${i}`} className="aspect-square bg-slate-100 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-700/40" />
+              <div key={`empty-${i}`} className="min-h-[100px] lg:min-h-[13vh] bg-slate-100 dark:bg-slate-800/30 rounded-lg border border-slate-200 dark:border-slate-700/40" />
             ))}
             {calendarDays.map((day) => {
               const dayKey = normalizeDateKey(day);
@@ -600,7 +600,7 @@ export default function CalendarPage() {
                 <button
                   key={dayKey}
                   onClick={() => handleDayClick(day)}
-                  className={`relative aspect-square flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all border ${
+                  className={`relative min-h-[100px] lg:min-h-[13vh] flex flex-col items-center justify-start pt-2 rounded-lg text-sm font-semibold transition-all border ${
                     isToday(day)
                       ? "bg-primary/15 border-primary/60 ring-2 ring-primary/30 text-primary shadow-sm"
                       : selectedDate && normalizeDateKey(selectedDate) === dayKey
