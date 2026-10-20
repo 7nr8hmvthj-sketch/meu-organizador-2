@@ -531,10 +531,11 @@ export default function CalendarPage() {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* Main Content */}
-      <div className="p-4">
+      <div>
+        {/* Mobile Calendar */}
+        <div className="block md:hidden">
         {/* Mobile Calendar */}
         <MobileCalendar
           currentMonth={currentMonth}
