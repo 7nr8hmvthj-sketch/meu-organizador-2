@@ -556,6 +556,7 @@ export default function CalendarPage() {
           getEventColor={getEventColor}
           normalizeDateKey={normalizeDateKey}
         />
+        </div>
 
         {/* Desktop Calendar Header */}
         <div className="hidden md:flex items-center justify-between gap-4 w-full mb-4">
