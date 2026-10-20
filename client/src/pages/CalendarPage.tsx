@@ -488,14 +488,13 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="w-full max-w-full bg-background">
+    <div className="space-y-4 animate-in fade-in duration-500 pb-10">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background border-b">
-        <div className="flex items-center justify-between px-4 py-3 gap-2">
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            <CalendarIcon className="w-5 h-5 shrink-0" />
-            <h1 className="text-lg font-semibold truncate">Agenda Mensal</h1>
-          </div>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <CalendarIcon className="w-6 h-6 shrink-0 text-primary" />
+          <h1 className="text-2xl font-bold truncate text-primary">Agenda Mensal</h1>
+        </div>
 
           <div className="flex items-center gap-1 shrink-0">
             {!isRestrictedUser && (
