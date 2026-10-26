@@ -340,7 +340,8 @@ export const appRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
       const effectiveUserId = await getEffectiveUserId(ctx.user);
       const currentYear = new Date().getFullYear();
-      const events = await db.getEventsByDateRange(effectiveUserId, `${currentYear}-01-01`, `${currentYear}-12-31`);
+      // Amplia a busca: carrega do ano anterior até 2 anos no futuro
+      const events = await db.getEventsByDateRange(effectiveUserId, `${currentYear - 1}-01-01`, `${currentYear + 2}-12-31`);
       return normalizeEvents(events);
     }),
     
