@@ -179,6 +179,62 @@ const parseDateSafe = (dateString: string) => {
   return new Date(dateString);
 };
 
+// Validação dos dados da planilha financeira mensal.
+const financialMonthKey = z
+  .string()
+  .regex(/^[0-9]{4}-(0[1-9]|1[0-2])$/);
+
+const financialAmount = z
+  .number()
+  .finite()
+  .min(0)
+  .max(1_000_000_000);
+
+const financialSignedAmount = z
+  .number()
+  .finite()
+  .min(-1_000_000_000)
+  .max(1_000_000_000);
+
+const financialItem = z.object({
+  id: z.string().min(1).max(100),
+  name: z.string().min(1).max(300),
+  value: financialAmount,
+  day: z
+    .string()
+    .regex(/^(|0?[1-9]|[12][0-9]|3[01])$/)
+    .optional(),
+  end: z.union([z.literal(""), financialMonthKey]).optional(),
+  repeat: z.boolean().optional(),
+  variable: z.boolean().optional(),
+  note: z.string().max(2000).optional(),
+  paid: z.boolean().optional(),
+  kind: z.string().max(100).optional(),
+  date: z.string().max(10).optional(),
+});
+
+const financialPayload = z.object({
+  pjStart: financialSignedAmount.nullable(),
+  pfStart: financialSignedAmount.nullable(),
+  reserve: financialAmount,
+  pro: financialAmount,
+  auto: z.boolean(),
+  transferred: financialAmount,
+  charges: financialAmount,
+  pfTax: financialAmount,
+  incomes: z.array(financialItem).max(2000),
+  pj: z.array(financialItem).max(2000),
+  pf: z.array(financialItem).max(2000),
+  giro: z.array(financialItem).max(2000),
+  entries: z.array(
+    financialItem.extend({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      category: z.string().min(1).max(100),
+      paid: z.boolean(),
+    })
+  ).max(5000),
+});
+
 export const appRouter = router({
   system: systemRouter,
 
