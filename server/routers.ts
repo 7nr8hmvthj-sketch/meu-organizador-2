@@ -238,16 +238,26 @@ const financialPayload = z.object({
 export const appRouter = router({
   system: systemRouter,
 
-  financialMonths: router({
+    financialMonths: router({
     list: adminProcedure.query(async ({ ctx }) => {
       const userId = ctx.user.userId;
+
       if (!Number.isSafeInteger(userId) || userId <= 0) {
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida. Entre novamente." });
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "Sessão inválida. Entre novamente.",
+        });
       }
+
       const connection = await db.getDb();
+
       if (!connection) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Banco indisponível." });
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Banco indisponível.",
+        });
       }
+
       try {
         const result = await connection.execute(sql`
           SELECT month, payload, version
@@ -255,12 +265,139 @@ export const appRouter = router({
           WHERE user_id = ${userId}
           ORDER BY month DESC
         `);
+
         return Array.from(result);
-      } catch (error) {
-        console.error("[FinancialMonths] Falha na leitura:", error);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível consultar os meses financeiros." });
+      } catch {
+        console.error("[FinancialMonths] Falha na consulta ao banco.");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Não foi possível carregar os meses financeiros.",
+        });
       }
     }),
+
+    save: adminProcedure
+      .input(
+        z.object({
+          month: financialMonthKey,
+          expectedVersion: z.number().int().min(0).max(2_000_000_000),
+          payload: financialPayload,
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const userId = ctx.user.userId;
+
+        if (!Number.isSafeInteger(userId) || userId <= 0) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Sessão inválida. Entre novamente.",
+          });
+        }
+
+        const lists = [
+          input.payload.incomes,
+          input.payload.pj,
+          input.payload.pf,
+          input.payload.giro,
+          input.payload.entries,
+        ];
+
+        for (const items of lists) {
+          if (new Set(items.map(item => item.id)).size !== items.length) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Há identificadores duplicados em uma lista.",
+            });
+          }
+        }
+
+        const categories = new Set([
+          "extraPF",
+          "extraPJ",
+          ...input.payload.giro.map(item => item.id),
+        ]);
+
+        for (const entry of input.payload.entries) {
+          const date = new Date(entry.date + "T12:00:00Z");
+
+          if (
+            !entry.date.startsWith(input.month + "-") ||
+            !Number.isFinite(date.getTime()) ||
+            date.toISOString().slice(0, 10) !== entry.date ||
+            !categories.has(entry.category)
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Data ou categoria de lançamento inválida.",
+            });
+          }
+        }
+
+        const serialized = JSON.stringify(input.payload);
+
+        if (Buffer.byteLength(serialized, "utf8") > 1_000_000) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Este mês excede o tamanho permitido.",
+          });
+        }
+
+        const connection = await db.getDb();
+
+        if (!connection) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Banco indisponível.",
+          });
+        }
+
+        try {
+          const result =
+            input.expectedVersion === 0
+              ? await connection.execute(sql`
+                  INSERT INTO public.financial_months
+                    (user_id, month, payload)
+                  VALUES
+                    (${userId}, ${input.month}, ${serialized}::jsonb)
+                  ON CONFLICT (user_id, month) DO NOTHING
+                  RETURNING month, payload, version
+                `)
+              : await connection.execute(sql`
+                  UPDATE public.financial_months
+                  SET payload = ${serialized}::jsonb,
+                      version = version + 1,
+                      updated_at = NOW()
+                  WHERE user_id = ${userId}
+                    AND month = ${input.month}
+                    AND version = ${input.expectedVersion}
+                  RETURNING month, payload, version
+                `);
+
+          const rows = Array.from(result);
+
+          if (rows.length === 0) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message:
+                "Este mês já existe ou foi alterado. Preserve suas edições e recarregue os dados antes de salvar novamente.",
+            });
+          }
+
+          return rows[0];
+        } catch (error) {
+          if (error instanceof TRPCError) {
+            throw error;
+          }
+
+          console.error("[FinancialMonths] Falha na gravação no banco.");
+
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message:
+              "Não foi possível salvar. Preserve suas edições e tente novamente.",
+          });
+        }
+      }),
   }),
 
   auth: router({
