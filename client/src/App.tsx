@@ -19,13 +19,13 @@ import Medications from "./pages/Medications";
 import DiaryPage from "./pages/DiaryPage";
 import { PrivacyPolicyPage, SupportPage } from "./pages/PublicLegalPages";
 
-import { 
-  LayoutDashboard, 
-  Calendar, 
+import {
+  LayoutDashboard,
+  Calendar,
   CalendarDays,
   CalendarRange,
-  DollarSign, 
-  Pill, 
+  DollarSign,
+  Pill,
   Moon,
   Sun,
   LogOut,
@@ -34,6 +34,57 @@ import {
   Book
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Tela inicial: verifica a leitura no servidor sem criar ou alterar dados.
+function FinancialSheetConnection() {
+  const monthsQuery = trpc.financialMonths.list.useQuery(undefined, {
+    retry: false,
+    refetchOnWindowFocus: true,
+  });
+
+  return (
+    <section className="space-y-4">
+      <h1 className="text-2xl font-bold">Planilha financeira</h1>
+      <p className="text-muted-foreground">
+        Configuração inicial do histórico mensal PJ e PF.
+      </p>
+      <div className="rounded-xl border bg-card p-5 space-y-3">
+        {monthsQuery.isLoading ? (
+          <p role="status">Consultando seus meses no servidor…</p>
+        ) : monthsQuery.isError ? (
+          <div role="alert" className="space-y-2">
+            <p className="font-semibold text-red-600">
+              Não foi possível consultar os meses.
+            </p>
+            <p className="break-words">{monthsQuery.error.message}</p>
+            <p className="text-sm text-muted-foreground">
+              Nenhum dado financeiro foi criado ou alterado por esta tela.
+            </p>
+          </div>
+        ) : (
+          <div role="status" className="space-y-2">
+            <p className="font-semibold text-green-700">
+              Consulta ao banco concluída com sucesso.
+            </p>
+            <p>Meses encontrados: {monthsQuery.data?.length ?? 0}</p>
+            <p className="text-sm text-muted-foreground">
+              Esta é a tela de verificação. O painel completo e o teste de
+              gravação serão adicionados na próxima etapa.
+            </p>
+          </div>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={monthsQuery.isFetching}
+          onClick={() => { void monthsQuery.refetch(); }}
+        >
+          {monthsQuery.isFetching ? "Consultando…" : "Verificar novamente"}
+        </Button>
+      </div>
+    </section>
+  );
+}
 
 interface NavigationProps {
   userRole?: string;
@@ -70,8 +121,9 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
     { path: "/agenda", label: "Semanal", icon: CalendarRange, roles: ["admin", "trainer", "user"] },
     { path: "/eventos", label: "Escala", icon: Calendar, roles: ["admin"] },
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin"] },
-    { path: "/diario", label: "Di\u00e1rio", icon: Book, roles: ["admin", "user"] },
+    { path: "/diario", label: "Diário", icon: Book, roles: ["admin", "user"] },
     { path: "/financeiro", label: "Financeiro", icon: DollarSign, roles: ["admin"] },
+    { path: "/planilha-financeira", label: "Planilha financeira", icon: DollarSign, roles: ["admin"] },
     // { path: "/medicamentos", label: "Medicamentos", icon: Pill, roles: ["admin", "user"] }, // OCULTO
   ];
 
@@ -93,7 +145,7 @@ function Navigation({ userRole, username, userId }: NavigationProps) {
             {username ? `Olá, ${username}` : "2026"}
           </p>
         </div>
-        
+
         <nav className="flex-1 p-4 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
@@ -226,7 +278,7 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
   useEffect(() => {
     if (isRestrictedUser(userRole, username)) {
       // Bloquear acesso a rotas sensíveis
-      const restrictedPaths = ["/eventos", "/dashboard", "/financeiro", "/workplaces", "/medicamentos", "/diario"];
+      const restrictedPaths = ["/eventos", "/dashboard", "/financeiro", "/planilha-financeira", "/workplaces", "/medicamentos", "/diario"];
       if (restrictedPaths.includes(location)) {
         setLocation("/agenda");
       }
@@ -246,6 +298,7 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
               <>
                 <Route path="/eventos" component={Events} />
                 <Route path="/dashboard" component={Dashboard} />
+                <Route path="/planilha-financeira" component={FinancialSheetConnection} />
               </>
             )}
             {/* Rotas para todos os usuários logados (exceto trainers e usuários restritos) */}
