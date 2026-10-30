@@ -18,6 +18,7 @@ import Finance from "./pages/Finance";
 import Medications from "./pages/Medications";
 import DiaryPage from "./pages/DiaryPage";
 import { PrivacyPolicyPage, SupportPage } from "./pages/PublicLegalPages";
+import FinancialSheet from "./pages/FinancialSheet";
 
 import {
   LayoutDashboard,
@@ -428,7 +429,7 @@ function AuthenticatedApp({ userRole, username, userId }: AuthenticatedAppProps)
               <>
                 <Route path="/eventos" component={Events} />
                 <Route path="/dashboard" component={Dashboard} />
-                <Route path="/planilha-financeira" component={FinancialSheetConnection} />
+                <Route path="/planilha-financeira" component={FinancialSheet} />
               </>
             )}
             {/* Rotas para todos os usuários logados (exceto trainers e usuários restritos) */}
