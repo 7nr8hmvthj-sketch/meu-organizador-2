@@ -35,52 +35,182 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Tela inicial: verifica a leitura no servidor sem criar ou alterar dados.
+// Etapa de integração: consulta e importação explícita de um mês do backup.
 function FinancialSheetConnection() {
   const monthsQuery = trpc.financialMonths.list.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: true,
   });
+  const saveMonth = trpc.financialMonths.save.useMutation({ retry: false });
+  const [backupText, setBackupText] = useState("");
+  const [importMonth, setImportMonth] = useState("2026-11");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [importSucceeded, setImportSucceeded] = useState(false);
+
+  async function importBackupMonth() {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    setImportSucceeded(false);
+
+    try {
+      if (!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(importMonth)) {
+        throw new Error("Informe o mês no formato AAAA-MM, por exemplo 2026-11.");
+      }
+      if (new Blob([backupText]).size > 15_000_000) {
+        throw new Error("Backup muito grande. O limite desta importação é 15 MB.");
+      }
+
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(backupText);
+      } catch {
+        throw new Error("O texto não é um JSON válido. Copie todo o conteúdo do Backup JSON.");
+      }
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        throw new Error("Formato de backup inválido.");
+      }
+      const backup = parsed as { version?: unknown; months?: unknown };
+      if (
+        backup.version !== 2 ||
+        !backup.months ||
+        typeof backup.months !== "object" ||
+        Array.isArray(backup.months)
+      ) {
+        throw new Error("Use o Backup JSON do painel financeiro desta conversa, versão 2.");
+      }
+      const months = backup.months as Record<string, unknown>;
+      if (!Object.prototype.hasOwnProperty.call(months, importMonth)) {
+        throw new Error("O backup não contém o mês " + importMonth + ".");
+      }
+      const payload = months[importMonth];
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        throw new Error("Os dados desse mês estão inválidos.");
+      }
+
+      // Confere a existência antes da importação; o banco também impede substituição.
+      const latest = await monthsQuery.refetch();
+      if (latest.isError || !latest.data) {
+        throw new Error("Não foi possível conferir o banco. Nenhuma importação foi enviada.");
+      }
+      if (latest.data.some(row => row.month === importMonth)) {
+        throw new Error("Esse mês já existe no servidor e não será substituído. O texto do backup foi preservado.");
+      }
+      if (!window.confirm("Importar somente " + importMonth + " para o servidor? Os outros meses não serão alterados.")) {
+        return;
+      }
+
+      // A asserção fornece o tipo ao TypeScript; a API valida o conteúdo de fato.
+      type SaveInput = Parameters<typeof saveMonth.mutateAsync>[0];
+      await saveMonth.mutateAsync({
+        month: importMonth,
+        expectedVersion: 0,
+        payload: payload as SaveInput["payload"],
+      });
+
+      setImportSucceeded(true);
+      setMessage("Salvo no servidor: " + importMonth + ". Abra a mesma conta no outro dispositivo e clique em Verificar novamente.");
+      await monthsQuery.refetch();
+    } catch (error) {
+      setMessage(
+        (error instanceof Error ? error.message : "Não foi possível confirmar a importação.") +
+        " O conteúdo colado foi mantido. Se houve falha de conexão, clique em Verificar novamente antes de tentar importar outra vez."
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-bold">Planilha financeira</h1>
       <p className="text-muted-foreground">
-        Configuração inicial do histórico mensal PJ e PF.
+        Histórico mensal PJ e PF — conexão e importação inicial.
       </p>
       <div className="rounded-xl border bg-card p-5 space-y-3">
         {monthsQuery.isLoading ? (
           <p role="status">Consultando seus meses no servidor…</p>
         ) : monthsQuery.isError ? (
           <div role="alert" className="space-y-2">
-            <p className="font-semibold text-red-600">
-              Não foi possível consultar os meses.
-            </p>
+            <p className="font-semibold text-red-600">Não foi possível consultar os meses.</p>
             <p className="break-words">{monthsQuery.error.message}</p>
-            <p className="text-sm text-muted-foreground">
-              Nenhum dado financeiro foi criado ou alterado por esta tela.
-            </p>
           </div>
         ) : (
           <div role="status" className="space-y-2">
-            <p className="font-semibold text-green-700">
-              Consulta ao banco concluída com sucesso.
-            </p>
+            <p className="font-semibold text-green-700">Consulta ao banco concluída com sucesso.</p>
             <p>Meses encontrados: {monthsQuery.data?.length ?? 0}</p>
-            <p className="text-sm text-muted-foreground">
-              Esta é a tela de verificação. O painel completo e o teste de
-              gravação serão adicionados na próxima etapa.
-            </p>
           </div>
         )}
         <Button
           type="button"
           variant="outline"
-          disabled={monthsQuery.isFetching}
+          disabled={monthsQuery.isFetching || busy}
           onClick={() => { void monthsQuery.refetch(); }}
         >
           {monthsQuery.isFetching ? "Consultando…" : "Verificar novamente"}
         </Button>
+        {!!monthsQuery.data?.length && (
+          <ul className="list-disc pl-5 space-y-1">
+            {monthsQuery.data.map(row => (
+              <li key={String(row.month)}>
+                {String(row.month)} — versão {String(row.version)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <h2 className="text-lg font-semibold">Importar um mês do painel desta conversa</h2>
+        <ol className="list-decimal pl-5 space-y-2 text-sm">
+          <li>No painel financeiro desta conversa, clique em Backup JSON e depois em Copiar JSON.</li>
+          <li>Cole o conteúdo completo no campo abaixo. Não precisa baixar arquivo.</li>
+          <li>Mantenha 2026-11 para importar novembro e clique em Importar mês.</li>
+        </ol>
+        <div className="space-y-2">
+          <label htmlFor="financial-import-month" className="block text-sm font-medium">Mês a importar (AAAA-MM)</label>
+          <input
+            id="financial-import-month"
+            type="text"
+            maxLength={7}
+            value={importMonth}
+            disabled={busy}
+            onChange={event => setImportMonth(event.target.value)}
+            className="w-full max-w-xs rounded-md border bg-background p-2"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="financial-backup-json" className="block text-sm font-medium">Conteúdo completo do Backup JSON</label>
+          <textarea
+            id="financial-backup-json"
+            rows={10}
+            spellCheck={false}
+            value={backupText}
+            disabled={busy}
+            onChange={event => setBackupText(event.target.value)}
+            placeholder={'Cole aqui o JSON que começa com { e contém "version": 2 e "months".'}
+            className="w-full rounded-md border bg-background p-3 font-mono text-xs"
+          />
+        </div>
+        <Button
+          type="button"
+          disabled={busy || monthsQuery.isFetching || monthsQuery.isError || !monthsQuery.data || !backupText.trim()}
+          onClick={() => { void importBackupMonth(); }}
+        >
+          {busy ? "Importando… Não feche esta página" : "Importar mês para o servidor"}
+        </Button>
+        {message && (
+          <p role="status" className={`break-words text-sm ${importSucceeded ? "text-green-700" : "text-red-600"}`}>
+            {message}
+          </p>
+        )}
+        <p className="text-sm text-muted-foreground">
+          A importação cria somente o mês escolhido e não substitui um mês existente.
+          Esta tela ainda não permite editar despesas; o painel completo será a próxima etapa.
+          Os números importados ficam no banco, não nos arquivos do GitHub.
+        </p>
       </div>
     </section>
   );
