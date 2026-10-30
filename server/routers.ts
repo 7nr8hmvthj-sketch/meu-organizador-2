@@ -5,6 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import * as db from "./db";
+import { sql } from "drizzle-orm";
 
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -181,8 +182,31 @@ const parseDateSafe = (dateString: string) => {
 export const appRouter = router({
   system: systemRouter,
 
-  
-  
+  financialMonths: router({
+    list: adminProcedure.query(async ({ ctx }) => {
+      const userId = ctx.user.userId;
+      if (!Number.isSafeInteger(userId) || userId <= 0) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Sessão inválida. Entre novamente." });
+      }
+      const connection = await db.getDb();
+      if (!connection) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Banco indisponível." });
+      }
+      try {
+        const result = await connection.execute(sql`
+          SELECT month, payload, version
+          FROM public.financial_months
+          WHERE user_id = ${userId}
+          ORDER BY month DESC
+        `);
+        return Array.from(result);
+      } catch (error) {
+        console.error("[FinancialMonths] Falha na leitura:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível consultar os meses financeiros." });
+      }
+    }),
+  }),
+
   auth: router({
     me: publicProcedure.query(({ ctx }) => {
       return getVerifiedSimpleUser(ctx.req);
